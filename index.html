@@ -1,37 +1,196 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Meine Test-Website</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MarlinW Media</title>
   <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #0b1020;
+      --bg-soft: rgba(255, 255, 255, 0.06);
+      --text: #f5f7fb;
+      --text-soft: #c9d2e3;
+      --accent: #7c9cff;
+      --accent-2: #9d7cff;
+      --border: rgba(255, 255, 255, 0.12);
+      --shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+    }
+
     body {
-      font-family: Arial, sans-serif;
+      font-family: Arial, Helvetica, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(124, 156, 255, 0.18), transparent 30%),
+        radial-gradient(circle at bottom right, rgba(157, 124, 255, 0.16), transparent 30%),
+        linear-gradient(135deg, #08101f, #0f1830 45%, #0a1120);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      width: 100%;
+      padding: 24px 8%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .status-badge {
+      padding: 10px 16px;
+      border-radius: 999px;
+      background: var(--bg-soft);
+      border: 1px solid var(--border);
+      color: var(--text-soft);
+      font-size: 0.95rem;
+      backdrop-filter: blur(8px);
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 8% 80px;
+    }
+
+    .hero-card {
+      width: 100%;
+      max-width: 1000px;
+      padding: 70px 50px;
+      border-radius: 28px;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
       text-align: center;
-      padding: 50px;
-      background: #f4f4f4;
     }
+
+    .small-text {
+      display: inline-block;
+      margin-bottom: 18px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(124, 156, 255, 0.12);
+      border: 1px solid rgba(124, 156, 255, 0.25);
+      color: #dbe5ff;
+      font-size: 0.95rem;
+      letter-spacing: 0.3px;
+    }
+
     h1 {
-      color: #222;
+      font-size: clamp(2.4rem, 6vw, 5rem);
+      line-height: 1.05;
+      margin-bottom: 18px;
     }
-    p {
-      color: #555;
-      font-size: 18px;
+
+    .highlight {
+      background: linear-gradient(90deg, #ffffff, #c8d5ff, #dccbff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
-    .box {
-      background: white;
-      padding: 30px;
-      border-radius: 12px;
-      max-width: 600px;
-      margin: auto;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+
+    .subtitle {
+      max-width: 700px;
+      margin: 0 auto 36px;
+      font-size: 1.1rem;
+      line-height: 1.7;
+      color: var(--text-soft);
+    }
+
+    .notice {
+      display: inline-block;
+      padding: 16px 24px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border);
+      font-size: 1rem;
+      color: #eef2ff;
+    }
+
+    .notice strong {
+      color: #ffffff;
+    }
+
+    .footer-note {
+      margin-top: 36px;
+      color: #aeb9d2;
+      font-size: 0.95rem;
+    }
+
+    footer {
+      padding: 24px 8% 32px;
+      text-align: center;
+      color: #9eabc7;
+      font-size: 0.92rem;
+    }
+
+    @media (max-width: 700px) {
+      header {
+        padding: 20px 6%;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      main {
+        padding: 20px 6% 60px;
+      }
+
+      .hero-card {
+        padding: 48px 24px;
+        border-radius: 22px;
+      }
+
+      .subtitle {
+        font-size: 1rem;
+      }
+
+      .notice {
+        padding: 14px 18px;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="box">
-    <h1>Hallo Welt 👋</h1>
-    <p>Das ist meine erste Test-Website mit GitHub Pages.</p>
-  </div>
+  <header>
+    <div class="logo">MarlinW Media</div>
+    <div class="status-badge">Website in Vorbereitung</div>
+  </header>
+
+  <main>
+    <section class="hero-card">
+      <div class="small-text">Willkommen</div>
+      <h1><span class="highlight">MarlinW Media</span></h1>
+      <p class="subtitle">
+        Kreative Inhalte, starke Medienpräsenz und moderne Projekte.
+        Diese Website befindet sich derzeit noch in der Entwicklung.
+      </p>
+
+      <div class="notice">
+        <strong>Hinweis:</strong> Diese Website ist aktuell noch im Aufbau.
+      </div>
+
+      <p class="footer-note">
+        Bald findest du hier mehr Informationen, Projekte und Kontaktmöglichkeiten.
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    © 2026 MarlinW Media
+  </footer>
 </body>
 </html>
