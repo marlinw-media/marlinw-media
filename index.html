@@ -1,95 +1,158 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Blog</title>
-  <style>
-    body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 1rem; }
-    .header { background: #6d28d9; color: white; padding: 1rem; }
-    .nav a { color: white; margin-right: 1rem; text-decoration: none; }
-    .nav a:hover { text-decoration: underline; }
-    .article { margin: 2rem 0; }
-    .article-title { font-size: 1.5rem; font-weight: bold; margin-bottom: 0.25rem; }
-    .meta { color: #666; margin-bottom: 1rem; }
-    .text p { margin-bottom: 0.75rem; line-height: 1.6; }
-    .image-container img { width: 100%; border-radius: 4px; }
-    .caption { color: #666; font-size: 0.9rem; margin-top: 0.25rem; }
-    .footer { border-top: 1px solid #ccc; padding: 1rem 0; color: #666; margin-top: 2rem; }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#000000" />
+  <title>MarlinW Media</title>
 
-    .points-title { font-weight: bold; margin-bottom: 0.5rem; }
-    .points { list-style: none; padding-left: 0; margin: 0; }
-    .points li { margin-bottom: 0.75rem; line-height: 1.6; }
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #000000;
+      --white: #ffffff;
+      --text-soft: #cfcfcf;
+      --line: rgba(255, 255, 255, 0.1);
+      --glass: rgba(255, 255, 255, 0.05);
+      --shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+    }
+
+    html, body {
+      min-height: 100%;
+      background: #000;
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--white);
+      overflow: hidden;
+      position: relative;
+      background:
+        radial-gradient(circle at 15% 20%, rgba(255,255,255,0.10), transparent 22%),
+        radial-gradient(circle at 80% 15%, rgba(255,255,255,0.06), transparent 18%),
+        radial-gradient(circle at 70% 75%, rgba(255,255,255,0.06), transparent 20%),
+        linear-gradient(135deg, #000000 0%, #070707 35%, #101010 65%, #000000 100%);
+    }
+
+    .background {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+      background-size: 72px 72px;
+      opacity: 0.2;
+      animation: slowDrift 18s ease-in-out infinite alternate;
+    }
+
+    .wrap {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 20px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .hero {
+      width: min(100%, 820px);
+      text-align: center;
+      padding: 36px 26px 42px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.05);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+    }
+
+    .logo {
+      display: block;
+      width: min(260px, 52vw);
+      margin: 0 auto 26px;
+    }
+
+    h1 {
+      font-size: clamp(2.2rem, 6vw, 4.2rem);
+      margin-bottom: 18px;
+    }
+
+    .subtitle {
+      max-width: 680px;
+      margin: 0 auto 30px;
+      color: var(--text-soft);
+      font-size: 1.2rem;
+      line-height: 1.6;
+    }
+
+    .notice {
+      margin: 0 auto 22px;
+      padding: 18px 22px;
+      border-radius: 22px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.06);
+      font-size: 1.5rem;
+    }
+
+    .phone {
+      font-size: 1.1rem;
+      color: #d9d9d9;
+    }
+
+    /* 🔥 WICHTIG: verhindert Umbruch */
+    .phone a {
+      white-space: nowrap;
+      color: #ffffff;
+      text-decoration: none;
+      border-bottom: 1px solid rgba(255,255,255,0.3);
+    }
+
+    @keyframes slowDrift {
+      0% { transform: translate(0,0); }
+      100% { transform: translate(-10px,10px); }
+    }
   </style>
 </head>
+
 <body>
 
-  <!--
-    AUFGABE: Semantisches Refactoring
-    ==================================
-    Diese Seite besteht fast nur aus <div> und <span>.
-    Visuell sieht sie normal aus, aber sie hat keine Semantik.
+  <div class="background">
+    <div class="grid"></div>
+  </div>
 
-    Eure Aufgabe:
-    1. Ersetzt jedes <div> durch das passende semantische HTML5-Element.
-    2. Die Seite muss danach visuell identisch aussehen.
-    3. Nutzt mindestens: <header>, <nav>, <main>, <article>, <section>,
-       <footer>, <h1>, <h2>, <p>, <figure>, <figcaption>, <time>, <ul>, <li>
+  <main class="wrap">
+    <section class="hero">
 
-    Tipp: Ihr duerft die CSS-Klassen beibehalten oder anpassen.
-  -->
+      <img src="logo-white.png" alt="MarlinW Media Logo" class="logo" />
 
-  <header class="header">
-    <h1>Mein Blog</h1>
-    <nav class="nav">
-      <a href="/">Start</a>
-      <a href="/about">Ueber mich</a>
-      <a href="/kontakt">Kontakt</a>
-    </nav>
-  </header>
+      <h1>MarlinW Media</h1>
 
-  <main>
-    <article class="article">
-      <h2>Warum HTML wichtig ist</h2>
-      <p class="meta">
-        Veroeffentlicht am <time datetime="2026-04-01">2026-04-01</time>
+      <p class="subtitle">
+        Kreative Medienlösungen, visuelle Projekte und moderne Markenauftritte.
       </p>
-      <section class="text">
-        <p>HTML ist die Grundlage jeder Webseite. Ohne HTML gaebe es kein Web.
-          Trotzdem unterschaetzen viele Entwickler die Bedeutung von semantischem
-          Markup und greifen reflexartig zu generischen Containern.</p>
-        <p>Semantische Elemente helfen nicht nur Screenreadern und Suchmaschinen,
-          sondern machen den Code auch fuer andere Entwickler lesbarer. Wer einmal
-          eine Seite voller verschachtelter Divs debuggen musste, weiss das.</p>
-      </section>
-      <figure class="image-container">
-        <img src="https://picsum.photos/seed/html-blog/600/300" alt="">
-        <figcaption class="caption">Ein Beispielbild ohne Alt-Text (auch ein Problem!)</figcaption>
-      </figure>
-    </article>
 
-    <article class="article">
-      <h2 class="article-title">Formulare richtig bauen</h2>
-      <p class="meta">
-        Veroeffentlicht am <time datetime="2026-03-25">2026-03-25</time>
+      <div class="notice">
+        Diese Website befindet sich aktuell im Aufbau.
+      </div>
+
+      <p class="phone">
+        Sie können mich gerne unter
+        <a href="tel:+4915231036109">+49 152 31036109</a>
+        erreichen.
       </p>
-      <section class="text">
-        <p>Ein gutes Formular braucht mehr als nur Input-Felder. Labels,
-          Validierung und Accessibility gehoeren dazu. Ohne ein verknuepftes
-          Label ist ein Eingabefeld fuer Screenreader-Nutzer unsichtbar.</p>
-      </section>
-      <section>
-        <p class="points-title">Wichtige Punkte:</p>
-        <ul class="points">
-          <li>&bull; Immer label mit for-Attribut verknuepfen</li>
-          <li>&bull; required und pattern fuer Validierung nutzen</li>
-          <li>&bull; Serverseitige Validierung nie vergessen</li>
-        </ul>
-      </section>
-    </article>
+
+    </section>
   </main>
-
-  <footer class="footer">&copy; 2026 Mein Blog. Alle Rechte vorbehalten.</footer>
 
 </body>
 </html>
