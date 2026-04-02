@@ -14,28 +14,63 @@
     }
 
     :root {
-      --bg: #000000;
-      --white: #ffffff;
+      --bg: #050505;
+      --bg-soft: #0f0f10;
+      --surface: rgba(255, 255, 255, 0.05);
+      --surface-strong: rgba(255, 255, 255, 0.08);
+      --text: #ffffff;
       --text-soft: #cfcfcf;
-      --shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+      --line: rgba(255, 255, 255, 0.1);
+      --line-strong: rgba(255, 255, 255, 0.18);
+      --shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+      --hero-glow: rgba(255, 255, 255, 0.12);
+      --accent: #ffffff;
+    }
+
+    body.light-mode {
+      --bg: #f7f7f7;
+      --bg-soft: #ffffff;
+      --surface: rgba(0, 0, 0, 0.04);
+      --surface-strong: rgba(0, 0, 0, 0.07);
+      --text: #111111;
+      --text-soft: #4e4e4e;
+      --line: rgba(0, 0, 0, 0.08);
+      --line-strong: rgba(0, 0, 0, 0.14);
+      --shadow: 0 18px 45px rgba(0, 0, 0, 0.08);
+      --hero-glow: rgba(0, 0, 0, 0.08);
+      --accent: #111111;
+    }
+
+    html {
+      scroll-behavior: smooth;
     }
 
     html,
     body {
       min-height: 100%;
-      background: #000;
+      background: var(--bg);
     }
 
     body {
       font-family: Arial, Helvetica, sans-serif;
-      color: var(--white);
-      position: relative;
-      overflow: hidden;
+      color: var(--text);
       background:
-        radial-gradient(circle at 15% 20%, rgba(255,255,255,0.10), transparent 22%),
-        radial-gradient(circle at 80% 15%, rgba(255,255,255,0.06), transparent 18%),
-        radial-gradient(circle at 70% 75%, rgba(255,255,255,0.06), transparent 20%),
-        linear-gradient(135deg, #000000 0%, #070707 35%, #101010 65%, #000000 100%);
+        radial-gradient(circle at 15% 20%, var(--hero-glow), transparent 22%),
+        radial-gradient(circle at 80% 15%, rgba(255,255,255,0.05), transparent 18%),
+        radial-gradient(circle at 70% 75%, rgba(255,255,255,0.04), transparent 20%),
+        linear-gradient(135deg, var(--bg) 0%, var(--bg-soft) 35%, var(--bg) 100%);
+      overflow-x: hidden;
+      transition: background 0.35s ease, color 0.35s ease;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    img {
+      max-width: 100%;
+      display: block;
     }
 
     .background {
@@ -43,26 +78,32 @@
       inset: 0;
       pointer-events: none;
       overflow: hidden;
+      z-index: 0;
     }
 
     .grid {
       position: absolute;
       inset: 0;
       background-image:
-        linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+        linear-gradient(var(--line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--line) 1px, transparent 1px);
       background-size: 72px 72px;
+      opacity: 0.16;
       mask-image: radial-gradient(circle at center, black 35%, transparent 85%);
       -webkit-mask-image: radial-gradient(circle at center, black 35%, transparent 85%);
-      opacity: 0.22;
       animation: slowDrift 18s ease-in-out infinite alternate;
     }
 
     .shape {
       position: absolute;
-      border: 1px solid rgba(255,255,255,0.06);
+      border: 1px solid var(--line);
       background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.015));
       box-shadow: var(--shadow);
+      transition: background 0.35s ease, border-color 0.35s ease;
+    }
+
+    body.light-mode .shape {
+      background: linear-gradient(145deg, rgba(0,0,0,0.04), rgba(0,0,0,0.015));
     }
 
     .shape.one {
@@ -105,10 +146,14 @@
     .orb {
       position: absolute;
       border-radius: 50%;
-      background: radial-gradient(circle, rgba(255,255,255,0.20), rgba(255,255,255,0.02) 65%, transparent 75%);
+      background: radial-gradient(circle, rgba(255,255,255,0.18), rgba(255,255,255,0.02) 65%, transparent 75%);
       filter: blur(12px);
-      opacity: 0.45;
+      opacity: 0.42;
       animation: pulseOrb 7s ease-in-out infinite;
+    }
+
+    body.light-mode .orb {
+      background: radial-gradient(circle, rgba(0,0,0,0.10), rgba(0,0,0,0.01) 65%, transparent 75%);
     }
 
     .orb.one {
@@ -126,124 +171,548 @@
       animation-delay: 1.8s;
     }
 
-    .wrap {
-      min-height: 100vh;
-      min-height: 100dvh;
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      background: rgba(5, 5, 5, 0.7);
+      border-bottom: 1px solid var(--line);
+      transition: background 0.35s ease, border-color 0.35s ease;
+    }
+
+    body.light-mode .site-header {
+      background: rgba(255, 255, 255, 0.82);
+    }
+
+    .header-inner {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 16px 22px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .menu-toggle {
+      justify-self: start;
+      display: none;
+      background: transparent;
+      color: var(--text);
+      border: none;
+      font-size: 0.98rem;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      padding: 6px 0;
+      border-bottom: 2px solid var(--accent);
+    }
+
+    .brand {
       display: flex;
       align-items: center;
-      justify-content: center;
-      padding: 32px 20px;
+      justify-self: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .brand-logo {
+      width: 108px;
+      filter: drop-shadow(0 0 16px rgba(255,255,255,0.06));
+    }
+
+    body.light-mode .brand-logo {
+      filter: none;
+    }
+
+    .brand-name {
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      white-space: nowrap;
+    }
+
+    .desktop-nav {
+      display: flex;
+      align-items: center;
+      gap: 26px;
+      justify-self: end;
+    }
+
+    .desktop-nav a,
+    .mobile-nav a {
       position: relative;
-      z-index: 2;
+      color: var(--text-soft);
+      transition: color 0.25s ease;
+    }
+
+    .desktop-nav a:hover,
+    .desktop-nav a.active,
+    .mobile-nav a:hover,
+    .mobile-nav a.active {
+      color: var(--text);
+    }
+
+    .desktop-nav a::after,
+    .mobile-nav a::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      bottom: -6px;
+      width: 0;
+      height: 1px;
+      background: var(--text);
+      transition: width 0.25s ease;
+    }
+
+    .desktop-nav a:hover::after,
+    .desktop-nav a.active::after,
+    .mobile-nav a:hover::after,
+    .mobile-nav a.active::after {
+      width: 100%;
+    }
+
+    .mobile-menu {
+      display: none;
+      border-top: 1px solid var(--line);
+      background: rgba(8, 8, 8, 0.92);
+    }
+
+    body.light-mode .mobile-menu {
+      background: rgba(255, 255, 255, 0.94);
+    }
+
+    .mobile-menu.open {
+      display: block;
+    }
+
+    .mobile-nav {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 12px 22px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    main {
+      position: relative;
+      z-index: 1;
+    }
+
+    section {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 92px 22px;
     }
 
     .hero {
-      width: min(100%, 820px);
-      text-align: center;
-      padding: 36px 26px 42px;
-      position: relative;
-      border: 1px solid rgba(255,255,255,0.08);
-      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.015));
-      border-radius: 28px;
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
+      min-height: calc(100vh - 80px);
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      align-items: center;
+      gap: 40px;
     }
 
-    .corner-accent {
-      position: absolute;
-      width: 90px;
-      height: 90px;
-      border-top: 1px solid rgba(255,255,255,0.14);
-      border-left: 1px solid rgba(255,255,255,0.14);
-      top: 18px;
-      left: 18px;
-      opacity: 0.6;
-    }
-
-    .corner-accent.right {
-      right: 18px;
-      left: auto;
-      top: auto;
-      bottom: 18px;
-      border-top: none;
-      border-left: none;
-      border-right: 1px solid rgba(255,255,255,0.14);
-      border-bottom: 1px solid rgba(255,255,255,0.14);
-    }
-
-    .top-line {
-      width: 110px;
-      height: 1px;
-      background: linear-gradient(to right, transparent, rgba(255,255,255,0.65), transparent);
-      margin: 0 auto 24px;
-      opacity: 0.9;
-    }
-
-    .logo {
-      display: block;
-      width: min(260px, 52vw);
-      margin: 0 auto 26px;
-      filter: drop-shadow(0 0 16px rgba(255,255,255,0.08));
-    }
-
-    h1 {
-      font-size: clamp(2.2rem, 6vw, 4.2rem);
-      font-weight: 700;
-      letter-spacing: 0.05em;
+    .hero-eyebrow {
+      display: inline-block;
       margin-bottom: 18px;
-    }
-
-    .subtitle {
-      max-width: 680px;
-      margin: 0 auto 30px;
+      font-size: 0.92rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
       color: var(--text-soft);
-      font-size: clamp(1rem, 2vw, 1.22rem);
-      line-height: 1.7;
+      border-bottom: 1px solid var(--line-strong);
+      padding-bottom: 6px;
     }
 
-    .notice {
-      margin: 0 auto 22px;
+    .hero h1 {
+      font-size: clamp(2.8rem, 7vw, 6rem);
+      line-height: 0.95;
+      margin-bottom: 18px;
+      letter-spacing: 0.04em;
+    }
+
+    .hero p {
+      max-width: 700px;
+      font-size: 1.1rem;
+      line-height: 1.75;
+      color: var(--text-soft);
+      margin-bottom: 28px;
+    }
+
+    .hero-actions {
       display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+
+    .button {
+      display: inline-flex;
       align-items: center;
       justify-content: center;
+      min-height: 48px;
+      padding: 0 20px;
+      border-radius: 999px;
+      border: 1px solid var(--line-strong);
+      background: var(--surface);
+      color: var(--text);
+      transition: transform 0.2s ease, background 0.25s ease, border-color 0.25s ease;
+    }
+
+    .button:hover {
+      transform: translateY(-2px);
+      background: var(--surface-strong);
+    }
+
+    .button.primary {
+      background: var(--text);
+      color: var(--bg);
+      border-color: transparent;
+      font-weight: 700;
+    }
+
+    .button.primary:hover {
+      background: #dcdcdc;
+    }
+
+    body.light-mode .button.primary {
+      background: #111111;
+      color: #ffffff;
+    }
+
+    .hero-card {
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.015));
+      border-radius: 30px;
+      padding: 28px;
+      box-shadow: var(--shadow);
+    }
+
+    body.light-mode .hero-card {
+      background: linear-gradient(180deg, rgba(0,0,0,0.03), rgba(0,0,0,0.01));
+    }
+
+    .hero-card-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
       gap: 14px;
-      padding: 18px 22px;
-      border-radius: 22px;
-      border: 1px solid rgba(255,255,255,0.12);
-      background: rgba(255,255,255,0.06);
-      color: #f2f2f2;
+    }
+
+    .mini-card {
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      min-height: 140px;
+      background:
+        linear-gradient(145deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01)),
+        linear-gradient(120deg, transparent, rgba(255,255,255,0.08), transparent);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      color: var(--text);
+    }
+
+    body.light-mode .mini-card {
+      background:
+        linear-gradient(145deg, rgba(0,0,0,0.03), rgba(0,0,0,0.01)),
+        linear-gradient(120deg, transparent, rgba(0,0,0,0.04), transparent);
+    }
+
+    .mini-card strong {
+      font-size: 1rem;
+      margin-bottom: 6px;
+    }
+
+    .mini-card span {
+      font-size: 0.92rem;
+      color: var(--text-soft);
+      line-height: 1.5;
+    }
+
+    .section-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: end;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 34px;
+    }
+
+    .section-head h2 {
+      font-size: clamp(2rem, 4vw, 3.3rem);
+      line-height: 1;
+      letter-spacing: 0.03em;
+    }
+
+    .section-head p {
       max-width: 680px;
-      font-size: clamp(1.2rem, 2.4vw, 1.6rem);
-      line-height: 1.4;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    }
-
-    .notice-dot {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      background: white;
-      box-shadow: 0 0 12px rgba(255,255,255,0.7);
-      flex-shrink: 0;
-    }
-
-    .phone {
-      font-size: clamp(1rem, 2vw, 1.15rem);
-      color: #d9d9d9;
+      color: var(--text-soft);
       line-height: 1.7;
     }
 
-    .phone a {
-      white-space: nowrap;
-      color: #ffffff;
-      text-decoration: none;
-      border-bottom: 1px solid rgba(255,255,255,0.25);
-      padding-bottom: 2px;
+    .cards-grid {
+      display: grid;
+      gap: 18px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
-    .phone a:hover {
-      border-bottom-color: rgba(255,255,255,0.7);
+    .gallery-grid {
+      display: grid;
+      gap: 18px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .card,
+    .gallery-item,
+    .partner-card,
+    .contact-card,
+    .reference-card {
+      border: 1px solid var(--line);
+      border-radius: 26px;
+      overflow: hidden;
+      background: linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.015));
+      box-shadow: var(--shadow);
+      transition: transform 0.25s ease, border-color 0.25s ease;
+    }
+
+    body.light-mode .card,
+    body.light-mode .gallery-item,
+    body.light-mode .partner-card,
+    body.light-mode .contact-card,
+    body.light-mode .reference-card {
+      background: linear-gradient(180deg, rgba(0,0,0,0.03), rgba(0,0,0,0.01));
+    }
+
+    .card:hover,
+    .gallery-item:hover,
+    .partner-card:hover,
+    .contact-card:hover,
+    .reference-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--line-strong);
+    }
+
+    .placeholder-media {
+      aspect-ratio: 16 / 10;
+      background:
+        linear-gradient(145deg, rgba(255,255,255,0.06), rgba(255,255,255,0.015)),
+        radial-gradient(circle at top left, rgba(255,255,255,0.12), transparent 35%),
+        linear-gradient(135deg, rgba(255,255,255,0.02), transparent 35%, rgba(255,255,255,0.05));
+      position: relative;
+      overflow: hidden;
+    }
+
+    body.light-mode .placeholder-media {
+      background:
+        linear-gradient(145deg, rgba(0,0,0,0.04), rgba(0,0,0,0.01)),
+        radial-gradient(circle at top left, rgba(0,0,0,0.06), transparent 35%),
+        linear-gradient(135deg, rgba(0,0,0,0.01), transparent 35%, rgba(0,0,0,0.04));
+    }
+
+    .placeholder-media::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(125deg, transparent 0%, rgba(255,255,255,0.10) 45%, transparent 60%);
+      transform: translateX(-100%);
+      animation: shimmer 7s linear infinite;
+    }
+
+    .placeholder-label {
+      position: absolute;
+      left: 18px;
+      bottom: 18px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line-strong);
+      background: rgba(0,0,0,0.35);
+      font-size: 0.86rem;
+      backdrop-filter: blur(8px);
+    }
+
+    body.light-mode .placeholder-label {
+      background: rgba(255,255,255,0.72);
+    }
+
+    .play-badge {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1px solid var(--line-strong);
+      background: rgba(0,0,0,0.35);
+      display: grid;
+      place-items: center;
+      backdrop-filter: blur(8px);
+    }
+
+    body.light-mode .play-badge {
+      background: rgba(255,255,255,0.72);
+    }
+
+    .play-badge::before {
+      content: "";
+      display: block;
+      margin-left: 3px;
+      width: 0;
+      height: 0;
+      border-top: 8px solid transparent;
+      border-bottom: 8px solid transparent;
+      border-left: 12px solid var(--text);
+    }
+
+    .item-body {
+      padding: 18px 18px 20px;
+    }
+
+    .item-body h3 {
+      font-size: 1.08rem;
+      margin-bottom: 8px;
+    }
+
+    .item-body p {
+      color: var(--text-soft);
+      line-height: 1.65;
+      font-size: 0.96rem;
+    }
+
+    .references-grid {
+      display: grid;
+      gap: 18px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      margin-top: 24px;
+    }
+
+    .reference-card {
+      padding: 24px;
+    }
+
+    .reference-card strong {
+      display: block;
+      margin-bottom: 12px;
+      font-size: 1.05rem;
+    }
+
+    .reference-card p {
+      color: var(--text-soft);
+      line-height: 1.7;
+    }
+
+    .partner-grid {
+      display: grid;
+      gap: 18px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .contact-layout {
+      display: grid;
+      gap: 18px;
+      grid-template-columns: 0.9fr 1.1fr;
+    }
+
+    .contact-card .item-body {
+      padding: 24px;
+    }
+
+    .portrait-placeholder {
+      aspect-ratio: 4 / 5;
+      background:
+        linear-gradient(145deg, rgba(255,255,255,0.06), rgba(255,255,255,0.015)),
+        radial-gradient(circle at 50% 24%, rgba(255,255,255,0.12), transparent 22%),
+        linear-gradient(180deg, transparent 35%, rgba(255,255,255,0.05));
+      position: relative;
+      overflow: hidden;
+    }
+
+    body.light-mode .portrait-placeholder {
+      background:
+        linear-gradient(145deg, rgba(0,0,0,0.04), rgba(0,0,0,0.015)),
+        radial-gradient(circle at 50% 24%, rgba(0,0,0,0.06), transparent 22%),
+        linear-gradient(180deg, transparent 35%, rgba(0,0,0,0.04));
+    }
+
+    .portrait-placeholder::before {
+      content: "";
+      position: absolute;
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      border: 1px solid var(--line);
+      left: 50%;
+      top: 24%;
+      transform: translate(-50%, -50%);
+      background: rgba(255,255,255,0.04);
+    }
+
+    .portrait-placeholder::after {
+      content: "";
+      position: absolute;
+      width: 190px;
+      height: 220px;
+      border-radius: 999px 999px 28px 28px;
+      border: 1px solid var(--line);
+      left: 50%;
+      bottom: 10%;
+      transform: translateX(-50%);
+      background: rgba(255,255,255,0.04);
+    }
+
+    .contact-list {
+      display: grid;
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .contact-row {
+      padding: 16px 18px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--surface);
+    }
+
+    .contact-row small {
+      display: block;
+      color: var(--text-soft);
+      margin-bottom: 6px;
+      font-size: 0.82rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .contact-row a,
+    .contact-row span {
+      font-size: 1rem;
+      line-height: 1.6;
+      color: var(--text);
+      word-break: break-word;
+    }
+
+    footer {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 0 22px 40px;
+      color: var(--text-soft);
+      position: relative;
+      z-index: 1;
+    }
+
+    .footer-inner {
+      padding-top: 24px;
+      border-top: 1px solid var(--line);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 0.95rem;
+    }
+
+    @keyframes slowDrift {
+      0% { transform: scale(1) translate(0, 0); }
+      100% { transform: scale(1.04) translate(-10px, 10px); }
     }
 
     @keyframes floatOne {
@@ -271,40 +740,68 @@
       50% { transform: scale(1.12); opacity: 0.55; }
     }
 
-    @keyframes slowDrift {
-      0% { transform: scale(1) translate(0, 0); }
-      100% { transform: scale(1.04) translate(-10px, 10px); }
+    @keyframes shimmer {
+      0% { transform: translateX(-100%); }
+      55%, 100% { transform: translateX(150%); }
     }
 
-    @media (max-width: 768px) {
-      .wrap {
-        padding: 24px 14px;
+    @media (max-width: 980px) {
+      .hero,
+      .contact-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .cards-grid,
+      .gallery-grid,
+      .partner-grid,
+      .references-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 760px) {
+      .header-inner {
+        grid-template-columns: auto 1fr;
+      }
+
+      .menu-toggle {
+        display: inline-block;
+      }
+
+      .desktop-nav {
+        display: none;
+      }
+
+      .mobile-menu {
+        display: none;
+      }
+
+      .brand {
+        justify-self: center;
+      }
+
+      .brand-name {
+        display: none;
+      }
+
+      section {
+        padding: 76px 18px;
       }
 
       .hero {
-        padding: 28px 18px 34px;
-        border-radius: 24px;
+        min-height: auto;
+        padding-top: 32px;
       }
 
-      .logo {
-        width: min(180px, 48vw);
-        margin-bottom: 22px;
+      .hero-card {
+        padding: 22px;
       }
 
-      .subtitle {
-        margin-bottom: 24px;
-      }
-
-      .notice {
-        font-size: 1.35rem;
-        padding: 18px 16px;
-        border-radius: 20px;
-      }
-
-      .corner-accent,
-      .corner-accent.right {
-        width: 62px;
-        height: 62px;
+      .cards-grid,
+      .gallery-grid,
+      .partner-grid,
+      .references-grid {
+        grid-template-columns: 1fr;
       }
 
       .shape.one,
@@ -321,7 +818,7 @@
   </style>
 </head>
 <body>
-  <div class="background">
+  <div class="background" aria-hidden="true">
     <div class="grid"></div>
     <div class="shape one"></div>
     <div class="shape two"></div>
@@ -331,32 +828,385 @@
     <div class="orb two"></div>
   </div>
 
-  <main class="wrap">
-    <section class="hero">
-      <div class="corner-accent"></div>
-      <div class="corner-accent right"></div>
+  <header class="site-header">
+    <div class="header-inner">
+      <button class="menu-toggle" id="menuToggle" aria-expanded="false" aria-controls="mobileMenu">
+        Menü
+      </button>
 
-      <div class="top-line"></div>
+      <a href="#home" class="brand" id="brandLink" aria-label="Zur Startseite">
+        <img src="logo-white.png" alt="MarlinW Media Logo" class="brand-logo" id="brandLogo">
+        <span class="brand-name">MarlinW Media</span>
+      </a>
 
-      <img src="logo-white.png" alt="MarlinW Media Logo" class="logo" />
+      <nav class="desktop-nav" aria-label="Hauptnavigation">
+        <a href="#portfolio">Portfolio</a>
+        <a href="#partner">Partner</a>
+        <a href="#kontakt">Kontakt</a>
+      </nav>
+    </div>
 
-      <h1>MarlinW Media</h1>
+    <div class="mobile-menu" id="mobileMenu">
+      <nav class="mobile-nav" aria-label="Mobile Navigation">
+        <a href="#portfolio">Portfolio</a>
+        <a href="#partner">Partner</a>
+        <a href="#kontakt">Kontakt</a>
+      </nav>
+    </div>
+  </header>
 
-      <p class="subtitle">
-        Kreative Medienlösungen, visuelle Projekte und moderne Markenauftritte.
-      </p>
+  <main>
+    <section class="hero" id="home">
+      <div>
+        <span class="hero-eyebrow">Kreative Medienproduktion</span>
+        <h1>MarlinW Media</h1>
+        <p>
+          Visuelle Inhalte mit Charakter. Von starken Bildwelten über moderne Videoprojekte
+          bis zu hochwertiger Markenpräsenz: MarlinW Media steht für saubere Ästhetik,
+          klare Kommunikation und Ergebnisse, die im Kopf bleiben.
+        </p>
 
-      <div class="notice">
-        <span class="notice-dot"></span>
-        <span>Diese Website befindet sich aktuell im Aufbau.</span>
+        <div class="hero-actions">
+          <a class="button primary" href="#portfolio">Portfolio ansehen</a>
+          <a class="button" href="#kontakt">Kontakt aufnehmen</a>
+        </div>
+
+        <div class="references-grid">
+          <article class="reference-card">
+            <strong>Professioneller Auftritt</strong>
+            <p>
+              Klare Bildsprache, moderner Stil und Inhalte, die Marken hochwertig,
+              sichtbar und wiedererkennbar machen.
+            </p>
+          </article>
+
+          <article class="reference-card">
+            <strong>Kreativ & vielseitig</strong>
+            <p>
+              Ob Foto, Video, Event oder Social Media Content — jedes Projekt wird
+              individuell gedacht und visuell präzise umgesetzt.
+            </p>
+          </article>
+
+          <article class="reference-card">
+            <strong>Für starke Eindrücke</strong>
+            <p>
+              Gute Medien sehen nicht nur gut aus, sie transportieren Stimmung,
+              Qualität und Vertrauen auf den ersten Blick.
+            </p>
+          </article>
+        </div>
       </div>
 
-      <p class="phone">
-        Sie können mich gerne unter
-        <a href="tel:+4915231036109">+49 152 31036109</a>
-        erreichen.
-      </p>
+      <aside class="hero-card">
+        <div class="section-head" style="margin-bottom: 20px;">
+          <div>
+            <h2 style="font-size: 1.5rem;">Highlights</h2>
+          </div>
+        </div>
+
+        <div class="hero-card-grid">
+          <article class="mini-card">
+            <strong>Foto & Video</strong>
+            <span>Hochwertige Produktionen für Marken, Kampagnen und Content.</span>
+          </article>
+
+          <article class="mini-card">
+            <strong>Events</strong>
+            <span>Emotionale Eindrücke, Atmosphäre und starke Aftermovies.</span>
+          </article>
+
+          <article class="mini-card">
+            <strong>Social Content</strong>
+            <span>Kurze, moderne Formate für Instagram, Reels und mehr.</span>
+          </article>
+
+          <article class="mini-card">
+            <strong>Referenzen</strong>
+            <span>Visuelle Arbeiten mit klarer Formsprache und hochwertigem Look.</span>
+          </article>
+        </div>
+      </aside>
+    </section>
+
+    <section id="portfolio">
+      <div class="section-head">
+        <div>
+          <h2>Portfolio</h2>
+        </div>
+        <p>
+          Hier findest du Platzhalter für deine bisherigen Projekte. Später kannst du
+          hier echte Bilder, Videos und Case-Studies einfügen.
+        </p>
+      </div>
+
+      <div class="gallery-grid">
+        <article class="gallery-item">
+          <div class="placeholder-media">
+            <span class="placeholder-label">Fotografie</span>
+          </div>
+          <div class="item-body">
+            <h3>Editorial Shooting</h3>
+            <p>Platzhalter für ein hochwertiges Foto-Projekt mit klarer Bildsprache.</p>
+          </div>
+        </article>
+
+        <article class="gallery-item">
+          <div class="placeholder-media">
+            <div class="play-badge"></div>
+            <span class="placeholder-label">Video</span>
+          </div>
+          <div class="item-body">
+            <h3>Brand Film</h3>
+            <p>Platzhalter für ein modernes Video mit Intro, Produktshots und Bewegung.</p>
+          </div>
+        </article>
+
+        <article class="gallery-item">
+          <div class="placeholder-media">
+            <span class="placeholder-label">Event</span>
+          </div>
+          <div class="item-body">
+            <h3>Event Coverage</h3>
+            <p>Platzhalter für Eindrücke eines Events mit Atmosphäre und Dynamik.</p>
+          </div>
+        </article>
+
+        <article class="gallery-item">
+          <div class="placeholder-media">
+            <span class="placeholder-label">Automotive</span>
+          </div>
+          <div class="item-body">
+            <h3>Car Visuals</h3>
+            <p>Platzhalter für Auto-Content mit Kontrast, Lichtkanten und Details.</p>
+          </div>
+        </article>
+
+        <article class="gallery-item">
+          <div class="placeholder-media">
+            <div class="play-badge"></div>
+            <span class="placeholder-label">Reel</span>
+          </div>
+          <div class="item-body">
+            <h3>Social Media Reel</h3>
+            <p>Platzhalter für kurze, starke Videoinhalte im Hochformat.</p>
+          </div>
+        </article>
+
+        <article class="gallery-item">
+          <div class="placeholder-media">
+            <span class="placeholder-label">Location</span>
+          </div>
+          <div class="item-body">
+            <h3>Location Showcase</h3>
+            <p>Platzhalter für Innenräume, Architektur und räumliche Inszenierung.</p>
+          </div>
+        </article>
+
+        <article class="gallery-item">
+          <div class="placeholder-media">
+            <span class="placeholder-label">Portrait</span>
+          </div>
+          <div class="item-body">
+            <h3>Portrait Session</h3>
+            <p>Platzhalter für moderne Portraits mit sauberem Licht und Stil.</p>
+          </div>
+        </article>
+
+        <article class="gallery-item">
+          <div class="placeholder-media">
+            <div class="play-badge"></div>
+            <span class="placeholder-label">Commercial</span>
+          </div>
+          <div class="item-body">
+            <h3>Commercial Clip</h3>
+            <p>Platzhalter für Werbevideo, Produktinszenierung und Storytelling.</p>
+          </div>
+        </article>
+
+        <article class="gallery-item">
+          <div class="placeholder-media">
+            <span class="placeholder-label">Campaign</span>
+          </div>
+          <div class="item-body">
+            <h3>Kampagnenmotiv</h3>
+            <p>Platzhalter für ein visuell starkes Projekt im typischen MarlinW Stil.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="partner">
+      <div class="section-head">
+        <div>
+          <h2>Partner</h2>
+        </div>
+        <p>
+          Hier kannst du später echte Partner, Kooperationen und gemeinsame Projekte zeigen.
+          Aktuell sind stilvolle Platzhalter eingebaut.
+        </p>
+      </div>
+
+      <div class="partner-grid">
+        <article class="partner-card">
+          <div class="placeholder-media">
+            <span class="placeholder-label">Partner 01</span>
+          </div>
+          <div class="item-body">
+            <h3>Kreativpartner</h3>
+            <p>Platzhalter für ein Partnerprofil mit Bild, Kurzbeschreibung und Kooperation.</p>
+          </div>
+        </article>
+
+        <article class="partner-card">
+          <div class="placeholder-media">
+            <span class="placeholder-label">Partner 02</span>
+          </div>
+          <div class="item-body">
+            <h3>Produktionspartner</h3>
+            <p>Platzhalter für gemeinsames Arbeiten an Medien, Kampagnen und Formaten.</p>
+          </div>
+        </article>
+
+        <article class="partner-card">
+          <div class="placeholder-media">
+            <span class="placeholder-label">Partner 03</span>
+          </div>
+          <div class="item-body">
+            <h3>Kooperation</h3>
+            <p>Platzhalter für Markenpartner, Locations oder kreative Zusammenarbeit.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="kontakt">
+      <div class="section-head">
+        <div>
+          <h2>Kontakt</h2>
+        </div>
+        <p>
+          Für Projekte, Kooperationen oder Anfragen kannst du dich direkt melden.
+        </p>
+      </div>
+
+      <div class="contact-layout">
+        <article class="contact-card">
+          <div class="portrait-placeholder"></div>
+          <div class="item-body">
+            <h3>MarlinW Media</h3>
+            <p>
+              Platzhalter für dein Portrait oder ein professionelles Foto von dir.
+            </p>
+          </div>
+        </article>
+
+        <article class="contact-card">
+          <div class="item-body">
+            <h3 style="margin-bottom: 10px;">Direkt erreichbar</h3>
+            <p style="color: var(--text-soft); line-height: 1.7;">
+              Melde dich gerne telefonisch, per E-Mail oder über Instagram.
+            </p>
+
+            <div class="contact-list">
+              <div class="contact-row">
+                <small>Telefon</small>
+                <a href="tel:+4915231036109">+49 152 31036109</a>
+              </div>
+
+              <div class="contact-row">
+                <small>E-Mail</small>
+                <a href="mailto:marlinw.media@gmail.com">marlinw.media@gmail.com</a>
+              </div>
+
+              <div class="contact-row">
+                <small>Instagram</small>
+                <a href="https://instagram.com/marlinw_media" target="_blank" rel="noopener noreferrer">
+                  @marlinw_media
+                </a>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
     </section>
   </main>
+
+  <footer>
+    <div class="footer-inner">
+      <span>© 2026 MarlinW Media</span>
+      <span>Foto • Video • Content • Creative Production</span>
+    </div>
+  </footer>
+
+  <script>
+    const menuToggle = document.getElementById("menuToggle");
+    const mobileMenu = document.getElementById("mobileMenu");
+    const mobileLinks = document.querySelectorAll(".mobile-nav a");
+    const allNavLinks = document.querySelectorAll(".desktop-nav a, .mobile-nav a");
+    const brandLogo = document.getElementById("brandLogo");
+
+    function closeMobileMenu() {
+      mobileMenu.classList.remove("open");
+      menuToggle.setAttribute("aria-expanded", "false");
+    }
+
+    menuToggle.addEventListener("click", () => {
+      const isOpen = mobileMenu.classList.toggle("open");
+      menuToggle.setAttribute("aria-expanded", String(isOpen));
+    });
+
+    mobileLinks.forEach(link => {
+      link.addEventListener("click", closeMobileMenu);
+    });
+
+    document.addEventListener("click", (event) => {
+      const isClickInsideMenu = mobileMenu.contains(event.target);
+      const isClickToggle = menuToggle.contains(event.target);
+
+      if (!isClickInsideMenu && !isClickToggle) {
+        closeMobileMenu();
+      }
+    });
+
+    const sections = document.querySelectorAll("main section[id]");
+
+    function setActiveNav() {
+      let currentId = "home";
+
+      sections.forEach(section => {
+        const top = window.scrollY + 140;
+        if (top >= section.offsetTop) {
+          currentId = section.getAttribute("id");
+        }
+      });
+
+      allNavLinks.forEach(link => {
+        const target = link.getAttribute("href").replace("#", "");
+        link.classList.toggle("active", target === currentId);
+      });
+    }
+
+    window.addEventListener("scroll", setActiveNav);
+    window.addEventListener("load", setActiveNav);
+
+    function applyColorMode(e) {
+      const prefersLight = e.matches;
+      document.body.classList.toggle("light-mode", prefersLight);
+      document.querySelector('meta[name="theme-color"]')
+        .setAttribute("content", prefersLight ? "#f7f7f7" : "#000000");
+
+      brandLogo.src = prefersLight ? "logo-black.png" : "logo-white.png";
+    }
+
+    const colorScheme = window.matchMedia("(prefers-color-scheme: light)");
+    applyColorMode(colorScheme);
+
+    if (colorScheme.addEventListener) {
+      colorScheme.addEventListener("change", applyColorMode);
+    } else if (colorScheme.addListener) {
+      colorScheme.addListener(applyColorMode);
+    }
+  </script>
 </body>
 </html>
