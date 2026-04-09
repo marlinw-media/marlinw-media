@@ -1,9 +1,8 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#000000" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MarlinW Media</title>
 
   <link rel="stylesheet" href="style.css">
@@ -11,7 +10,6 @@
 
 <body>
 
-<!-- BACKGROUND bleibt -->
 <div class="background">
   <div class="grid"></div>
   <div class="shape one"></div>
@@ -22,36 +20,42 @@
   <div class="orb two"></div>
 </div>
 
-<!-- HEADER -->
 <header class="site-header">
+  <div class="header-inner">
 
-  <button class="menu-toggle" onclick="toggleMenu()">Menü</button>
+    <button id="menuToggle" class="menu-toggle">Menü</button>
 
-  <img src="logo-white.png" class="logo" onclick="goHome()">
+    <a href="#" class="brand">
+      <img src="logo-white.png" id="logo" class="brand-logo">
+    </a>
 
-  <nav class="desktop-nav">
+    <nav class="desktop-nav">
+      <a href="#portfolio">Portfolio</a>
+      <a href="#partner">Partner</a>
+      <a href="#kontakt">Kontakt</a>
+    </nav>
+
+  </div>
+
+  <div class="mobile-menu" id="mobileMenu">
     <a href="#portfolio">Portfolio</a>
-    <a href="shop.html">Bilder kaufen</a>
+    <a href="#partner">Partner</a>
     <a href="#kontakt">Kontakt</a>
-    <a href="login.html" id="userDisplay">Login</a>
-  </nav>
-
+  </div>
 </header>
 
-<!-- MOBILE MENU -->
-<div id="mobileMenu" class="mobile-menu">
-  <a href="#portfolio">Portfolio</a>
-  <a href="shop.html">Bilder kaufen</a>
-  <a href="#kontakt">Kontakt</a>
-</div>
-
-<!-- CONTENT -->
 <main>
 
-<!-- HERO -->
-<section class="hero" id="home">
-  <h1>MarlinW Media</h1>
-  <p>Kreative Medienlösungen & visuelle Projekte</p>
+<section class="hero">
+  <div>
+    <h1>MarlinW Media</h1>
+    <p>Moderne Medienproduktion für starke Marken und visuelle Erlebnisse.</p>
+
+    <div class="hero-actions">
+      <a href="#portfolio" class="button primary">Portfolio</a>
+      <a href="#kontakt" class="button">Kontakt</a>
+    </div>
+  </div>
 </section>
 
 <!-- PORTFOLIO SLIDER -->
@@ -59,33 +63,40 @@
   <h2>Portfolio</h2>
 
   <div class="slider">
-    <div class="slide">Projekt 1</div>
-    <div class="slide">Projekt 2</div>
-    <div class="slide">Projekt 3</div>
-    <div class="slide">Projekt 4</div>
-    <div class="slide">Projekt 5</div>
-    <div class="slide">Projekt 6</div>
+    <div class="slider-track" id="sliderTrack">
+
+      <!-- Slides -->
+      <div class="slide"></div>
+      <div class="slide"></div>
+      <div class="slide"></div>
+      <div class="slide"></div>
+      <div class="slide"></div>
+
+    </div>
   </div>
 </section>
 
-<!-- KONTAKT -->
+<section id="partner">
+  <h2>Partner</h2>
+  <div class="grid-3">
+    <div class="card"></div>
+    <div class="card"></div>
+    <div class="card"></div>
+  </div>
+</section>
+
 <section id="kontakt">
   <h2>Kontakt</h2>
 
-  <p>📞 <a href="tel:+4915231036109">+49 152 31036109</a></p>
-  <p>✉️ marlinw.media@gmail.com</p>
-  <p>📷 @marlinw_media</p>
-
+  <div class="contact-box">
+    <p>📞 +49 152 31036109</p>
+    <p>📧 marlinw.media@gmail.com</p>
+    <p>📸 @marlinw_media</p>
+  </div>
 </section>
 
 </main>
 
-<!-- WARENKORB -->
-<div class="cart" onclick="openCart()">
-  🛒 <span id="cart-count">0</span>
-</div>
-
 <script src="script.js"></script>
-
 </body>
 </html>
