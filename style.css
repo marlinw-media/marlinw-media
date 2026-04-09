@@ -650,6 +650,24 @@ body.light-mode .play-badge {
   font-size: 0.96rem;
 }
 
+.signature {
+  font-size: 1.18rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.portrait-image {
+  width: 100%;
+  max-width: 260px;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  display: block;
+  margin: 24px auto 0;
+  border-radius: 24px;
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+
 .references-grid {
   display: grid;
   gap: 18px;
@@ -687,54 +705,6 @@ body.light-mode .play-badge {
 
 .contact-card .item-body {
   padding: 24px;
-}
-
-.portrait-placeholder {
-  aspect-ratio: 5 / 5.6;
-  max-width: 320px;
-  width: 100%;
-  margin: 24px auto 0;
-  border-radius: 24px;
-  background:
-    linear-gradient(145deg, rgba(255,255,255,0.06), rgba(255,255,255,0.015)),
-    radial-gradient(circle at 50% 24%, rgba(255,255,255,0.12), transparent 22%),
-    linear-gradient(180deg, transparent 35%, rgba(255,255,255,0.05));
-  position: relative;
-  overflow: hidden;
-  border: 1px solid var(--line);
-}
-
-body.light-mode .portrait-placeholder {
-  background:
-    linear-gradient(145deg, rgba(0,0,0,0.04), rgba(0,0,0,0.015)),
-    radial-gradient(circle at 50% 24%, rgba(0,0,0,0.06), transparent 22%),
-    linear-gradient(180deg, transparent 35%, rgba(0,0,0,0.04));
-}
-
-.portrait-placeholder::before {
-  content: "";
-  position: absolute;
-  width: 88px;
-  height: 88px;
-  border-radius: 50%;
-  border: 1px solid var(--line);
-  left: 50%;
-  top: 27%;
-  transform: translate(-50%, -50%);
-  background: rgba(255,255,255,0.04);
-}
-
-.portrait-placeholder::after {
-  content: "";
-  position: absolute;
-  width: 150px;
-  height: 178px;
-  border-radius: 999px 999px 24px 24px;
-  border: 1px solid var(--line);
-  left: 50%;
-  bottom: 10%;
-  transform: translateX(-50%);
-  background: rgba(255,255,255,0.04);
 }
 
 .contact-list {
@@ -1159,7 +1129,9 @@ body.light-mode .login-fab {
   z-index: 1;
 }
 
-.auth-card {
+.auth-card,
+.profile-editor-card,
+.order-card {
   width: min(560px, 100%);
   padding: 30px;
 }
@@ -1259,10 +1231,6 @@ body.light-mode .login-fab {
   gap: 18px;
 }
 
-.profile-editor-card {
-  padding: 24px;
-}
-
 .edit-row {
   display: grid;
   grid-template-columns: 1fr auto;
@@ -1273,10 +1241,6 @@ body.light-mode .login-fab {
 .edit-button {
   min-height: 54px;
   min-width: 120px;
-}
-
-.order-card {
-  padding: 22px;
 }
 
 .order-card h3 {
@@ -1472,7 +1436,9 @@ footer {
     padding: 20px;
   }
 
-  .auth-card {
+  .auth-card,
+  .profile-editor-card,
+  .order-card {
     padding: 24px 20px;
     border-radius: 22px;
   }
@@ -1484,5 +1450,9 @@ footer {
   .profile-menu {
     right: auto;
     left: 0;
+  }
+
+  .portrait-image {
+    max-width: 220px;
   }
 }
