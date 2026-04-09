@@ -34,7 +34,18 @@
         <a href="index.html#partner">Partner</a>
         <a href="shop.html" class="active">Bilder kaufen</a>
         <a href="index.html#kontakt">Kontakt</a>
-        <a href="login.html" id="userDisplay">Login</a>
+
+        <div class="profile" id="profileBox">
+          <button class="profile-trigger" id="profileTrigger" type="button">Profil</button>
+          <div class="profile-menu">
+            <div class="profile-short" id="profileShort">User</div>
+            <a href="profile.html" class="requires-user">Profil bearbeiten</a>
+            <button type="button" class="requires-user" onclick="openCart()">Warenkorb</button>
+            <a href="orders.html" class="requires-user">Bestellungen</a>
+            <button type="button" class="requires-user" onclick="logoutUser()">Logout</button>
+            <a href="login.html" class="auth-only" id="userDisplay">Login</a>
+          </div>
+        </div>
       </nav>
     </div>
 
@@ -53,8 +64,8 @@
     <div class="page-intro">
       <h1>Bilder kaufen</h1>
       <p>
-        Galerie mit quadratischen Platzhaltern im selben Stil wie die Hauptseite.
-        Jedes Bild kostet aktuell 5,00 € und kann in der Vollansicht zum Warenkorb hinzugefügt werden.
+        Galerie mit quadratischen Bildern. Auf dem Handy passen 2 × 2 Bilder sauber in den Viewport.
+        Jedes Bild kostet aktuell 5,00 €.
       </p>
     </div>
 
@@ -77,7 +88,7 @@
       <button class="lightbox-close" type="button" onclick="closeLightbox()" aria-label="Schließen">✕</button>
 
       <div class="lightbox-grid">
-        <div class="lightbox-image"></div>
+        <div class="lightbox-image" id="lightboxImage"></div>
 
         <div class="lightbox-meta">
           <small class="hero-eyebrow" id="lightboxCategory">Kategorie</small>
@@ -106,7 +117,7 @@
 
       <div class="cart-footer">
         <span class="cart-total">Gesamt: <span id="cartTotal">0,00 €</span></span>
-        <a class="button" href="index.html">Zur Hauptseite</a>
+        <button class="button primary" type="button" onclick="checkout()">Kaufen</button>
       </div>
     </div>
   </div>
