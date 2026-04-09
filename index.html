@@ -1,102 +1,361 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#000000" />
   <title>MarlinW Media</title>
-
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
-
-<div class="background">
-  <div class="grid"></div>
-  <div class="shape one"></div>
-  <div class="shape two"></div>
-  <div class="shape three"></div>
-  <div class="shape four"></div>
-  <div class="orb one"></div>
-  <div class="orb two"></div>
-</div>
-
-<header class="site-header">
-  <div class="header-inner">
-
-    <button id="menuToggle" class="menu-toggle">Menü</button>
-
-    <a href="#" class="brand">
-      <img src="logo-white.png" id="logo" class="brand-logo">
-    </a>
-
-    <nav class="desktop-nav">
-      <a href="#portfolio">Portfolio</a>
-      <a href="#partner">Partner</a>
-      <a href="#kontakt">Kontakt</a>
-    </nav>
-
+  <div class="background" aria-hidden="true">
+    <div class="grid"></div>
+    <div class="shape one"></div>
+    <div class="shape two"></div>
+    <div class="shape three"></div>
+    <div class="shape four"></div>
+    <div class="orb one"></div>
+    <div class="orb two"></div>
   </div>
 
-  <div class="mobile-menu" id="mobileMenu">
-    <a href="#portfolio">Portfolio</a>
-    <a href="#partner">Partner</a>
-    <a href="#kontakt">Kontakt</a>
-  </div>
-</header>
+  <header class="site-header">
+    <div class="header-inner">
+      <button class="menu-toggle" id="menuToggle" aria-expanded="false" aria-controls="mobileMenu">
+        Menü
+      </button>
 
-<main>
+      <a href="#home" class="brand" aria-label="Zur Startseite">
+        <img src="logo-white.png" alt="MarlinW Media Logo" class="brand-logo" id="brandLogo" />
+        <span class="brand-name">MarlinW Media</span>
+      </a>
 
-<section class="hero">
-  <div>
-    <h1>MarlinW Media</h1>
-    <p>Moderne Medienproduktion für starke Marken und visuelle Erlebnisse.</p>
+      <nav class="desktop-nav" aria-label="Hauptnavigation">
+        <a href="#portfolio">Portfolio</a>
+        <a href="#partner">Partner</a>
+        <a href="shop.html">Bilder kaufen</a>
+        <a href="#kontakt">Kontakt</a>
+        <a href="login.html" id="userDisplay">Login</a>
+      </nav>
+    </div>
 
-    <div class="hero-actions">
-      <a href="#portfolio" class="button primary">Portfolio</a>
-      <a href="#kontakt" class="button">Kontakt</a>
+    <div class="mobile-menu" id="mobileMenu">
+      <nav class="mobile-nav" aria-label="Mobile Navigation">
+        <a href="#portfolio">Portfolio</a>
+        <a href="#partner">Partner</a>
+        <a href="shop.html">Bilder kaufen</a>
+        <a href="#kontakt">Kontakt</a>
+        <a href="login.html" id="mobileUserDisplay">Login</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" id="home">
+      <div>
+        <span class="hero-eyebrow">Kreative Medienproduktion</span>
+        <h1>MarlinW Media</h1>
+        <p>
+          Visuelle Inhalte mit Charakter. Von starken Bildwelten über moderne Videoprojekte
+          bis zu hochwertiger Markenpräsenz: MarlinW Media steht für saubere Ästhetik,
+          klare Kommunikation und Ergebnisse, die im Kopf bleiben.
+        </p>
+
+        <div class="hero-actions">
+          <a class="button primary" href="#portfolio">Portfolio ansehen</a>
+          <a class="button" href="#kontakt">Kontakt aufnehmen</a>
+        </div>
+
+        <div class="references-grid">
+          <article class="reference-card">
+            <strong>Professioneller Auftritt</strong>
+            <p>
+              Klare Bildsprache, moderner Stil und Inhalte, die Marken hochwertig,
+              sichtbar und wiedererkennbar machen.
+            </p>
+          </article>
+
+          <article class="reference-card">
+            <strong>Kreativ & vielseitig</strong>
+            <p>
+              Ob Foto, Video, Event oder Social Media Content — jedes Projekt wird
+              individuell gedacht und visuell präzise umgesetzt.
+            </p>
+          </article>
+
+          <article class="reference-card">
+            <strong>Für starke Eindrücke</strong>
+            <p>
+              Gute Medien sehen nicht nur gut aus, sie transportieren Stimmung,
+              Qualität und Vertrauen auf den ersten Blick.
+            </p>
+          </article>
+        </div>
+      </div>
+
+      <aside class="hero-card">
+        <div class="section-head" style="margin-bottom: 20px;">
+          <div>
+            <h2 style="font-size: 1.5rem;">Highlights</h2>
+          </div>
+        </div>
+
+        <div class="hero-card-grid">
+          <article class="mini-card">
+            <strong>Foto & Video</strong>
+            <span>Hochwertige Produktionen für Marken, Kampagnen und Content.</span>
+          </article>
+
+          <article class="mini-card">
+            <strong>Events</strong>
+            <span>Emotionale Eindrücke, Atmosphäre und starke Aftermovies.</span>
+          </article>
+
+          <article class="mini-card">
+            <strong>Social Content</strong>
+            <span>Kurze, moderne Formate für Instagram, Reels und mehr.</span>
+          </article>
+
+          <article class="mini-card">
+            <strong>Referenzen</strong>
+            <span>Visuelle Arbeiten mit klarer Formsprache und hochwertigem Look.</span>
+          </article>
+        </div>
+      </aside>
+    </section>
+
+    <section id="portfolio">
+      <div class="section-head">
+        <div>
+          <h2>Portfolio</h2>
+        </div>
+        <p>
+          Nach rechts und links durch deine Arbeiten gleiten — als flüssige Galerie im selben Stil
+          wie der Rest der Website.
+        </p>
+      </div>
+
+      <div class="portfolio-carousel-wrap">
+        <div class="portfolio-toolbar">
+          <p class="section-note">Swipe oder nutze die Pfeile, um durch mehrere Projekte zu gehen.</p>
+          <div class="portfolio-controls">
+            <button class="carousel-btn" id="portfolioPrev" type="button" aria-label="Zurück">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <button class="carousel-btn" id="portfolioNext" type="button" aria-label="Weiter">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="portfolio-carousel" id="portfolioCarousel">
+          <article class="portfolio-slide gallery-item">
+            <div class="placeholder-media">
+              <span class="placeholder-label">Fotografie</span>
+            </div>
+            <div class="item-body">
+              <h3>Editorial Shooting</h3>
+              <p>Platzhalter für ein hochwertiges Foto-Projekt mit klarer Bildsprache.</p>
+            </div>
+          </article>
+
+          <article class="portfolio-slide gallery-item">
+            <div class="placeholder-media">
+              <div class="play-badge"></div>
+              <span class="placeholder-label">Video</span>
+            </div>
+            <div class="item-body">
+              <h3>Brand Film</h3>
+              <p>Platzhalter für ein modernes Video mit Intro, Produktshots und Bewegung.</p>
+            </div>
+          </article>
+
+          <article class="portfolio-slide gallery-item">
+            <div class="placeholder-media">
+              <span class="placeholder-label">Event</span>
+            </div>
+            <div class="item-body">
+              <h3>Event Coverage</h3>
+              <p>Platzhalter für Eindrücke eines Events mit Atmosphäre und Dynamik.</p>
+            </div>
+          </article>
+
+          <article class="portfolio-slide gallery-item">
+            <div class="placeholder-media">
+              <span class="placeholder-label">Automotive</span>
+            </div>
+            <div class="item-body">
+              <h3>Car Visuals</h3>
+              <p>Platzhalter für Auto-Content mit Kontrast, Lichtkanten und Details.</p>
+            </div>
+          </article>
+
+          <article class="portfolio-slide gallery-item">
+            <div class="placeholder-media">
+              <div class="play-badge"></div>
+              <span class="placeholder-label">Reel</span>
+            </div>
+            <div class="item-body">
+              <h3>Social Media Reel</h3>
+              <p>Platzhalter für kurze, starke Videoinhalte im Hochformat.</p>
+            </div>
+          </article>
+
+          <article class="portfolio-slide gallery-item">
+            <div class="placeholder-media">
+              <span class="placeholder-label">Location</span>
+            </div>
+            <div class="item-body">
+              <h3>Location Showcase</h3>
+              <p>Platzhalter für Innenräume, Architektur und räumliche Inszenierung.</p>
+            </div>
+          </article>
+
+          <article class="portfolio-slide gallery-item">
+            <div class="placeholder-media">
+              <span class="placeholder-label">Portrait</span>
+            </div>
+            <div class="item-body">
+              <h3>Portrait Session</h3>
+              <p>Platzhalter für moderne Portraits mit sauberem Licht und Stil.</p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="partner">
+      <div class="section-head">
+        <div>
+          <h2>Partner</h2>
+        </div>
+        <p>
+          Hier kannst du später echte Partner, Kooperationen und gemeinsame Projekte zeigen.
+          Aktuell sind stilvolle Platzhalter eingebaut.
+        </p>
+      </div>
+
+      <div class="partner-grid">
+        <article class="partner-card">
+          <div class="placeholder-media">
+            <span class="placeholder-label">Partner 01</span>
+          </div>
+          <div class="item-body">
+            <h3>Kreativpartner</h3>
+            <p>Platzhalter für ein Partnerprofil mit Bild, Kurzbeschreibung und Kooperation.</p>
+          </div>
+        </article>
+
+        <article class="partner-card">
+          <div class="placeholder-media">
+            <span class="placeholder-label">Partner 02</span>
+          </div>
+          <div class="item-body">
+            <h3>Produktionspartner</h3>
+            <p>Platzhalter für gemeinsames Arbeiten an Medien, Kampagnen und Formaten.</p>
+          </div>
+        </article>
+
+        <article class="partner-card">
+          <div class="placeholder-media">
+            <span class="placeholder-label">Partner 03</span>
+          </div>
+          <div class="item-body">
+            <h3>Kooperation</h3>
+            <p>Platzhalter für Markenpartner, Locations oder kreative Zusammenarbeit.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="kontakt">
+      <div class="section-head">
+        <div>
+          <h2>Kontakt</h2>
+        </div>
+        <p>
+          Für Projekte, Kooperationen oder Anfragen kannst du dich direkt melden.
+        </p>
+      </div>
+
+      <div class="contact-layout">
+        <article class="contact-card">
+          <div class="portrait-placeholder"></div>
+          <div class="item-body">
+            <h3>MarlinW Media</h3>
+            <p>
+              Platzhalter für dein Portrait oder ein professionelles Foto von dir.
+            </p>
+          </div>
+        </article>
+
+        <article class="contact-card">
+          <div class="item-body">
+            <h3 style="margin-bottom: 10px;">Direkt erreichbar</h3>
+            <p style="color: var(--text-soft); line-height: 1.7;">
+              Melde dich gerne telefonisch, per E-Mail oder über Instagram.
+            </p>
+
+            <div class="contact-list">
+              <div class="contact-row phone-nowrap">
+                <small>Telefon</small>
+                <a href="tel:+4915231036109">+49 152 31036109</a>
+              </div>
+
+              <div class="contact-row">
+                <small>E-Mail</small>
+                <a href="mailto:marlinw.media@gmail.com">marlinw.media@gmail.com</a>
+              </div>
+
+              <div class="contact-row">
+                <small>Instagram</small>
+                <a href="https://instagram.com/marlinw_media" target="_blank" rel="noopener noreferrer">
+                  @marlinw_media
+                </a>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <button class="login-fab" id="loginFab" onclick="window.location.href='login.html'" aria-label="Login">
+    👤
+  </button>
+
+  <button class="cart-fab" onclick="openCart()" aria-label="Warenkorb öffnen">
+    🛒
+    <span class="cart-count">0</span>
+  </button>
+
+  <div class="cart-overlay" id="cartOverlay">
+    <div class="cart-sheet">
+      <button class="cart-close" type="button" onclick="closeCart()" aria-label="Schließen">✕</button>
+
+      <div class="cart-brand">
+        <img src="logo-white.png" alt="MarlinW Media Logo" id="cartBrandLogo" />
+        <div>
+          <strong>MarlinW Media</strong>
+          <h2>Warenkorb</h2>
+        </div>
+      </div>
+
+      <div class="cart-items" id="cartItems"></div>
+
+      <div class="cart-footer">
+        <span class="cart-total">Gesamt: <span id="cartTotal">0,00 €</span></span>
+        <a class="button" href="shop.html">Weiter einkaufen</a>
+      </div>
     </div>
   </div>
-</section>
 
-<!-- PORTFOLIO SLIDER -->
-<section id="portfolio">
-  <h2>Portfolio</h2>
-
-  <div class="slider">
-    <div class="slider-track" id="sliderTrack">
-
-      <!-- Slides -->
-      <div class="slide"></div>
-      <div class="slide"></div>
-      <div class="slide"></div>
-      <div class="slide"></div>
-      <div class="slide"></div>
-
+  <footer>
+    <div class="footer-inner">
+      <span>© 2026 MarlinW Media</span>
+      <span>Foto • Video • Content • Creative Production</span>
     </div>
-  </div>
-</section>
+  </footer>
 
-<section id="partner">
-  <h2>Partner</h2>
-  <div class="grid-3">
-    <div class="card"></div>
-    <div class="card"></div>
-    <div class="card"></div>
-  </div>
-</section>
-
-<section id="kontakt">
-  <h2>Kontakt</h2>
-
-  <div class="contact-box">
-    <p>📞 +49 152 31036109</p>
-    <p>📧 marlinw.media@gmail.com</p>
-    <p>📸 @marlinw_media</p>
-  </div>
-</section>
-
-</main>
-
-<script src="script.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
