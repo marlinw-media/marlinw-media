@@ -38,7 +38,7 @@ function updateStoredUser(updatedUser) {
 }
 
 function getDisplayName(user) {
-  if (!user) return "Profil";
+  if (!user) return "Login";
   if (user.email && user.email.includes("@")) {
     return user.email.split("@")[0];
   }
@@ -147,6 +147,12 @@ function initProfileMenu() {
   if (!profile || !trigger) return;
 
   trigger.addEventListener("click", (e) => {
+    const loggedOut = profile.classList.contains("logged-out");
+    if (loggedOut) {
+      window.location.href = "login.html";
+      return;
+    }
+
     e.preventDefault();
     profile.classList.toggle("open");
   });
@@ -165,6 +171,8 @@ function logoutUser() {
 
 function updateUserUI() {
   const user = getStoredUser();
+  const profileBox = document.getElementById("profileBox");
+  const profileTrigger = document.getElementById("profileTrigger");
   const profileShort = document.getElementById("profileShort");
   const userDisplay = document.getElementById("userDisplay");
   const mobileUserDisplay = document.getElementById("mobileUserDisplay");
@@ -172,17 +180,25 @@ function updateUserUI() {
   const profileLinks = document.querySelectorAll(".requires-user");
   const authOnlyLinks = document.querySelectorAll(".auth-only");
 
-  if (userDisplay) userDisplay.textContent = "Profil";
+  if (profileTrigger) {
+    profileTrigger.textContent = user ? "Profil" : "Login";
+  }
+
+  if (userDisplay) userDisplay.textContent = "Login";
   if (mobileUserDisplay) mobileUserDisplay.textContent = user ? "Profil" : "Login";
   if (profileShort) profileShort.textContent = getDisplayName(user);
   if (loginFab) loginFab.setAttribute("aria-label", user ? "Profil" : "Login");
+
+  if (profileBox) {
+    profileBox.classList.toggle("logged-out", !user);
+  }
 
   profileLinks.forEach(el => {
     el.style.display = user ? "block" : "none";
   });
 
   authOnlyLinks.forEach(el => {
-    el.style.display = user ? "none" : "block";
+    el.style.display = user ? "block" : "none";
   });
 }
 
