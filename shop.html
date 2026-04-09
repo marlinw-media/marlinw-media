@@ -1,30 +1,123 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <title>Shop</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#000000" />
+  <title>Bilder kaufen – MarlinW Media</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
+  <div class="background" aria-hidden="true">
+    <div class="grid"></div>
+    <div class="shape one"></div>
+    <div class="shape two"></div>
+    <div class="shape three"></div>
+    <div class="shape four"></div>
+    <div class="orb one"></div>
+    <div class="orb two"></div>
+  </div>
 
-<header>
-  <img src="logo-white.png" class="logo" onclick="goHome()">
-</header>
+  <header class="site-header">
+    <div class="header-inner">
+      <button class="menu-toggle" id="menuToggle" aria-expanded="false" aria-controls="mobileMenu">
+        Menü
+      </button>
 
-<h1>Bilder kaufen</h1>
+      <a href="index.html#home" class="brand" aria-label="Zur Startseite">
+        <img src="logo-white.png" alt="MarlinW Media Logo" class="brand-logo" id="brandLogo" />
+        <span class="brand-name">MarlinW Media</span>
+      </a>
 
-<div class="shop-grid">
-  <div class="item" onclick="addToCart('Bild 1',5)">Bild 1 - 5€</div>
-  <div class="item" onclick="addToCart('Bild 2',5)">Bild 2 - 5€</div>
-  <div class="item" onclick="addToCart('Bild 3',5)">Bild 3 - 5€</div>
-  <div class="item" onclick="addToCart('Bild 4',5)">Bild 4 - 5€</div>
-</div>
+      <nav class="desktop-nav" aria-label="Hauptnavigation">
+        <a href="index.html#portfolio">Portfolio</a>
+        <a href="index.html#partner">Partner</a>
+        <a href="shop.html" class="active">Bilder kaufen</a>
+        <a href="index.html#kontakt">Kontakt</a>
+        <a href="login.html" id="userDisplay">Login</a>
+      </nav>
+    </div>
 
-<div class="cart" onclick="openCart()">
-  🛒 <span id="cart-count">0</span>
-</div>
+    <div class="mobile-menu" id="mobileMenu">
+      <nav class="mobile-nav" aria-label="Mobile Navigation">
+        <a href="index.html#portfolio">Portfolio</a>
+        <a href="index.html#partner">Partner</a>
+        <a href="shop.html" class="active">Bilder kaufen</a>
+        <a href="index.html#kontakt">Kontakt</a>
+        <a href="login.html" id="mobileUserDisplay">Login</a>
+      </nav>
+    </div>
+  </header>
 
-<script src="script.js"></script>
+  <main>
+    <div class="page-intro">
+      <h1>Bilder kaufen</h1>
+      <p>
+        Galerie mit quadratischen Platzhaltern im selben Stil wie die Hauptseite.
+        Jedes Bild kostet aktuell 5,00 € und kann in der Vollansicht zum Warenkorb hinzugefügt werden.
+      </p>
+    </div>
+
+    <section style="padding-top: 12px;">
+      <div class="shop-grid" id="shopGrid"></div>
+    </section>
+  </main>
+
+  <button class="login-fab" id="loginFab" onclick="window.location.href='login.html'" aria-label="Login">
+    👤
+  </button>
+
+  <button class="cart-fab" onclick="openCart()" aria-label="Warenkorb öffnen">
+    🛒
+    <span class="cart-count">0</span>
+  </button>
+
+  <div class="lightbox" id="lightbox">
+    <div class="lightbox-panel">
+      <button class="lightbox-close" type="button" onclick="closeLightbox()" aria-label="Schließen">✕</button>
+
+      <div class="lightbox-grid">
+        <div class="lightbox-image"></div>
+
+        <div class="lightbox-meta">
+          <small class="hero-eyebrow" id="lightboxCategory">Kategorie</small>
+          <h2 id="lightboxTitle">Bild</h2>
+          <p id="lightboxDescription">Beschreibung</p>
+          <div class="lightbox-price" id="lightboxPrice">5,00 €</div>
+          <button class="button primary" id="lightboxAddButton" type="button">In den Warenkorb</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cart-overlay" id="cartOverlay">
+    <div class="cart-sheet">
+      <button class="cart-close" type="button" onclick="closeCart()" aria-label="Schließen">✕</button>
+
+      <div class="cart-brand">
+        <img src="logo-white.png" alt="MarlinW Media Logo" id="cartBrandLogo" />
+        <div>
+          <strong>MarlinW Media</strong>
+          <h2>Warenkorb</h2>
+        </div>
+      </div>
+
+      <div class="cart-items" id="cartItems"></div>
+
+      <div class="cart-footer">
+        <span class="cart-total">Gesamt: <span id="cartTotal">0,00 €</span></span>
+        <a class="button" href="index.html">Zur Hauptseite</a>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <span>© 2026 MarlinW Media</span>
+      <span>Fine Art • Editorial • Gallery • Prints</span>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
 </body>
 </html>
