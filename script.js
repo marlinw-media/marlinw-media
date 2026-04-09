@@ -1,14 +1,14 @@
 const SHOP_PRODUCTS = [
-  { id: 1, title: "Bild 01", category: "Editorial", price: 5, description: "Atmosphärischer Platzhalter im MarlinW Stil." },
-  { id: 2, title: "Bild 02", category: "Automotive", price: 5, description: "Kontrastreiche Bildsprache mit moderner Formsprache." },
-  { id: 3, title: "Bild 03", category: "Portrait", price: 5, description: "Minimalistischer Platzhalter für ein Portraitmotiv." },
-  { id: 4, title: "Bild 04", category: "Campaign", price: 5, description: "Visuell starke Szene für Branding und Kampagnen." },
-  { id: 5, title: "Bild 05", category: "Location", price: 5, description: "Architektur und Raumwirkung als Galerie-Motiv." },
-  { id: 6, title: "Bild 06", category: "Studio", price: 5, description: "Hochwertige Studioästhetik mit klarer Lichtkante." },
-  { id: 7, title: "Bild 07", category: "Event", price: 5, description: "Dynamischer Event-Placeholder mit Tiefe." },
-  { id: 8, title: "Bild 08", category: "Commercial", price: 5, description: "Klares Werbemotiv mit elegantem Look." },
-  { id: 9, title: "Bild 09", category: "Social", price: 5, description: "Modernes Social-Visual für Feed oder Story." },
-  { id: 10, title: "Bild 10", category: "Fine Art", price: 5, description: "Galerie-Placeholder mit ruhiger visueller Wirkung." }
+  { id: 1, title: "Bild 01", category: "Editorial", price: 5, description: "Atmosphärischer Platzhalter im MarlinW Stil.", image: "images/img1.jpg" },
+  { id: 2, title: "Bild 02", category: "Automotive", price: 5, description: "Kontrastreiche Bildsprache mit moderner Formsprache.", image: "images/img2.jpg" },
+  { id: 3, title: "Bild 03", category: "Portrait", price: 5, description: "Minimalistischer Platzhalter für ein Portraitmotiv.", image: "images/img3.jpg" },
+  { id: 4, title: "Bild 04", category: "Campaign", price: 5, description: "Visuell starke Szene für Branding und Kampagnen.", image: "images/img4.jpg" },
+  { id: 5, title: "Bild 05", category: "Location", price: 5, description: "Architektur und Raumwirkung als Galerie-Motiv.", image: "images/img5.jpg" },
+  { id: 6, title: "Bild 06", category: "Studio", price: 5, description: "Hochwertige Studioästhetik mit klarer Lichtkante.", image: "images/img6.jpg" },
+  { id: 7, title: "Bild 07", category: "Event", price: 5, description: "Dynamischer Event-Placeholder mit Tiefe.", image: "images/img7.jpg" },
+  { id: 8, title: "Bild 08", category: "Commercial", price: 5, description: "Klares Werbemotiv mit elegantem Look.", image: "images/img8.jpg" },
+  { id: 9, title: "Bild 09", category: "Social", price: 5, description: "Modernes Social-Visual für Feed oder Story.", image: "images/img9.jpg" },
+  { id: 10, title: "Bild 10", category: "Fine Art", price: 5, description: "Galerie-Placeholder mit ruhiger visueller Wirkung.", image: "images/img10.jpg" }
 ];
 
 function getStoredUser() {
@@ -19,20 +19,38 @@ function setStoredUser(user) {
   localStorage.setItem("mw_user", JSON.stringify(user));
 }
 
-function getCart() {
-  return JSON.parse(localStorage.getItem("mw_cart") || "[]");
+function getAllUsers() {
+  return JSON.parse(localStorage.getItem("mw_users") || "[]");
 }
 
-function setCart(cart) {
-  localStorage.setItem("mw_cart", JSON.stringify(cart));
+function setAllUsers(users) {
+  localStorage.setItem("mw_users", JSON.stringify(users));
+}
+
+function updateStoredUser(updatedUser) {
+  const users = getAllUsers();
+  const index = users.findIndex(user => user.email === updatedUser.email);
+  if (index !== -1) {
+    users[index] = updatedUser;
+    setAllUsers(users);
+  }
+  setStoredUser(updatedUser);
 }
 
 function getDisplayName(user) {
-  if (!user) return "Login";
+  if (!user) return "Profil";
   if (user.email && user.email.includes("@")) {
     return user.email.split("@")[0];
   }
-  return user.firstName || user.name || user.username || "Login";
+  return "Profil";
+}
+
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function isValidPassword(password) {
+  return password.length >= 8 && password.length <= 14;
 }
 
 function applyTheme() {
@@ -122,16 +140,58 @@ function initActiveNav() {
   setActiveNav();
 }
 
+function initProfileMenu() {
+  const profile = document.getElementById("profileBox");
+  const trigger = document.getElementById("profileTrigger");
+
+  if (!profile || !trigger) return;
+
+  trigger.addEventListener("click", (e) => {
+    e.preventDefault();
+    profile.classList.toggle("open");
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!profile.contains(e.target)) {
+      profile.classList.remove("open");
+    }
+  });
+}
+
+function logoutUser() {
+  localStorage.removeItem("mw_user");
+  window.location.href = "index.html";
+}
+
 function updateUserUI() {
   const user = getStoredUser();
-  const displayName = getDisplayName(user);
+  const profileShort = document.getElementById("profileShort");
   const userDisplay = document.getElementById("userDisplay");
   const mobileUserDisplay = document.getElementById("mobileUserDisplay");
   const loginFab = document.getElementById("loginFab");
+  const profileLinks = document.querySelectorAll(".requires-user");
+  const authOnlyLinks = document.querySelectorAll(".auth-only");
 
-  if (userDisplay) userDisplay.textContent = displayName;
-  if (mobileUserDisplay) mobileUserDisplay.textContent = displayName;
-  if (loginFab) loginFab.setAttribute("aria-label", user ? displayName : "Login");
+  if (userDisplay) userDisplay.textContent = "Profil";
+  if (mobileUserDisplay) mobileUserDisplay.textContent = user ? "Profil" : "Login";
+  if (profileShort) profileShort.textContent = getDisplayName(user);
+  if (loginFab) loginFab.setAttribute("aria-label", user ? "Profil" : "Login");
+
+  profileLinks.forEach(el => {
+    el.style.display = user ? "block" : "none";
+  });
+
+  authOnlyLinks.forEach(el => {
+    el.style.display = user ? "none" : "block";
+  });
+}
+
+function getCart() {
+  return JSON.parse(localStorage.getItem("mw_cart") || "[]");
+}
+
+function setCart(cart) {
+  localStorage.setItem("mw_cart", JSON.stringify(cart));
 }
 
 function addToCart(productId) {
@@ -143,7 +203,8 @@ function addToCart(productId) {
     cartId: Date.now() + Math.random(),
     id: product.id,
     title: product.title,
-    price: product.price
+    price: product.price,
+    image: product.image
   });
 
   setCart(cart);
@@ -192,9 +253,7 @@ function renderCartItems() {
         <span>${item.price.toFixed(2).replace(".", ",")} €</span>
       </div>
       <span>${item.price.toFixed(2).replace(".", ",")} €</span>
-      <button class="remove-item" type="button" onclick="removeFromCart(${item.cartId})" aria-label="Produkt entfernen">
-        🗑
-      </button>
+      <button class="remove-item" type="button" onclick="removeFromCart(${item.cartId})">Löschen</button>
     </div>
   `).join("");
 
@@ -215,6 +274,16 @@ function closeCart() {
   overlay.classList.remove("open");
 }
 
+function checkout() {
+  const user = getStoredUser();
+  if (!user) {
+    window.location.href = "login.html";
+    return;
+  }
+
+  window.location.href = "failed.html";
+}
+
 function openLightbox(productId) {
   const product = SHOP_PRODUCTS.find(item => item.id === productId);
   const lightbox = document.getElementById("lightbox");
@@ -224,6 +293,13 @@ function openLightbox(productId) {
   document.getElementById("lightboxCategory").textContent = product.category;
   document.getElementById("lightboxDescription").textContent = product.description;
   document.getElementById("lightboxPrice").textContent = `${product.price.toFixed(2).replace(".", ",")} €`;
+
+  const image = document.getElementById("lightboxImage");
+  if (image) {
+    image.style.backgroundImage = `url('${product.image}')`;
+    image.style.backgroundSize = "cover";
+    image.style.backgroundPosition = "center";
+  }
 
   const button = document.getElementById("lightboxAddButton");
   button.onclick = () => {
@@ -247,7 +323,7 @@ function renderShopGrid() {
 
   shopGrid.innerHTML = SHOP_PRODUCTS.map(product => `
     <article class="shop-card" onclick="openLightbox(${product.id})" tabindex="0">
-      <div class="shop-image">
+      <div class="shop-image" style="background-image:url('${product.image}'); background-size:cover; background-position:center;">
         <span class="placeholder-label">${product.category}</span>
         <span class="shop-price-badge">${product.price.toFixed(2).replace(".", ",")} €</span>
       </div>
@@ -310,6 +386,41 @@ function initPortfolioCarousel() {
   });
 }
 
+function showFormMessage(element, text, success) {
+  if (!element) return;
+  element.textContent = text;
+  element.classList.add("show");
+  element.classList.toggle("success", success);
+  element.classList.toggle("error", !success);
+}
+
+function validateRegisterPasswordFields() {
+  const pw = document.getElementById("registerPassword");
+  const pw2 = document.getElementById("registerPasswordConfirm");
+  const pwHint = document.getElementById("registerPasswordHint");
+  const matchHint = document.getElementById("registerPasswordMatchHint");
+  const button = document.getElementById("registerSubmit");
+
+  if (!pw || !pw2 || !button) return;
+
+  const validLength = isValidPassword(pw.value);
+  const matches = pw.value === pw2.value && pw2.value.length > 0;
+
+  if (pw.value.length > 0 && !validLength) {
+    pwHint.classList.add("show");
+  } else {
+    pwHint.classList.remove("show");
+  }
+
+  if (pw2.value.length > 0 && !matches) {
+    matchHint.classList.add("show");
+  } else {
+    matchHint.classList.remove("show");
+  }
+
+  button.disabled = !(validLength && matches);
+}
+
 function registerUser(event) {
   event.preventDefault();
 
@@ -320,10 +431,20 @@ function registerUser(event) {
   const confirmPassword = document.getElementById("registerPasswordConfirm").value;
   const message = document.getElementById("registerMessage");
 
-  const users = JSON.parse(localStorage.getItem("mw_users") || "[]");
+  const users = getAllUsers();
 
   if (!firstName || !lastName || !email || !password || !confirmPassword) {
     showFormMessage(message, "Bitte fülle alle Felder aus.", false);
+    return;
+  }
+
+  if (!isValidEmail(email)) {
+    showFormMessage(message, "Bitte gib eine gültige E-Mail-Adresse ein.", false);
+    return;
+  }
+
+  if (!isValidPassword(password)) {
+    showFormMessage(message, "Das Passwort muss 8-14 Zeichen lang sein.", false);
     return;
   }
 
@@ -337,14 +458,21 @@ function registerUser(event) {
     return;
   }
 
-  const newUser = { firstName, lastName, email, password };
+  const newUser = {
+    firstName,
+    lastName,
+    email,
+    password,
+    orders: []
+  };
+
   users.push(newUser);
-  localStorage.setItem("mw_users", JSON.stringify(users));
+  setAllUsers(users);
   setStoredUser(newUser);
 
   showFormMessage(
     message,
-    "Benutzerkonto gespeichert. Auf GitHub Pages kann keine echte Bestätigungs-E-Mail versendet werden, daher wurde dein Konto lokal angelegt und du wirst jetzt zur Startseite zurückgeleitet.",
+    "Benutzerkonto gespeichert. In dieser GitHub-Pages-Version werden die Daten lokal im Browser gespeichert. Du wirst jetzt zur Startseite weitergeleitet.",
     true
   );
 
@@ -359,7 +487,7 @@ function loginUser(event) {
   const identifier = document.getElementById("loginIdentifier").value.trim().toLowerCase();
   const password = document.getElementById("loginPassword").value;
   const message = document.getElementById("loginMessage");
-  const users = JSON.parse(localStorage.getItem("mw_users") || "[]");
+  const users = getAllUsers();
 
   const user = users.find(entry => {
     const emailMatch = entry.email.toLowerCase() === identifier;
@@ -380,12 +508,181 @@ function loginUser(event) {
   }, 900);
 }
 
-function showFormMessage(element, text, success) {
-  if (!element) return;
-  element.textContent = text;
-  element.classList.add("show");
-  element.classList.toggle("success", success);
-  element.classList.toggle("error", !success);
+function initRegisterValidation() {
+  const pw = document.getElementById("registerPassword");
+  const pw2 = document.getElementById("registerPasswordConfirm");
+  if (!pw || !pw2) return;
+
+  pw.addEventListener("input", validateRegisterPasswordFields);
+  pw2.addEventListener("input", validateRegisterPasswordFields);
+  validateRegisterPasswordFields();
+}
+
+function initProfilePage() {
+  const user = getStoredUser();
+  if (!document.getElementById("profileEmail")) return;
+  if (!user) {
+    window.location.href = "login.html";
+    return;
+  }
+
+  const email = document.getElementById("profileEmail");
+  const first = document.getElementById("profileFirstName");
+  const last = document.getElementById("profileLastName");
+  const pw = document.getElementById("profilePasswordMasked");
+
+  email.value = user.email;
+  first.value = user.firstName || "";
+  last.value = user.lastName || "";
+  pw.value = "••••••••";
+
+  initEditableField(first, "firstName");
+  initEditableField(last, "lastName");
+}
+
+function initEditableField(input, key) {
+  const button = document.querySelector(`[data-edit="${key}"]`);
+  if (!input || !button) return;
+
+  input.disabled = true;
+
+  button.addEventListener("click", () => {
+    if (input.disabled) {
+      input.disabled = false;
+      input.focus();
+      button.textContent = "Speichern";
+      return;
+    }
+
+    const user = getStoredUser();
+    if (!user) return;
+
+    user[key] = input.value.trim();
+    updateStoredUser(user);
+    input.disabled = true;
+    button.textContent = "Bearbeiten";
+  });
+}
+
+function initPasswordPage() {
+  const user = getStoredUser();
+  const email = document.getElementById("passwordEmail");
+  const current = document.getElementById("currentPassword");
+  const next = document.getElementById("newPassword");
+  const confirm = document.getElementById("confirmPassword");
+  const currentHint = document.getElementById("currentPasswordHint");
+  const lengthHint = document.getElementById("newPasswordLengthHint");
+  const matchHint = document.getElementById("newPasswordMatchHint");
+  const save = document.getElementById("savePasswordButton");
+
+  if (!email) return;
+  if (!user) {
+    window.location.href = "login.html";
+    return;
+  }
+
+  email.value = user.email;
+  next.disabled = true;
+  confirm.disabled = true;
+  save.disabled = true;
+
+  function validateAll() {
+    const currentMatches = current.value === user.password;
+    const nextValid = isValidPassword(next.value);
+    const matches = next.value === confirm.value && confirm.value.length > 0;
+
+    if (current.value.length > 0 && !currentMatches) {
+      currentHint.classList.add("show");
+    } else {
+      currentHint.classList.remove("show");
+    }
+
+    next.disabled = !currentMatches;
+    confirm.disabled = !currentMatches;
+
+    if (next.value.length > 0 && !nextValid) {
+      lengthHint.classList.add("show");
+    } else {
+      lengthHint.classList.remove("show");
+    }
+
+    if (confirm.value.length > 0 && !matches) {
+      matchHint.classList.add("show");
+    } else {
+      matchHint.classList.remove("show");
+    }
+
+    save.disabled = !(currentMatches && nextValid && matches);
+  }
+
+  current.addEventListener("input", validateAll);
+  next.addEventListener("input", validateAll);
+  confirm.addEventListener("input", validateAll);
+  validateAll();
+}
+
+function saveNewPassword(event) {
+  event.preventDefault();
+  const user = getStoredUser();
+  if (!user) return;
+
+  const current = document.getElementById("currentPassword").value;
+  const next = document.getElementById("newPassword").value;
+  const confirm = document.getElementById("confirmPassword").value;
+  const message = document.getElementById("passwordMessage");
+
+  if (current !== user.password) {
+    showFormMessage(message, "Das aktuelle Passwort stimmt nicht.", false);
+    return;
+  }
+
+  if (!isValidPassword(next)) {
+    showFormMessage(message, "Das neue Passwort muss 8-14 Zeichen lang sein.", false);
+    return;
+  }
+
+  if (next !== confirm) {
+    showFormMessage(message, "Die neuen Passwörter müssen übereinstimmen.", false);
+    return;
+  }
+
+  user.password = next;
+  updateStoredUser(user);
+  showFormMessage(message, "Passwort erfolgreich gespeichert.", true);
+}
+
+function renderOrders() {
+  const grid = document.getElementById("ordersGrid");
+  if (!grid) return;
+
+  const user = getStoredUser();
+  if (!user) {
+    window.location.href = "login.html";
+    return;
+  }
+
+  const orders = user.orders || [];
+
+  if (!orders.length) {
+    grid.innerHTML = `
+      <article class="order-card">
+        <h3>Noch keine Bestellungen</h3>
+        <p>Hier erscheint später dein Bestellverlauf.</p>
+      </article>
+    `;
+    return;
+  }
+
+  grid.innerHTML = orders.map((order, index) => `
+    <article class="order-card">
+      <h3>Bestellung ${index + 1}</h3>
+      <p>Datum: ${order.date}</p>
+      <p>Gesamt: ${order.total}</p>
+      <div class="order-products">
+        ${order.items.map(item => `<div>${item.title} – ${item.price.toFixed(2).replace(".", ",")} €</div>`).join("")}
+      </div>
+    </article>
+  `).join("");
 }
 
 function initGlobalEvents() {
@@ -416,10 +713,15 @@ document.addEventListener("DOMContentLoaded", () => {
   initThemeListener();
   initMobileMenu();
   initActiveNav();
+  initProfileMenu();
   updateUserUI();
   updateCartUI();
   renderCartItems();
   renderShopGrid();
   initPortfolioCarousel();
+  initRegisterValidation();
+  initProfilePage();
+  initPasswordPage();
+  renderOrders();
   initGlobalEvents();
 });
