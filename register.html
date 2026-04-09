@@ -61,14 +61,16 @@
         <div class="form-row">
           <label for="registerPassword">Passwort</label>
           <input type="password" id="registerPassword" required />
+          <div class="field-hint error" id="registerPasswordHint">Hinweis: Das Passwort muss 8-14 Zeichen lang sein</div>
         </div>
 
         <div class="form-row">
           <label for="registerPasswordConfirm">Passwort bestätigen</label>
           <input type="password" id="registerPasswordConfirm" required />
+          <div class="field-hint error" id="registerPasswordMatchHint">Hinweis: Die neuen Passwörter müssen übereinstimmen</div>
         </div>
 
-        <button class="button primary" type="submit">Registrieren</button>
+        <button class="button primary" type="submit" id="registerSubmit">Registrieren</button>
       </form>
 
       <div class="auth-links">
