@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MarlinW Media</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<header>
+  <div class="menu-btn" onclick="toggleMenu()">Menü</div>
+
+  <img src="logo-white.png" class="logo" onclick="goHome()">
+
+  <nav class="nav-desktop">
+    <a href="#portfolio">Portfolio</a>
+    <a href="shop.html">Bilder kaufen</a>
+    <a href="#kontakt">Kontakt</a>
+    <a href="login.html" id="userDisplay">Login</a>
+  </nav>
+</header>
+
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#portfolio">Portfolio</a>
+  <a href="shop.html">Bilder kaufen</a>
+  <a href="#kontakt">Kontakt</a>
+</div>
+
+<main>
+
+<section class="hero">
+  <h1>MarlinW Media</h1>
+  <p>Kreative Medienlösungen & visuelle Projekte</p>
+</section>
+
+<section id="portfolio">
+  <h2>Portfolio</h2>
+
+  <div class="slider">
+    <div class="slide">Projekt 1</div>
+    <div class="slide">Projekt 2</div>
+    <div class="slide">Projekt 3</div>
+    <div class="slide">Projekt 4</div>
+    <div class="slide">Projekt 5</div>
+  </div>
+</section>
+
+<section id="kontakt">
+  <h2>Kontakt</h2>
+
+  <p>📞 <a href="tel:+4915231036109">+49 152 31036109</a></p>
+  <p>✉️ marlinw.media@gmail.com</p>
+  <p>📷 @marlinw_media</p>
+
+</section>
+
+</main>
+
+<div class="cart" onclick="openCart()">
+  🛒 <span id="cart-count">0</span>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
