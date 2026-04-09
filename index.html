@@ -34,7 +34,18 @@
         <a href="#partner">Partner</a>
         <a href="shop.html">Bilder kaufen</a>
         <a href="#kontakt">Kontakt</a>
-        <a href="login.html" id="userDisplay">Login</a>
+
+        <div class="profile" id="profileBox">
+          <button class="profile-trigger" id="profileTrigger" type="button">Profil</button>
+          <div class="profile-menu">
+            <div class="profile-short" id="profileShort">User</div>
+            <a href="profile.html" class="requires-user">Profil bearbeiten</a>
+            <button type="button" class="requires-user" onclick="openCart()">Warenkorb</button>
+            <a href="orders.html" class="requires-user">Bestellungen</a>
+            <button type="button" class="requires-user" onclick="logoutUser()">Logout</button>
+            <a href="login.html" class="auth-only" id="userDisplay">Login</a>
+          </div>
+        </div>
       </nav>
     </div>
 
@@ -149,7 +160,7 @@
 
         <div class="portfolio-carousel" id="portfolioCarousel">
           <article class="portfolio-slide gallery-item">
-            <div class="placeholder-media">
+            <div class="placeholder-media" style="background-image:url('images/img1.jpg'); background-size:cover; background-position:center;">
               <span class="placeholder-label">Fotografie</span>
             </div>
             <div class="item-body">
@@ -159,7 +170,7 @@
           </article>
 
           <article class="portfolio-slide gallery-item">
-            <div class="placeholder-media">
+            <div class="placeholder-media" style="background-image:url('images/img2.jpg'); background-size:cover; background-position:center;">
               <div class="play-badge"></div>
               <span class="placeholder-label">Video</span>
             </div>
@@ -170,7 +181,7 @@
           </article>
 
           <article class="portfolio-slide gallery-item">
-            <div class="placeholder-media">
+            <div class="placeholder-media" style="background-image:url('images/img3.jpg'); background-size:cover; background-position:center;">
               <span class="placeholder-label">Event</span>
             </div>
             <div class="item-body">
@@ -180,7 +191,7 @@
           </article>
 
           <article class="portfolio-slide gallery-item">
-            <div class="placeholder-media">
+            <div class="placeholder-media" style="background-image:url('images/img4.jpg'); background-size:cover; background-position:center;">
               <span class="placeholder-label">Automotive</span>
             </div>
             <div class="item-body">
@@ -190,7 +201,7 @@
           </article>
 
           <article class="portfolio-slide gallery-item">
-            <div class="placeholder-media">
+            <div class="placeholder-media" style="background-image:url('images/img5.jpg'); background-size:cover; background-position:center;">
               <div class="play-badge"></div>
               <span class="placeholder-label">Reel</span>
             </div>
@@ -201,7 +212,7 @@
           </article>
 
           <article class="portfolio-slide gallery-item">
-            <div class="placeholder-media">
+            <div class="placeholder-media" style="background-image:url('images/img6.jpg'); background-size:cover; background-position:center;">
               <span class="placeholder-label">Location</span>
             </div>
             <div class="item-body">
@@ -211,7 +222,7 @@
           </article>
 
           <article class="portfolio-slide gallery-item">
-            <div class="placeholder-media">
+            <div class="placeholder-media" style="background-image:url('images/img7.jpg'); background-size:cover; background-position:center;">
               <span class="placeholder-label">Portrait</span>
             </div>
             <div class="item-body">
@@ -236,7 +247,7 @@
 
       <div class="partner-grid">
         <article class="partner-card">
-          <div class="placeholder-media">
+          <div class="placeholder-media" style="background-image:url('images/img8.jpg'); background-size:cover; background-position:center;">
             <span class="placeholder-label">Partner 01</span>
           </div>
           <div class="item-body">
@@ -246,7 +257,7 @@
         </article>
 
         <article class="partner-card">
-          <div class="placeholder-media">
+          <div class="placeholder-media" style="background-image:url('images/img9.jpg'); background-size:cover; background-position:center;">
             <span class="placeholder-label">Partner 02</span>
           </div>
           <div class="item-body">
@@ -256,7 +267,7 @@
         </article>
 
         <article class="partner-card">
-          <div class="placeholder-media">
+          <div class="placeholder-media" style="background-image:url('images/img10.jpg'); background-size:cover; background-position:center;">
             <span class="placeholder-label">Partner 03</span>
           </div>
           <div class="item-body">
@@ -344,7 +355,7 @@
 
       <div class="cart-footer">
         <span class="cart-total">Gesamt: <span id="cartTotal">0,00 €</span></span>
-        <a class="button" href="shop.html">Weiter einkaufen</a>
+        <button class="button primary" type="button" onclick="checkout()">Kaufen</button>
       </div>
     </div>
   </div>
