@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#000000" />
+  <title>Bestellverlauf – MarlinW Media</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="background" aria-hidden="true">
+    <div class="grid"></div>
+    <div class="shape one"></div>
+    <div class="shape two"></div>
+    <div class="shape three"></div>
+    <div class="shape four"></div>
+    <div class="orb one"></div>
+    <div class="orb two"></div>
+  </div>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <button class="menu-toggle hidden-mobile" type="button" style="visibility:hidden;">Menü</button>
+
+      <a href="index.html#home" class="brand" aria-label="Zur Startseite">
+        <img src="logo-white.png" alt="MarlinW Media Logo" class="brand-logo" id="brandLogo" />
+        <span class="brand-name">MarlinW Media</span>
+      </a>
+
+      <nav class="desktop-nav" aria-label="Hauptnavigation">
+        <a href="profile.html">Profil bearbeiten</a>
+        <a href="shop.html">Bilder kaufen</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="profile-page">
+    <h1>Bestellverlauf</h1>
+    <p>Hier findest du deine bisher gespeicherten Bestellungen.</p>
+
+    <div class="orders-grid" id="ordersGrid"></div>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
