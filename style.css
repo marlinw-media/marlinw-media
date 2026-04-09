@@ -16,8 +16,8 @@
   --shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
   --hero-glow: rgba(255, 255, 255, 0.12);
   --accent: #ffffff;
-  --success: #d7ffd9;
-  --danger: #ffd7d7;
+  --danger: #ff6b6b;
+  --success: #7bff9e;
 }
 
 body.light-mode {
@@ -239,21 +239,29 @@ body.light-mode .brand-logo {
 }
 
 .desktop-nav a,
-.mobile-nav a {
+.mobile-nav a,
+.profile-trigger {
   position: relative;
   color: var(--text-soft);
   transition: color 0.25s ease;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
 }
 
 .desktop-nav a:hover,
 .desktop-nav a.active,
 .mobile-nav a:hover,
-.mobile-nav a.active {
+.mobile-nav a.active,
+.profile-trigger:hover,
+.profile:hover .profile-trigger {
   color: var(--text);
 }
 
 .desktop-nav a::after,
-.mobile-nav a::after {
+.mobile-nav a::after,
+.profile-trigger::after {
   content: "";
   position: absolute;
   left: 0;
@@ -267,7 +275,10 @@ body.light-mode .brand-logo {
 .desktop-nav a:hover::after,
 .desktop-nav a.active::after,
 .mobile-nav a:hover::after,
-.mobile-nav a.active::after {
+.mobile-nav a.active::after,
+.profile-trigger:hover::after,
+.profile:hover .profile-trigger::after,
+.profile.open .profile-trigger::after {
   width: 100%;
 }
 
@@ -292,6 +303,58 @@ body.light-mode .mobile-menu {
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+
+.profile {
+  position: relative;
+}
+
+.profile-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 18px);
+  min-width: 220px;
+  display: none;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow);
+  padding: 16px;
+  z-index: 70;
+}
+
+body.light-mode .profile-menu {
+  background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.76));
+}
+
+.profile:hover .profile-menu,
+.profile.open .profile-menu {
+  display: block;
+}
+
+.profile-short {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--text);
+}
+
+.profile-menu a,
+.profile-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 0;
+  border: none;
+  background: transparent;
+  color: var(--text-soft);
+  cursor: pointer;
+}
+
+.profile-menu a:hover,
+.profile-menu button:hover {
+  color: var(--text);
 }
 
 main {
@@ -380,6 +443,12 @@ body.light-mode .button.primary {
   color: #ffffff;
 }
 
+.button.disabled,
+.button:disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
 .hero-card {
   border: 1px solid var(--line);
   background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.015));
@@ -458,7 +527,9 @@ body.light-mode .mini-card {
 .shop-card,
 .auth-card,
 .cart-sheet,
-.lightbox-panel {
+.lightbox-panel,
+.profile-editor-card,
+.order-card {
   border: 1px solid var(--line);
   border-radius: 26px;
   overflow: hidden;
@@ -475,7 +546,9 @@ body.light-mode .reference-card,
 body.light-mode .shop-card,
 body.light-mode .auth-card,
 body.light-mode .cart-sheet,
-body.light-mode .lightbox-panel {
+body.light-mode .lightbox-panel,
+body.light-mode .profile-editor-card,
+body.light-mode .order-card {
   background: linear-gradient(180deg, rgba(0,0,0,0.03), rgba(0,0,0,0.01));
 }
 
@@ -882,6 +955,7 @@ body.light-mode .shop-price-badge {
   max-height: 92vh;
   overflow: auto;
   padding: 24px;
+  position: relative;
 }
 
 .lightbox-grid {
@@ -1042,13 +1116,14 @@ body.light-mode .login-fab {
 }
 
 .remove-item {
-  width: 40px;
-  height: 40px;
+  min-width: 76px;
+  min-height: 40px;
   border-radius: 999px;
   border: 1px solid var(--line-strong);
   background: transparent;
   color: var(--text);
   cursor: pointer;
+  padding: 0 12px;
 }
 
 .cart-footer {
@@ -1089,18 +1164,21 @@ body.light-mode .login-fab {
   padding: 30px;
 }
 
-.auth-card h1 {
+.auth-card h1,
+.profile-page h1 {
   font-size: clamp(2rem, 5vw, 3.2rem);
   margin-bottom: 12px;
 }
 
-.auth-card p {
+.auth-card p,
+.profile-page p {
   color: var(--text-soft);
   line-height: 1.7;
   margin-bottom: 24px;
 }
 
-.auth-form {
+.auth-form,
+.profile-form {
   display: grid;
   gap: 14px;
 }
@@ -1129,6 +1207,11 @@ body.light-mode .login-fab {
   border-color: var(--line-strong);
 }
 
+.form-row input:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
 .auth-links {
   margin-top: 18px;
   color: var(--text-soft);
@@ -1138,26 +1221,84 @@ body.light-mode .login-fab {
   border-bottom: 1px solid currentColor;
 }
 
-.form-message {
+.form-message,
+.field-hint {
   display: none;
-  margin-top: 16px;
-  padding: 14px 16px;
-  border-radius: 16px;
-  border: 1px solid var(--line);
-  background: var(--surface);
+  padding: 0;
+  border: none;
+  background: transparent;
   line-height: 1.6;
+  font-size: 0.92rem;
 }
 
-.form-message.show {
+.form-message.show,
+.field-hint.show {
   display: block;
 }
 
 .form-message.success {
-  border-color: rgba(120, 220, 140, 0.35);
+  color: var(--success);
 }
 
-.form-message.error {
-  border-color: rgba(220, 120, 120, 0.35);
+.form-message.error,
+.field-hint.error {
+  color: var(--danger);
+}
+
+.profile-page {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 72px 22px 92px;
+  position: relative;
+  z-index: 1;
+}
+
+.profile-grid,
+.orders-grid {
+  display: grid;
+  gap: 18px;
+}
+
+.profile-editor-card {
+  padding: 24px;
+}
+
+.edit-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.edit-button {
+  min-height: 54px;
+  min-width: 120px;
+}
+
+.order-card {
+  padding: 22px;
+}
+
+.order-card h3 {
+  margin-bottom: 10px;
+}
+
+.order-card p {
+  color: var(--text-soft);
+  line-height: 1.7;
+}
+
+.order-products {
+  margin-top: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.order-products div {
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--surface);
 }
 
 footer {
@@ -1282,7 +1423,8 @@ footer {
     padding: 76px 18px;
   }
 
-  .page-intro {
+  .page-intro,
+  .profile-page {
     padding: 58px 18px 12px;
   }
 
@@ -1316,7 +1458,7 @@ footer {
   }
 
   .shop-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
     padding: 18px;
   }
@@ -1333,5 +1475,14 @@ footer {
   .auth-card {
     padding: 24px 20px;
     border-radius: 22px;
+  }
+
+  .edit-row {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-menu {
+    right: auto;
+    left: 0;
   }
 }
