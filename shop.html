@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Shop</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<header>
+  <img src="logo-white.png" class="logo" onclick="goHome()">
+</header>
+
+<h1>Bilder kaufen</h1>
+
+<div class="shop-grid">
+  <div class="item" onclick="addToCart('Bild 1',5)">Bild 1 - 5€</div>
+  <div class="item" onclick="addToCart('Bild 2',5)">Bild 2 - 5€</div>
+  <div class="item" onclick="addToCart('Bild 3',5)">Bild 3 - 5€</div>
+  <div class="item" onclick="addToCart('Bild 4',5)">Bild 4 - 5€</div>
+</div>
+
+<div class="cart" onclick="openCart()">
+  🛒 <span id="cart-count">0</span>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
