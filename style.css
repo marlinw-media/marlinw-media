@@ -333,6 +333,11 @@ body.light-mode .profile-menu {
   display: block;
 }
 
+.profile.logged-out:hover .profile-menu,
+.profile.logged-out.open .profile-menu {
+  display: none;
+}
+
 .profile-short {
   font-size: 1.05rem;
   font-weight: 700;
@@ -1372,7 +1377,7 @@ footer {
   }
 
   .brand {
-    justify-self: center;
+    justify-self: end;
   }
 
   .brand-name {
@@ -1384,75 +1389,4 @@ footer {
   }
 
   section {
-    padding: 76px 18px;
-  }
-
-  .page-intro,
-  .profile-page {
-    padding: 58px 18px 12px;
-  }
-
-  .hero {
-    min-height: auto;
-    padding-top: 32px;
-  }
-
-  .hero-card {
-    padding: 22px;
-  }
-
-  .partner-grid,
-  .references-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .shape.one,
-  .shape.two,
-  .shape.four {
-    opacity: 0.55;
-  }
-
-  .shape.three {
-    width: 280px;
-    height: 160px;
-  }
-
-  .portfolio-carousel {
-    grid-auto-columns: 86%;
-  }
-
-  .shop-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-    padding: 18px;
-  }
-
-  .cart-fab,
-  .login-fab {
-    display: flex;
-  }
-
-  .cart-sheet {
-    padding: 20px;
-  }
-
-  .auth-card,
-  .profile-editor-card,
-  .order-card {
-    padding: 24px 20px;
-    border-radius: 22px;
-  }
-
-  .edit-row {
-    grid-template-columns: 1fr;
-  }
-
-  .profile-menu {
-    right: auto;
-    left: 0;
-  }
-
-  .portrait-image {
-    max-width: 220px;
-  }
-}
+    padding: 76px 18px
