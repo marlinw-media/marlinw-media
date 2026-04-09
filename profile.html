@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#000000" />
+  <title>Profil bearbeiten – MarlinW Media</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="background" aria-hidden="true">
+    <div class="grid"></div>
+    <div class="shape one"></div>
+    <div class="shape two"></div>
+    <div class="shape three"></div>
+    <div class="shape four"></div>
+    <div class="orb one"></div>
+    <div class="orb two"></div>
+  </div>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <button class="menu-toggle hidden-mobile" type="button" style="visibility:hidden;">Menü</button>
+
+      <a href="index.html#home" class="brand" aria-label="Zur Startseite">
+        <img src="logo-white.png" alt="MarlinW Media Logo" class="brand-logo" id="brandLogo" />
+        <span class="brand-name">MarlinW Media</span>
+      </a>
+
+      <nav class="desktop-nav" aria-label="Hauptnavigation">
+        <a href="index.html#portfolio">Portfolio</a>
+        <a href="shop.html">Bilder kaufen</a>
+        <a href="orders.html">Bestellungen</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="profile-page">
+    <h1>Profil bearbeiten</h1>
+    <p>Hier kannst du deine gespeicherten Benutzerdaten ansehen und bearbeiten.</p>
+
+    <div class="profile-grid">
+      <article class="profile-editor-card">
+        <form class="profile-form">
+          <div class="form-row">
+            <label for="profileEmail">E-Mail</label>
+            <input type="email" id="profileEmail" disabled />
+          </div>
+
+          <div class="edit-row">
+            <div class="form-row">
+              <label for="profileFirstName">Vorname</label>
+              <input type="text" id="profileFirstName" />
+            </div>
+            <button class="button edit-button" type="button" data-edit="firstName">Bearbeiten</button>
+          </div>
+
+          <div class="edit-row">
+            <div class="form-row">
+              <label for="profileLastName">Nachname</label>
+              <input type="text" id="profileLastName" />
+            </div>
+            <button class="button edit-button" type="button" data-edit="lastName">Bearbeiten</button>
+          </div>
+
+          <div class="edit-row">
+            <div class="form-row">
+              <label for="profilePasswordMasked">Passwort</label>
+              <input type="text" id="profilePasswordMasked" disabled />
+            </div>
+            <a class="button edit-button" href="password.html">Bearbeiten</a>
+          </div>
+        </form>
+      </article>
+    </div>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
