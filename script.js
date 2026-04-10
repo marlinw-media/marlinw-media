@@ -11,6 +11,82 @@ const SHOP_PRODUCTS = [
   { id: 10, title: "Bild 10", category: "Fine Art", price: 5, description: "Galerie-Placeholder mit ruhiger visueller Wirkung.", image: "images/img10.jpg" }
 ];
 
+const PORTFOLIO_DETAILS = {
+  1: {
+    title: "Editorial Shooting",
+    category: "Fotografie",
+    text: "Eine klar komponierte Editorial-Serie mit Fokus auf Lichtstimmung, Details und hochwertiger Bildsprache. Hier kannst du später konkrete Infos zum Shooting, zum Kunden oder zur Produktion eintragen.",
+    images: [
+      "images/portfolio1-1.jpg",
+      "images/portfolio1-2.jpg",
+      "images/portfolio1-3.jpg"
+    ]
+  },
+  2: {
+    title: "Brand Film",
+    category: "Video",
+    text: "Visuelle Sequenzen mit moderner Ästhetik, starken Perspektiven und cineastischem Look. Dieser Bereich ist ideal für kurze Projektbeschreibungen und Hintergrundinfos zur Produktion.",
+    images: [
+      "images/portfolio2-1.jpg",
+      "images/portfolio2-2.jpg",
+      "images/portfolio2-3.jpg"
+    ]
+  },
+  3: {
+    title: "Event Coverage",
+    category: "Event",
+    text: "Dynamische Eindrücke mit Atmosphäre, Bewegung und echtem Momentgefühl. Hier kannst du später beschreiben, welche Veranstaltung begleitet wurde und welche Inhalte entstanden sind.",
+    images: [
+      "images/portfolio3-1.jpg",
+      "images/portfolio3-2.jpg",
+      "images/portfolio3-3.jpg"
+    ]
+  },
+  4: {
+    title: "Car Visuals",
+    category: "Automotive",
+    text: "Kontrastreiche Aufnahmen mit Fokus auf Form, Material und Lichtkanten. Dieser Bereich eignet sich ideal für Fahrzeuginszenierungen, Details und Markenästhetik.",
+    images: [
+      "images/portfolio4-1.jpg",
+      "images/portfolio4-2.jpg",
+      "images/portfolio4-3.jpg"
+    ]
+  },
+  5: {
+    title: "Social Media Reel",
+    category: "Reel",
+    text: "Schnelle, moderne Formate mit klarer visueller Sprache für Social Media. Hier kannst du später Plattform, Reichweite oder Inhalte des Projekts ergänzen.",
+    images: [
+      "images/portfolio5-1.jpg",
+      "images/portfolio5-2.jpg",
+      "images/portfolio5-3.jpg"
+    ]
+  },
+  6: {
+    title: "Location Showcase",
+    category: "Location",
+    text: "Räumliche Inszenierung mit Fokus auf Architektur, Atmosphäre und Perspektive. Perfekt für Hotels, Eventlocations oder besondere Innenräume.",
+    images: [
+      "images/portfolio6-1.jpg",
+      "images/portfolio6-2.jpg",
+      "images/portfolio6-3.jpg"
+    ]
+  },
+  7: {
+    title: "Portrait Session",
+    category: "Portrait",
+    text: "Portraitarbeiten mit sauberem Licht, ruhigem Aufbau und modernem Look. Hier kannst du später Informationen zum Menschen, Anlass oder Stil ergänzen.",
+    images: [
+      "images/portfolio7-1.jpg",
+      "images/portfolio7-2.jpg",
+      "images/portfolio7-3.jpg"
+    ]
+  }
+};
+
+let currentPortfolioId = null;
+let currentPortfolioImageIndex = 0;
+
 function getStoredUser() {
   return JSON.parse(localStorage.getItem("mw_user") || "null");
 }
@@ -402,6 +478,58 @@ function initPortfolioCarousel() {
   });
 }
 
+function openPortfolioModal(id) {
+  const modal = document.getElementById("portfolioModal");
+  const data = PORTFOLIO_DETAILS[id];
+  if (!modal || !data) return;
+
+  currentPortfolioId = id;
+  currentPortfolioImageIndex = 0;
+
+  document.getElementById("portfolioModalCategory").textContent = data.category;
+  document.getElementById("portfolioModalTitle").textContent = data.title;
+  document.getElementById("portfolioModalText").textContent = data.text;
+
+  updatePortfolioModalImage();
+  modal.classList.add("open");
+}
+
+function updatePortfolioModalImage() {
+  const data = PORTFOLIO_DETAILS[currentPortfolioId];
+  const imageEl = document.getElementById("portfolioModalImage");
+  const counterEl = document.getElementById("portfolioModalCounter");
+  if (!data || !imageEl || !counterEl) return;
+
+  const currentImage = data.images[currentPortfolioImageIndex];
+  imageEl.style.backgroundImage = `url('${currentImage}')`;
+  imageEl.style.backgroundSize = "cover";
+  imageEl.style.backgroundPosition = "center";
+  counterEl.textContent = `${currentPortfolioImageIndex + 1} / ${data.images.length}`;
+}
+
+function changePortfolioDetailImage(direction) {
+  const data = PORTFOLIO_DETAILS[currentPortfolioId];
+  if (!data) return;
+
+  currentPortfolioImageIndex += direction;
+
+  if (currentPortfolioImageIndex < 0) {
+    currentPortfolioImageIndex = data.images.length - 1;
+  }
+
+  if (currentPortfolioImageIndex >= data.images.length) {
+    currentPortfolioImageIndex = 0;
+  }
+
+  updatePortfolioModalImage();
+}
+
+function closePortfolioModal() {
+  const modal = document.getElementById("portfolioModal");
+  if (!modal) return;
+  modal.classList.remove("open");
+}
+
 function showFormMessage(element, text, success) {
   if (!element) return;
   element.textContent = text;
@@ -704,6 +832,7 @@ function renderOrders() {
 function initGlobalEvents() {
   const cartOverlay = document.getElementById("cartOverlay");
   const lightbox = document.getElementById("lightbox");
+  const portfolioModal = document.getElementById("portfolioModal");
 
   if (cartOverlay) {
     cartOverlay.addEventListener("click", (e) => {
@@ -717,10 +846,22 @@ function initGlobalEvents() {
     });
   }
 
+  if (portfolioModal) {
+    portfolioModal.addEventListener("click", (e) => {
+      if (e.target === portfolioModal) closePortfolioModal();
+    });
+  }
+
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
       closeCart();
       closeLightbox();
+      closePortfolioModal();
+    }
+
+    if (document.getElementById("portfolioModal")?.classList.contains("open")) {
+      if (e.key === "ArrowRight") changePortfolioDetailImage(1);
+      if (e.key === "ArrowLeft") changePortfolioDetailImage(-1);
     }
   });
 }
