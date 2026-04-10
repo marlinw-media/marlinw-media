@@ -534,7 +534,8 @@ body.light-mode .mini-card {
 .cart-sheet,
 .lightbox-panel,
 .profile-editor-card,
-.order-card {
+.order-card,
+.portfolio-modal-panel {
   border: 1px solid var(--line);
   border-radius: 26px;
   overflow: hidden;
@@ -553,7 +554,8 @@ body.light-mode .auth-card,
 body.light-mode .cart-sheet,
 body.light-mode .lightbox-panel,
 body.light-mode .profile-editor-card,
-body.light-mode .order-card {
+body.light-mode .order-card,
+body.light-mode .portfolio-modal-panel {
   background: linear-gradient(180deg, rgba(0,0,0,0.03), rgba(0,0,0,0.01));
 }
 
@@ -586,7 +588,8 @@ body.light-mode .placeholder-media {
 
 .placeholder-media::before,
 .shop-image::before,
-.lightbox-image::before {
+.lightbox-image::before,
+.portfolio-modal-image::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -646,7 +649,7 @@ body.light-mode .play-badge {
 
 .item-body h3 {
   font-size: 1.08rem;
-  margin-bottom: 8px;
+  margin-bottom: 0;
 }
 
 .item-body p {
@@ -841,6 +844,160 @@ body.light-mode .play-badge {
 
 .portfolio-slide .placeholder-media {
   aspect-ratio: 16 / 11;
+}
+
+.portfolio-clickable {
+  cursor: pointer;
+}
+
+.portfolio-thumb::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 45%, rgba(0,0,0,0.35) 100%);
+  pointer-events: none;
+}
+
+.portfolio-open-hint {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  background: rgba(0,0,0,0.38);
+  font-size: 0.82rem;
+  backdrop-filter: blur(8px);
+  z-index: 2;
+}
+
+body.light-mode .portfolio-open-hint {
+  background: rgba(255,255,255,0.72);
+}
+
+.portfolio-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.78);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 120;
+  padding: 20px;
+}
+
+.portfolio-modal.open {
+  display: flex;
+}
+
+.portfolio-modal-panel {
+  width: min(1080px, 100%);
+  max-height: 92vh;
+  overflow: auto;
+  padding: 24px;
+  position: relative;
+}
+
+.portfolio-modal-close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  z-index: 2;
+}
+
+.portfolio-modal-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 24px;
+  align-items: center;
+}
+
+.portfolio-modal-visual {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.portfolio-modal-image {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 22px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background:
+    linear-gradient(145deg, rgba(255,255,255,0.06), rgba(255,255,255,0.015)),
+    radial-gradient(circle at top left, rgba(255,255,255,0.12), transparent 35%),
+    linear-gradient(135deg, rgba(255,255,255,0.02), transparent 35%, rgba(255,255,255,0.05));
+  background-size: cover;
+  background-position: center;
+}
+
+body.light-mode .portfolio-modal-image {
+  background:
+    linear-gradient(145deg, rgba(0,0,0,0.04), rgba(0,0,0,0.01)),
+    radial-gradient(circle at top left, rgba(0,0,0,0.06), transparent 35%),
+    linear-gradient(135deg, rgba(0,0,0,0.01), transparent 35%, rgba(0,0,0,0.04));
+}
+
+.portfolio-modal-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 52px;
+  height: 52px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  background: rgba(0,0,0,0.48);
+  color: #fff;
+  font-size: 1.8rem;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 2;
+}
+
+body.light-mode .portfolio-modal-nav {
+  background: rgba(255,255,255,0.8);
+  color: #111;
+}
+
+.portfolio-modal-nav.prev {
+  left: 14px;
+}
+
+.portfolio-modal-nav.next {
+  right: 14px;
+}
+
+.portfolio-modal-meta h2 {
+  font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+  margin-bottom: 12px;
+}
+
+.portfolio-modal-meta p {
+  color: var(--text-soft);
+  line-height: 1.8;
+  margin-bottom: 20px;
+}
+
+.portfolio-modal-counter {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  font-size: 0.95rem;
 }
 
 .section-note {
@@ -1270,6 +1427,30 @@ body.light-mode .login-fab {
   background: var(--surface);
 }
 
+.impressum-link {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 95;
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  background: rgba(0,0,0,0.62);
+  color: #fff;
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow);
+  font-size: 0.92rem;
+}
+
+body.light-mode .impressum-link {
+  background: rgba(255,255,255,0.84);
+  color: #111;
+}
+
 footer {
   max-width: 1240px;
   margin: 0 auto;
@@ -1341,7 +1522,8 @@ footer {
 @media (max-width: 980px) {
   .hero,
   .contact-layout,
-  .lightbox-grid {
+  .lightbox-grid,
+  .portfolio-modal-grid {
     grid-template-columns: 1fr;
   }
 
@@ -1389,4 +1571,96 @@ footer {
   }
 
   section {
-    padding: 76px 18px
+    padding: 76px 18px;
+  }
+
+  .page-intro,
+  .profile-page {
+    padding: 58px 18px 12px;
+  }
+
+  .hero {
+    min-height: auto;
+    padding-top: 32px;
+  }
+
+  .hero-card {
+    padding: 22px;
+  }
+
+  .partner-grid,
+  .references-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .shape.one,
+  .shape.two,
+  .shape.four {
+    opacity: 0.55;
+  }
+
+  .shape.three {
+    width: 280px;
+    height: 160px;
+  }
+
+  .portfolio-carousel {
+    grid-auto-columns: 86%;
+  }
+
+  .shop-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    padding: 18px;
+  }
+
+  .cart-fab,
+  .login-fab {
+    display: flex;
+  }
+
+  .cart-sheet {
+    padding: 20px;
+  }
+
+  .auth-card,
+  .profile-editor-card,
+  .order-card,
+  .portfolio-modal-panel {
+    padding: 24px 20px;
+    border-radius: 22px;
+  }
+
+  .edit-row {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-menu {
+    right: auto;
+    left: 0;
+  }
+
+  .portrait-image {
+    max-width: 220px;
+  }
+
+  .portfolio-open-hint {
+    font-size: 0.78rem;
+    right: 14px;
+    bottom: 14px;
+  }
+
+  .portfolio-modal-nav {
+    width: 44px;
+    height: 44px;
+    font-size: 1.5rem;
+  }
+
+  .impressum-link {
+    right: 14px;
+    bottom: 14px;
+    min-height: 40px;
+    padding: 0 12px;
+    font-size: 0.88rem;
+  }
+}
