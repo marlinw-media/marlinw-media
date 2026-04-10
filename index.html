@@ -150,84 +150,88 @@
           <p class="section-note">Swipe oder nutze die Pfeile, um durch mehrere Projekte zu gehen.</p>
           <div class="portfolio-controls">
             <button class="carousel-btn" id="portfolioPrev" type="button" aria-label="Zurück">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M15 18l-6-6 6-6"></path>
+              </svg>
             </button>
             <button class="carousel-btn" id="portfolioNext" type="button" aria-label="Weiter">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 18l6-6-6-6"></path>
+              </svg>
             </button>
           </div>
         </div>
 
         <div class="portfolio-carousel" id="portfolioCarousel">
-          <article class="portfolio-slide gallery-item">
-            <div class="placeholder-media" style="background-image:url('images/portfolio1.jpg'); background-size:cover; background-position:center;">
+          <article class="portfolio-slide gallery-item portfolio-clickable" onclick="openPortfolioModal(1)">
+            <div class="placeholder-media portfolio-thumb" style="background-image:url('images/portfolio1.jpg'); background-size:cover; background-position:center;">
+              <span class="portfolio-open-hint">Mehr ansehen</span>
               <span class="placeholder-label">Fotografie</span>
             </div>
             <div class="item-body">
               <h3>Editorial Shooting</h3>
-              <p>Platzhalter für ein hochwertiges Foto-Projekt mit klarer Bildsprache.</p>
             </div>
           </article>
 
-          <article class="portfolio-slide gallery-item">
-            <div class="placeholder-media" style="background-image:url('images/portfolio2.jpg'); background-size:cover; background-position:center;">
+          <article class="portfolio-slide gallery-item portfolio-clickable" onclick="openPortfolioModal(2)">
+            <div class="placeholder-media portfolio-thumb" style="background-image:url('images/portfolio2.jpg'); background-size:cover; background-position:center;">
+              <span class="portfolio-open-hint">Mehr ansehen</span>
               <div class="play-badge"></div>
               <span class="placeholder-label">Video</span>
             </div>
             <div class="item-body">
               <h3>Brand Film</h3>
-              <p>Platzhalter für ein modernes Video mit Intro, Produktshots und Bewegung.</p>
             </div>
           </article>
 
-          <article class="portfolio-slide gallery-item">
-            <div class="placeholder-media" style="background-image:url('images/portfolio3.jpg'); background-size:cover; background-position:center;">
+          <article class="portfolio-slide gallery-item portfolio-clickable" onclick="openPortfolioModal(3)">
+            <div class="placeholder-media portfolio-thumb" style="background-image:url('images/portfolio3.jpg'); background-size:cover; background-position:center;">
+              <span class="portfolio-open-hint">Mehr ansehen</span>
               <span class="placeholder-label">Event</span>
             </div>
             <div class="item-body">
               <h3>Event Coverage</h3>
-              <p>Platzhalter für Eindrücke eines Events mit Atmosphäre und Dynamik.</p>
             </div>
           </article>
 
-          <article class="portfolio-slide gallery-item">
-            <div class="placeholder-media" style="background-image:url('images/portfolio4.jpg'); background-size:cover; background-position:center;">
+          <article class="portfolio-slide gallery-item portfolio-clickable" onclick="openPortfolioModal(4)">
+            <div class="placeholder-media portfolio-thumb" style="background-image:url('images/portfolio4.jpg'); background-size:cover; background-position:center;">
+              <span class="portfolio-open-hint">Mehr ansehen</span>
               <span class="placeholder-label">Automotive</span>
             </div>
             <div class="item-body">
               <h3>Car Visuals</h3>
-              <p>Platzhalter für Auto-Content mit Kontrast, Lichtkanten und Details.</p>
             </div>
           </article>
 
-          <article class="portfolio-slide gallery-item">
-            <div class="placeholder-media" style="background-image:url('images/portfolio5.jpg'); background-size:cover; background-position:center;">
+          <article class="portfolio-slide gallery-item portfolio-clickable" onclick="openPortfolioModal(5)">
+            <div class="placeholder-media portfolio-thumb" style="background-image:url('images/portfolio5.jpg'); background-size:cover; background-position:center;">
+              <span class="portfolio-open-hint">Mehr ansehen</span>
               <div class="play-badge"></div>
               <span class="placeholder-label">Reel</span>
             </div>
             <div class="item-body">
               <h3>Social Media Reel</h3>
-              <p>Platzhalter für kurze, starke Videoinhalte im Hochformat.</p>
             </div>
           </article>
 
-          <article class="portfolio-slide gallery-item">
-            <div class="placeholder-media" style="background-image:url('images/portfolio6.jpg'); background-size:cover; background-position:center;">
+          <article class="portfolio-slide gallery-item portfolio-clickable" onclick="openPortfolioModal(6)">
+            <div class="placeholder-media portfolio-thumb" style="background-image:url('images/portfolio6.jpg'); background-size:cover; background-position:center;">
+              <span class="portfolio-open-hint">Mehr ansehen</span>
               <span class="placeholder-label">Location</span>
             </div>
             <div class="item-body">
               <h3>Location Showcase</h3>
-              <p>Platzhalter für Innenräume, Architektur und räumliche Inszenierung.</p>
             </div>
           </article>
 
-          <article class="portfolio-slide gallery-item">
-            <div class="placeholder-media" style="background-image:url('images/portfolio7.jpg'); background-size:cover; background-position:center;">
+          <article class="portfolio-slide gallery-item portfolio-clickable" onclick="openPortfolioModal(7)">
+            <div class="placeholder-media portfolio-thumb" style="background-image:url('images/portfolio7.jpg'); background-size:cover; background-position:center;">
+              <span class="portfolio-open-hint">Mehr ansehen</span>
               <span class="placeholder-label">Portrait</span>
             </div>
             <div class="item-body">
               <h3>Portrait Session</h3>
-              <p>Platzhalter für moderne Portraits mit sauberem Licht und Stil.</p>
             </div>
           </article>
         </div>
@@ -359,6 +363,29 @@
       </div>
     </div>
   </div>
+
+  <div class="portfolio-modal" id="portfolioModal">
+    <div class="portfolio-modal-panel">
+      <button class="portfolio-modal-close" type="button" onclick="closePortfolioModal()" aria-label="Schließen">✕</button>
+
+      <div class="portfolio-modal-grid">
+        <div class="portfolio-modal-visual">
+          <button class="portfolio-modal-nav prev" type="button" onclick="changePortfolioDetailImage(-1)" aria-label="Vorheriges Bild">‹</button>
+          <div class="portfolio-modal-image" id="portfolioModalImage"></div>
+          <button class="portfolio-modal-nav next" type="button" onclick="changePortfolioDetailImage(1)" aria-label="Nächstes Bild">›</button>
+        </div>
+
+        <div class="portfolio-modal-meta">
+          <small class="hero-eyebrow" id="portfolioModalCategory">Kategorie</small>
+          <h2 id="portfolioModalTitle">Projekt</h2>
+          <p id="portfolioModalText">Zusatztext</p>
+          <div class="portfolio-modal-counter" id="portfolioModalCounter">1 / 3</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <a href="impressum.html" class="impressum-link">Impressum</a>
 
   <footer>
     <div class="footer-inner">
