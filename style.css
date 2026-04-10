@@ -18,6 +18,9 @@
   --accent: #ffffff;
   --danger: #ff6b6b;
   --success: #7bff9e;
+  --whatsapp: #25d366;
+  --whatsapp-dark: #128c47;
+  --record-red: #ff3b30;
 }
 
 body.light-mode {
@@ -203,7 +206,7 @@ body.light-mode.impressum-page {
 .header-inner {
   max-width: 1240px;
   margin: 0 auto;
-  padding: 16px 22px;
+  padding: 14px 22px;
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
@@ -231,7 +234,6 @@ body.light-mode.impressum-page {
   display: flex;
   align-items: center;
   justify-self: center;
-  gap: 12px;
   min-width: 0;
 }
 
@@ -391,7 +393,7 @@ main {
 section {
   max-width: 1240px;
   margin: 0 auto;
-  padding: 92px 22px;
+  padding: 64px 22px;
 }
 
 .hero {
@@ -399,12 +401,12 @@ section {
   display: grid;
   grid-template-columns: 1fr;
   align-items: center;
-  gap: 40px;
+  gap: 24px;
 }
 
 .hero-eyebrow {
   display: inline-block;
-  margin-bottom: 18px;
+  margin-bottom: 14px;
   font-size: 0.92rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -416,31 +418,32 @@ section {
 .hero h1 {
   font-size: clamp(2.2rem, 6vw, 5.4rem);
   line-height: 0.95;
-  margin-bottom: 18px;
+  margin-bottom: 14px;
   letter-spacing: 0.04em;
   white-space: nowrap;
 }
 
 .hero p {
   max-width: 700px;
-  font-size: 1.1rem;
-  line-height: 1.75;
+  font-size: 1.05rem;
+  line-height: 1.7;
   color: var(--text-soft);
-  margin-bottom: 28px;
+  margin-bottom: 22px;
 }
 
 .hero-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 14px;
+  gap: 12px;
+  align-items: center;
 }
 
 .button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 48px;
-  padding: 0 20px;
+  min-height: 46px;
+  padding: 0 18px;
   border-radius: 999px;
   border: 1px solid var(--line-strong);
   background: var(--surface);
@@ -476,17 +479,58 @@ body.light-mode .button.primary {
   pointer-events: none;
 }
 
+.booking-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--text);
+  transition: transform 0.2s ease, background 0.25s ease, border-color 0.25s ease;
+}
+
+.booking-cta:hover {
+  transform: translateY(-2px);
+  background: var(--surface-strong);
+}
+
+.booking-rec {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 59, 48, 0.45);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 4px rgba(255, 59, 48, 0.08);
+}
+
+.booking-rec-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--record-red);
+  box-shadow: 0 0 12px rgba(255, 59, 48, 0.7);
+}
+
 .section-head {
   display: flex;
   flex-wrap: wrap;
   align-items: end;
   justify-content: space-between;
-  gap: 18px;
-  margin-bottom: 34px;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.section-head-inline {
+  align-items: center;
 }
 
 .section-head h2 {
-  font-size: clamp(2rem, 4vw, 3.3rem);
+  font-size: clamp(2rem, 4vw, 3.1rem);
   line-height: 1;
   letter-spacing: 0.03em;
 }
@@ -611,7 +655,7 @@ body.light-mode .play-badge {
 }
 
 .item-body {
-  padding: 18px 18px 20px;
+  padding: 16px 18px 18px;
 }
 
 .item-body h3 {
@@ -637,7 +681,7 @@ body.light-mode .play-badge {
   aspect-ratio: 4 / 5;
   object-fit: cover;
   display: block;
-  margin: 24px auto 0;
+  margin: 20px auto 0;
   border-radius: 24px;
   border: 1px solid var(--line);
   box-shadow: var(--shadow);
@@ -651,17 +695,17 @@ body.light-mode .play-badge {
 }
 
 .contact-card .item-body {
-  padding: 24px;
+  padding: 22px;
 }
 
 .contact-list {
   display: grid;
-  gap: 14px;
-  margin-top: 18px;
+  gap: 12px;
+  margin-top: 16px;
 }
 
 .contact-row {
-  padding: 16px 18px;
+  padding: 15px 18px;
   border: 1px solid var(--line);
   border-radius: 18px;
   background: var(--surface);
@@ -687,8 +731,10 @@ body.light-mode .play-badge {
 .contact-inline-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  flex-wrap: nowrap;
 }
 
 .phone-link {
@@ -706,6 +752,7 @@ body.light-mode .play-badge {
   background: var(--surface);
   color: var(--text);
   transition: background 0.25s ease, transform 0.2s ease;
+  flex-shrink: 0;
 }
 
 .contact-chip:hover {
@@ -713,10 +760,21 @@ body.light-mode .play-badge {
   transform: translateY(-1px);
 }
 
+.whatsapp-chip {
+  background: var(--whatsapp);
+  border-color: transparent;
+  color: #ffffff;
+  margin-left: auto;
+}
+
+.whatsapp-chip:hover {
+  background: var(--whatsapp-dark);
+}
+
 .page-intro {
   max-width: 1240px;
   margin: 0 auto;
-  padding: 72px 22px 18px;
+  padding: 56px 22px 12px;
   position: relative;
   z-index: 1;
 }
@@ -745,7 +803,7 @@ body.light-mode .play-badge {
   justify-content: flex-end;
   align-items: center;
   gap: 14px;
-  margin-bottom: 18px;
+  margin-bottom: 12px;
 }
 
 .portfolio-controls {
@@ -754,8 +812,8 @@ body.light-mode .play-badge {
 }
 
 .carousel-btn {
-  width: 48px;
-  height: 48px;
+  width: 46px;
+  height: 46px;
   border-radius: 999px;
   border: 1px solid var(--line-strong);
   background: var(--surface);
@@ -785,7 +843,7 @@ body.light-mode .play-badge {
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   scroll-behavior: smooth;
-  padding-bottom: 10px;
+  padding-bottom: 6px;
   cursor: grab;
   scrollbar-width: none;
 }
@@ -1345,7 +1403,7 @@ body.light-mode .login-fab {
 .profile-page {
   max-width: 1240px;
   margin: 0 auto;
-  padding: 72px 22px 92px;
+  padding: 56px 22px 72px;
   position: relative;
   z-index: 1;
 }
@@ -1398,7 +1456,7 @@ body.light-mode .login-fab {
 .impressum-wrap {
   max-width: 980px;
   margin: 0 auto;
-  padding: 72px 22px 96px;
+  padding: 52px 22px 72px;
 }
 
 .impressum-grid {
@@ -1435,14 +1493,14 @@ body.light-mode .impressum-card {
 footer {
   max-width: 1240px;
   margin: 0 auto;
-  padding: 0 22px 40px;
+  padding: 0 22px 32px;
   color: var(--text-soft);
   position: relative;
   z-index: 1;
 }
 
 .footer-inner {
-  padding-top: 24px;
+  padding-top: 20px;
   border-top: 1px solid var(--line);
   display: flex;
   flex-wrap: wrap;
@@ -1554,22 +1612,23 @@ footer {
   }
 
   section {
-    padding: 76px 18px;
+    padding: 52px 18px;
   }
 
   .page-intro,
   .profile-page,
   .impressum-wrap {
-    padding: 58px 18px 20px;
+    padding: 44px 18px 18px;
   }
 
   .hero {
     min-height: auto;
-    padding-top: 32px;
+    padding-top: 24px;
   }
 
   .hero h1 {
     font-size: clamp(1.7rem, 8vw, 2.6rem);
+    white-space: normal;
   }
 
   .portfolio-carousel,
@@ -1634,9 +1693,15 @@ footer {
   .contact-inline-actions {
     align-items: stretch;
     flex-direction: column;
+    gap: 10px;
   }
 
   .phone-link {
     white-space: normal;
+  }
+
+  .whatsapp-chip {
+    margin-left: 0;
+    width: 100%;
   }
 }
