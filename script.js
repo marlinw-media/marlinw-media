@@ -15,7 +15,7 @@ const PORTFOLIO_DETAILS = {
   1: {
     title: "Editorial Shooting",
     category: "Fotografie",
-    text: "Eine klar komponierte Editorial-Serie mit Fokus auf Lichtstimmung, Details und hochwertiger Bildsprache. Hier kannst du später konkrete Infos zum Shooting, zum Kunden oder zur Produktion eintragen.",
+    text: "Moderne Portraits, stilvolle Fotoserien und hochwertige Bildwelten, die Persönlichkeit, Ästhetik und Charakter sichtbar machen. Ideal für Personal Branding, Social Media, Kampagnen oder einen professionellen Gesamtauftritt.",
     images: [
       "images/portfolio1-1.jpg",
       "images/portfolio1-2.jpg",
@@ -23,9 +23,9 @@ const PORTFOLIO_DETAILS = {
     ]
   },
   2: {
-    title: "Brand Film",
-    category: "Video",
-    text: "Visuelle Sequenzen mit moderner Ästhetik, starken Perspektiven und cineastischem Look. Dieser Bereich ist ideal für kurze Projektbeschreibungen und Hintergrundinfos zur Produktion.",
+    title: "Automotive Content",
+    category: "Auto",
+    text: "Professionelle Fotos und Videos für Fahrzeuge — ob kinoreif inszeniert, modern und clean oder perfekt zugeschnitten für Instagram, Reels und Social Media. Für Privatkunden, Unternehmen und Marken mit Anspruch.",
     images: [
       "images/portfolio2-1.jpg",
       "images/portfolio2-2.jpg",
@@ -33,9 +33,9 @@ const PORTFOLIO_DETAILS = {
     ]
   },
   3: {
-    title: "Event Coverage",
-    category: "Event",
-    text: "Dynamische Eindrücke mit Atmosphäre, Bewegung und echtem Momentgefühl. Hier kannst du später beschreiben, welche Veranstaltung begleitet wurde und welche Inhalte entstanden sind.",
+    title: "Branding Content",
+    category: "Branding",
+    text: "Produkte und Marken hochwertig in Szene gesetzt — mit starken Bildern und Videos, die Aufmerksamkeit erzeugen, Vertrauen aufbauen und deine Marke professionell präsentieren. Für Kampagnen, Launches und Werbeinhalte.",
     images: [
       "images/portfolio3-1.jpg",
       "images/portfolio3-2.jpg",
@@ -43,9 +43,9 @@ const PORTFOLIO_DETAILS = {
     ]
   },
   4: {
-    title: "Car Visuals",
-    category: "Automotive",
-    text: "Kontrastreiche Aufnahmen mit Fokus auf Form, Material und Lichtkanten. Dieser Bereich eignet sich ideal für Fahrzeuginszenierungen, Details und Markenästhetik.",
+    title: "Event Coverage",
+    category: "Events",
+    text: "Begleitung von Events, Firmenevents, Feiern und größeren Produktionen mit Fokus auf Atmosphäre, Emotion und professioneller Dokumentation. Perfekt für Erinnerungen, Werbung und Social Media Nachbereitung.",
     images: [
       "images/portfolio4-1.jpg",
       "images/portfolio4-2.jpg",
@@ -53,9 +53,9 @@ const PORTFOLIO_DETAILS = {
     ]
   },
   5: {
-    title: "Social Media Reel",
-    category: "Reel",
-    text: "Schnelle, moderne Formate mit klarer visueller Sprache für Social Media. Hier kannst du später Plattform, Reichweite oder Inhalte des Projekts ergänzen.",
+    title: "Wedding Content",
+    category: "Hochzeiten",
+    text: "Hochzeiten stilvoll und emotional festgehalten — in Bildern und Videos, die echte Momente transportieren. Elegant, modern und auf Wunsch sowohl zeitlos als auch social-media-tauglich umgesetzt.",
     images: [
       "images/portfolio5-1.jpg",
       "images/portfolio5-2.jpg",
@@ -63,9 +63,9 @@ const PORTFOLIO_DETAILS = {
     ]
   },
   6: {
-    title: "Location Showcase",
-    category: "Location",
-    text: "Räumliche Inszenierung mit Fokus auf Architektur, Atmosphäre und Perspektive. Perfekt für Hotels, Eventlocations oder besondere Innenräume.",
+    title: "Grafikdesign",
+    category: "Design",
+    text: "Logos, Flyer, Plakate und visuelle Konzepte, die auf persönliche Wünsche und den Charakter deiner Marke zugeschnitten sind. Individuell gestaltet, professionell aufbereitet und mit klarem Wiedererkennungswert.",
     images: [
       "images/portfolio6-1.jpg",
       "images/portfolio6-2.jpg",
@@ -73,9 +73,9 @@ const PORTFOLIO_DETAILS = {
     ]
   },
   7: {
-    title: "Portrait Session",
-    category: "Portrait",
-    text: "Portraitarbeiten mit sauberem Licht, ruhigem Aufbau und modernem Look. Hier kannst du später Informationen zum Menschen, Anlass oder Stil ergänzen.",
+    title: "Webdesign",
+    category: "Web",
+    text: "Individuell angefertigte Websites mit modernem Look, klarer Struktur und starker visueller Wirkung. Passend für Unternehmen, Kreative und Marken, die online professionell und hochwertig auftreten wollen.",
     images: [
       "images/portfolio7-1.jpg",
       "images/portfolio7-2.jpg",
@@ -427,16 +427,18 @@ function renderShopGrid() {
   `).join("");
 }
 
-function initPortfolioCarousel() {
-  const carousel = document.getElementById("portfolioCarousel");
-  const prev = document.getElementById("portfolioPrev");
-  const next = document.getElementById("portfolioNext");
+function initHorizontalCarousel(carouselId, prevId, nextId) {
+  const carousel = document.getElementById(carouselId);
+  const prev = document.getElementById(prevId);
+  const next = document.getElementById(nextId);
+
   if (!carousel || !prev || !next) return;
 
   const getStep = () => {
-    const first = carousel.querySelector(".portfolio-slide");
+    const first = carousel.children[0];
     if (!first) return 360;
-    const gap = 18;
+    const styles = window.getComputedStyle(carousel);
+    const gap = parseFloat(styles.columnGap || styles.gap || 18);
     return first.getBoundingClientRect().width + gap;
   };
 
@@ -616,7 +618,7 @@ function registerUser(event) {
 
   showFormMessage(
     message,
-    "Benutzerkonto gespeichert. In dieser GitHub-Pages-Version werden die Daten lokal im Browser gespeichert. Du wirst jetzt zur Startseite weitergeleitet.",
+    "Benutzerkonto gespeichert. In dieser statischen Version werden die Daten lokal im Browser gespeichert. Du wirst jetzt zur Startseite weitergeleitet.",
     true
   );
 
@@ -875,7 +877,8 @@ document.addEventListener("DOMContentLoaded", () => {
   updateCartUI();
   renderCartItems();
   renderShopGrid();
-  initPortfolioCarousel();
+  initHorizontalCarousel("portfolioCarousel", "portfolioPrev", "portfolioNext");
+  initHorizontalCarousel("partnerCarousel", "partnerPrev", "partnerNext");
   initRegisterValidation();
   initProfilePage();
   initPasswordPage();
