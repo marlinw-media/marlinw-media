@@ -73,33 +73,38 @@
         <div class="hero-actions">
           <a class="button primary" href="#portfolio">Portfolio ansehen</a>
           <a class="button" href="#kontakt">Kontakt aufnehmen</a>
+
+          <a class="booking-cta" href="#kontakt" aria-label="Jetzt Termin buchen">
+            <span class="booking-rec">
+              <span class="booking-rec-dot"></span>
+            </span>
+            <span>Jetzt Termin buchen</span>
+          </a>
         </div>
       </div>
     </section>
 
     <section id="portfolio">
-      <div class="section-head">
+      <div class="section-head section-head-inline">
         <div>
           <h2>Portfolio</h2>
+        </div>
+
+        <div class="portfolio-controls">
+          <button class="carousel-btn" id="portfolioPrev" type="button" aria-label="Zurück">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M15 18l-6-6 6-6"></path>
+            </svg>
+          </button>
+          <button class="carousel-btn" id="portfolioNext" type="button" aria-label="Weiter">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 18l6-6-6-6"></path>
+            </svg>
+          </button>
         </div>
       </div>
 
       <div class="portfolio-carousel-wrap">
-        <div class="portfolio-toolbar">
-          <div class="portfolio-controls">
-            <button class="carousel-btn" id="portfolioPrev" type="button" aria-label="Zurück">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M15 18l-6-6 6-6"></path>
-              </svg>
-            </button>
-            <button class="carousel-btn" id="portfolioNext" type="button" aria-label="Weiter">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M9 18l6-6-6-6"></path>
-              </svg>
-            </button>
-          </div>
-        </div>
-
         <div class="portfolio-carousel" id="portfolioCarousel">
           <article class="portfolio-slide gallery-item portfolio-clickable" onclick="openPortfolioModal(1)">
             <div class="placeholder-media portfolio-thumb" style="background-image:url('images/portfolio1.jpg'); background-size:cover; background-position:center;">
@@ -176,28 +181,26 @@
     </section>
 
     <section id="partner">
-      <div class="section-head">
+      <div class="section-head section-head-inline">
         <div>
           <h2>Partner</h2>
+        </div>
+
+        <div class="portfolio-controls">
+          <button class="carousel-btn" id="partnerPrev" type="button" aria-label="Zurück">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M15 18l-6-6 6-6"></path>
+            </svg>
+          </button>
+          <button class="carousel-btn" id="partnerNext" type="button" aria-label="Weiter">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 18l6-6-6-6"></path>
+            </svg>
+          </button>
         </div>
       </div>
 
       <div class="partner-carousel-wrap">
-        <div class="portfolio-toolbar">
-          <div class="portfolio-controls">
-            <button class="carousel-btn" id="partnerPrev" type="button" aria-label="Zurück">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M15 18l-6-6 6-6"></path>
-              </svg>
-            </button>
-            <button class="carousel-btn" id="partnerNext" type="button" aria-label="Weiter">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M9 18l6-6-6-6"></path>
-              </svg>
-            </button>
-          </div>
-        </div>
-
         <div class="partner-carousel" id="partnerCarousel">
           <article class="partner-card partner-slide">
             <div class="placeholder-media" style="background-image:url('images/partner1.jpg'); background-size:cover; background-position:center;">
@@ -265,7 +268,7 @@
                 <small>Telefon</small>
                 <div class="contact-inline-actions">
                   <a href="tel:+4915231036109" class="phone-link">+49 152 31036109</a>
-                  <a href="https://wa.me/4915231036109" target="_blank" rel="noopener noreferrer" class="contact-chip">
+                  <a href="https://wa.me/4915231036109" target="_blank" rel="noopener noreferrer" class="contact-chip whatsapp-chip">
                     WhatsApp
                   </a>
                 </div>
