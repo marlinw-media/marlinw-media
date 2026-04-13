@@ -1166,8 +1166,7 @@ body.light-mode .lightbox-image {
   cursor: pointer;
 }
 
-.cart-fab,
-.login-fab {
+.cart-fab {
   position: fixed;
   bottom: 24px;
   width: 58px;
@@ -1183,20 +1182,12 @@ body.light-mode .lightbox-image {
   box-shadow: var(--shadow);
   cursor: pointer;
   z-index: 90;
-}
-
-body.light-mode .cart-fab,
-body.light-mode .login-fab {
-  background: rgba(255,255,255,0.84);
-  color: #111;
-}
-
-.cart-fab {
   right: 24px;
 }
 
-.login-fab {
-  left: 24px;
+body.light-mode .cart-fab {
+  background: rgba(255,255,255,0.84);
+  color: #111;
 }
 
 .cart-count {
@@ -1642,8 +1633,7 @@ footer {
     padding: 18px;
   }
 
-  .cart-fab,
-  .login-fab {
+  .cart-fab {
     display: flex;
   }
 
