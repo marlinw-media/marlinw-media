@@ -619,10 +619,12 @@ body.light-mode .placeholder-media {
   background: rgba(0,0,0,0.35);
   font-size: 0.86rem;
   backdrop-filter: blur(8px);
+  z-index: 3;
 }
 
 body.light-mode .placeholder-label {
-  background: rgba(255,255,255,0.72);
+  background: rgba(255,255,255,0.82);
+  color: #111111;
 }
 
 .play-badge {
@@ -897,7 +899,8 @@ body.light-mode .play-badge {
 }
 
 body.light-mode .portfolio-open-hint {
-  background: rgba(255,255,255,0.72);
+  background: rgba(255,255,255,0.82);
+  color: #111111;
 }
 
 .partner-media::after {
@@ -905,10 +908,14 @@ body.light-mode .portfolio-open-hint {
   position: absolute;
   inset: 0;
   pointer-events: none;
+  z-index: 1;
 }
 
 body.light-mode .partner-media::after {
-  background: rgba(0, 0, 0, 0.5);
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.30), rgba(0, 0, 0, 0.30)),
+    linear-gradient(135deg, rgba(255,255,255,0.06) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.06) 75%, transparent 75%, transparent 100%);
+  background-size: auto, 18px 18px;
 }
 
 .portfolio-modal {
@@ -937,9 +944,9 @@ body.light-mode .partner-media::after {
 }
 
 body.light-mode .portfolio-modal-panel {
-  background: linear-gradient(180deg, rgba(255,255,255,0.97), rgba(245,245,245,0.95));
-  border: 1px solid rgba(0,0,0,0.12);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.14);
+  background: linear-gradient(180deg, rgba(255,255,255,0.99), rgba(248,248,248,0.98));
+  border: 1px solid rgba(0,0,0,0.14);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.16);
 }
 
 .portfolio-modal-close {
@@ -992,6 +999,7 @@ body.light-mode .portfolio-modal-close {
 
 body.light-mode .portfolio-modal-image {
   border: 1px solid rgba(0,0,0,0.10);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
   background:
     linear-gradient(145deg, rgba(0,0,0,0.02), rgba(0,0,0,0.005)),
     radial-gradient(circle at top left, rgba(0,0,0,0.03), transparent 35%),
@@ -1015,9 +1023,10 @@ body.light-mode .portfolio-modal-image {
 }
 
 body.light-mode .portfolio-modal-nav {
-  background: rgba(255,255,255,0.88);
+  background: rgba(255,255,255,0.94);
   color: #111111;
-  border-color: rgba(0,0,0,0.12);
+  border-color: rgba(0,0,0,0.14);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.10);
 }
 
 .portfolio-modal-nav.prev {
@@ -1033,11 +1042,11 @@ body.light-mode .portfolio-modal-nav {
 }
 
 body.light-mode .portfolio-modal-meta {
-  color: #111111;
+  color: #101010;
 }
 
 body.light-mode .portfolio-modal-meta .hero-eyebrow {
-  color: #444444;
+  color: #3a3a3a;
   border-bottom-color: rgba(0,0,0,0.18);
 }
 
@@ -1047,7 +1056,7 @@ body.light-mode .portfolio-modal-meta .hero-eyebrow {
 }
 
 body.light-mode .portfolio-modal-meta h2 {
-  color: #111111;
+  color: #0f0f0f;
 }
 
 .portfolio-modal-meta p {
@@ -1057,7 +1066,7 @@ body.light-mode .portfolio-modal-meta h2 {
 }
 
 body.light-mode .portfolio-modal-meta p {
-  color: #2f2f2f;
+  color: #262626;
 }
 
 .portfolio-modal-counter {
