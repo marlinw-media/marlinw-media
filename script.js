@@ -84,6 +84,52 @@ const PORTFOLIO_DETAILS = {
   }
 };
 
+const INDEX_PRELOAD_IMAGES = [
+  "logo-white.png",
+  "logo-black.png",
+  "profil.jpg",
+
+  "images/portfolio1.jpg",
+  "images/portfolio2.jpg",
+  "images/portfolio3.jpg",
+  "images/portfolio4.jpg",
+  "images/portfolio5.jpg",
+  "images/portfolio6.jpg",
+  "images/portfolio7.jpg",
+
+  "images/partner1.jpg",
+  "images/partner2.jpg",
+  "images/partner3.jpg",
+
+  "images/portfolio1-1.jpg",
+  "images/portfolio1-2.jpg",
+  "images/portfolio1-3.jpg",
+
+  "images/portfolio2-1.jpg",
+  "images/portfolio2-2.jpg",
+  "images/portfolio2-3.jpg",
+
+  "images/portfolio3-1.jpg",
+  "images/portfolio3-2.jpg",
+  "images/portfolio3-3.jpg",
+
+  "images/portfolio4-1.jpg",
+  "images/portfolio4-2.jpg",
+  "images/portfolio4-3.jpg",
+
+  "images/portfolio5-1.jpg",
+  "images/portfolio5-2.jpg",
+  "images/portfolio5-3.jpg",
+
+  "images/portfolio6-1.jpg",
+  "images/portfolio6-2.jpg",
+  "images/portfolio6-3.jpg",
+
+  "images/portfolio7-1.jpg",
+  "images/portfolio7-2.jpg",
+  "images/portfolio7-3.jpg"
+];
+
 let currentPortfolioId = null;
 let currentPortfolioImageIndex = 0;
 
@@ -127,6 +173,20 @@ function isValidEmail(email) {
 
 function isValidPassword(password) {
   return password.length >= 8 && password.length <= 14;
+}
+
+function preloadImages(imagePaths) {
+  imagePaths.forEach((path) => {
+    const img = new Image();
+    img.decoding = "async";
+    img.loading = "eager";
+    img.src = path;
+  });
+}
+
+function preloadIndexPageAssets() {
+  if (!document.getElementById("portfolioCarousel")) return;
+  preloadImages(INDEX_PRELOAD_IMAGES);
 }
 
 function applyTheme() {
@@ -252,7 +312,6 @@ function updateUserUI() {
   const profileShort = document.getElementById("profileShort");
   const userDisplay = document.getElementById("userDisplay");
   const mobileUserDisplay = document.getElementById("mobileUserDisplay");
-  const loginFab = document.getElementById("loginFab");
   const profileLinks = document.querySelectorAll(".requires-user");
   const authOnlyLinks = document.querySelectorAll(".auth-only");
 
@@ -263,7 +322,6 @@ function updateUserUI() {
   if (userDisplay) userDisplay.textContent = "Login";
   if (mobileUserDisplay) mobileUserDisplay.textContent = user ? "Profil" : "Login";
   if (profileShort) profileShort.textContent = getDisplayName(user);
-  if (loginFab) loginFab.setAttribute("aria-label", user ? "Profil" : "Login");
 
   if (profileBox) {
     profileBox.classList.toggle("logged-out", !user);
@@ -394,11 +452,13 @@ function openLightbox(productId) {
   }
 
   const button = document.getElementById("lightboxAddButton");
-  button.onclick = () => {
-    addToCart(product.id);
-    closeLightbox();
-    openCart();
-  };
+  if (button) {
+    button.onclick = () => {
+      addToCart(product.id);
+      closeLightbox();
+      openCart();
+    };
+  }
 
   lightbox.classList.add("open");
 }
@@ -552,16 +612,20 @@ function validateRegisterPasswordFields() {
   const validLength = isValidPassword(pw.value);
   const matches = pw.value === pw2.value && pw2.value.length > 0;
 
-  if (pw.value.length > 0 && !validLength) {
-    pwHint.classList.add("show");
-  } else {
-    pwHint.classList.remove("show");
+  if (pwHint) {
+    if (pw.value.length > 0 && !validLength) {
+      pwHint.classList.add("show");
+    } else {
+      pwHint.classList.remove("show");
+    }
   }
 
-  if (pw2.value.length > 0 && !matches) {
-    matchHint.classList.add("show");
-  } else {
-    matchHint.classList.remove("show");
+  if (matchHint) {
+    if (pw2.value.length > 0 && !matches) {
+      matchHint.classList.add("show");
+    } else {
+      matchHint.classList.remove("show");
+    }
   }
 
   button.disabled = !(validLength && matches);
@@ -737,25 +801,31 @@ function initPasswordPage() {
     const nextValid = isValidPassword(next.value);
     const matches = next.value === confirm.value && confirm.value.length > 0;
 
-    if (current.value.length > 0 && !currentMatches) {
-      currentHint.classList.add("show");
-    } else {
-      currentHint.classList.remove("show");
+    if (currentHint) {
+      if (current.value.length > 0 && !currentMatches) {
+        currentHint.classList.add("show");
+      } else {
+        currentHint.classList.remove("show");
+      }
     }
 
     next.disabled = !currentMatches;
     confirm.disabled = !currentMatches;
 
-    if (next.value.length > 0 && !nextValid) {
-      lengthHint.classList.add("show");
-    } else {
-      lengthHint.classList.remove("show");
+    if (lengthHint) {
+      if (next.value.length > 0 && !nextValid) {
+        lengthHint.classList.add("show");
+      } else {
+        lengthHint.classList.remove("show");
+      }
     }
 
-    if (confirm.value.length > 0 && !matches) {
-      matchHint.classList.add("show");
-    } else {
-      matchHint.classList.remove("show");
+    if (matchHint) {
+      if (confirm.value.length > 0 && !matches) {
+        matchHint.classList.add("show");
+      } else {
+        matchHint.classList.remove("show");
+      }
     }
 
     save.disabled = !(currentMatches && nextValid && matches);
@@ -869,6 +939,7 @@ function initGlobalEvents() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  preloadIndexPageAssets();
   initThemeListener();
   initMobileMenu();
   initActiveNav();
