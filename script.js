@@ -16,79 +16,112 @@ const PORTFOLIO_DETAILS = {
     title: "Editorial Shooting",
     category: "Fotografie",
     text: "Moderne Portraits, stilvolle Fotoserien und hochwertige Bildwelten, die Persönlichkeit, Ästhetik und Charakter sichtbar machen. Ideal für Personal Branding, Social Media, Kampagnen oder einen professionellen Gesamtauftritt.",
-    images: [
-      "images/portfolio1-1.jpg",
-      "images/portfolio1-2.jpg",
-      "images/portfolio1-3.jpg"
-    ]
+    images: ["images/portfolio1-1.jpg", "images/portfolio1-2.jpg", "images/portfolio1-3.jpg"]
   },
   2: {
     title: "Automotive Content",
     category: "Auto",
     text: "Professionelle Fotos und Videos für Fahrzeuge — ob kinoreif inszeniert, modern und clean oder perfekt zugeschnitten für Instagram, Reels und Social Media. Für Privatkunden, Unternehmen und Marken mit Anspruch.",
-    images: [
-      "images/portfolio2-1.jpg",
-      "images/portfolio2-2.jpg",
-      "images/portfolio2-3.jpg"
-    ]
+    images: ["images/portfolio2-1.jpg", "images/portfolio2-2.jpg", "images/portfolio2-3.jpg"]
   },
   3: {
     title: "Branding Content",
     category: "Branding",
     text: "Produkte und Marken hochwertig in Szene gesetzt — mit starken Bildern und Videos, die Aufmerksamkeit erzeugen, Vertrauen aufbauen und deine Marke professionell präsentieren. Für Kampagnen, Launches und Werbeinhalte.",
-    images: [
-      "images/portfolio3-1.jpg",
-      "images/portfolio3-2.jpg",
-      "images/portfolio3-3.jpg"
-    ]
+    images: ["images/portfolio3-1.jpg", "images/portfolio3-2.jpg", "images/portfolio3-3.jpg"]
   },
   4: {
     title: "Event Coverage",
     category: "Events",
     text: "Begleitung von Events, Firmenevents, Feiern und größeren Produktionen mit Fokus auf Atmosphäre, Emotion und professioneller Dokumentation. Perfekt für Erinnerungen, Werbung und Social Media Nachbereitung.",
-    images: [
-      "images/portfolio4-1.jpg",
-      "images/portfolio4-2.jpg",
-      "images/portfolio4-3.jpg"
-    ]
+    images: ["images/portfolio4-1.jpg", "images/portfolio4-2.jpg", "images/portfolio4-3.jpg"]
   },
   5: {
     title: "Wedding Content",
     category: "Hochzeiten",
     text: "Hochzeiten stilvoll und emotional festgehalten — in Bildern und Videos, die echte Momente transportieren. Elegant, modern und auf Wunsch sowohl zeitlos als auch social-media-tauglich umgesetzt.",
-    images: [
-      "images/portfolio5-1.jpg",
-      "images/portfolio5-2.jpg",
-      "images/portfolio5-3.jpg"
-    ]
+    images: ["images/portfolio5-1.jpg", "images/portfolio5-2.jpg", "images/portfolio5-3.jpg"]
   },
   6: {
     title: "Grafikdesign",
     category: "Design",
     text: "Logos, Flyer, Plakate und visuelle Konzepte, die auf persönliche Wünsche und den Charakter deiner Marke zugeschnitten sind. Individuell gestaltet, professionell aufbereitet und mit klarem Wiedererkennungswert.",
-    images: [
-      "images/portfolio6-1.jpg",
-      "images/portfolio6-2.jpg",
-      "images/portfolio6-3.jpg"
-    ]
+    images: ["images/portfolio6-1.jpg", "images/portfolio6-2.jpg", "images/portfolio6-3.jpg"]
   },
   7: {
     title: "Webdesign",
     category: "Web",
     text: "Individuell angefertigte Websites mit modernem Look, klarer Struktur und starker visueller Wirkung. Passend für Unternehmen, Kreative und Marken, die online professionell und hochwertig auftreten wollen.",
-    images: [
-      "images/portfolio7-1.jpg",
-      "images/portfolio7-2.jpg",
-      "images/portfolio7-3.jpg"
-    ]
+    images: ["images/portfolio7-1.jpg", "images/portfolio7-2.jpg", "images/portfolio7-3.jpg"]
   }
 };
+
+const BOOKING_CONFIG = [
+  {
+    id: "foto",
+    label: "Fotografie",
+    intro: "Wähle den fotografischen Bereich, der am besten zu deinem Projekt passt.",
+    items: [
+      { title: "Business", price: 400, priceLabel: "~400€" },
+      { title: "Werbung", price: 300, priceLabel: "~300€" },
+      { title: "Immobilien", price: 250, priceLabel: "~250€" },
+      { title: "Auto", price: 250, priceLabel: "~250€" },
+      { title: "Artist", price: 250, priceLabel: "~250€" }
+    ]
+  },
+  {
+    id: "video",
+    label: "Video",
+    intro: "Wähle das Videopaket als grobe Projekt-Richtung.",
+    items: [
+      { title: "Musikvideo", price: 450, priceLabel: "ab ~450€", note: "Preis kann stark abweichen" },
+      { title: "Auto Videos (Carporn)", price: 400, priceLabel: "ab ~400€" },
+      { title: "Hochzeits-Paket", price: 1900, priceLabel: "ab ~1900€" },
+      { title: "Events", price: 700, priceLabel: "ab ~700€", note: "Festival, Firmenevents, Shows… Preis kann stark abweichen" },
+      { title: "Immobilien Video", price: 400, priceLabel: "ab ~400€" },
+      { title: "Business Video", price: 500, priceLabel: "~500€" }
+    ]
+  },
+  {
+    id: "foto-video",
+    label: "Foto & Video",
+    intro: "Besonders stark, wenn ein einheitlicher Look für Bild und Video gewünscht ist.",
+    featured: true,
+    badge: "Im Durchschnitt 30 % sparen",
+    items: [
+      { title: "Auto Paket", price: 450, priceLabel: "ab ~450€" },
+      { title: "Artist Video & Fotos", price: 500, priceLabel: "ab ~500€" },
+      { title: "Commercial Business Paket", price: 750, priceLabel: "ab ~750€", note: "Fotos & Video, um das Business zu bewerben" },
+      { title: "Immobilien Paket", price: 600, priceLabel: "ab ~600€", note: "Fotos und Videos für die Immobilie" }
+    ]
+  },
+  {
+    id: "grafikdesign",
+    label: "Grafikdesign",
+    intro: "Für visuelle Gestaltung, Print und markenstarke Designs.",
+    items: [
+      { title: "Logo", price: 250, priceLabel: "~250€" },
+      { title: "Flyer", price: 200, priceLabel: "~200€" },
+      { title: "Plakate", price: 200, priceLabel: "~200€" },
+      { title: "Kleidung", price: 150, priceLabel: "ab ~150€" },
+      { title: "Autofolierungen", price: 500, priceLabel: "~500€" }
+    ]
+  },
+  {
+    id: "website",
+    label: "Website erstellen",
+    intro: "Für Webprojekte mit professionellem Auftritt.",
+    items: [
+      { title: "Ausschließlich informative Website", price: 800, priceLabel: "800€" },
+      { title: "Online Shop", price: 1200, priceLabel: "1200€" }
+    ]
+  }
+];
 
 const INDEX_PRELOAD_IMAGES = [
   "logo-white.png",
   "logo-black.png",
   "profil.jpg",
-
   "images/portfolio1.jpg",
   "images/portfolio2.jpg",
   "images/portfolio3.jpg",
@@ -96,35 +129,27 @@ const INDEX_PRELOAD_IMAGES = [
   "images/portfolio5.jpg",
   "images/portfolio6.jpg",
   "images/portfolio7.jpg",
-
   "images/partner1.jpg",
   "images/partner2.jpg",
   "images/partner3.jpg",
-
   "images/portfolio1-1.jpg",
   "images/portfolio1-2.jpg",
   "images/portfolio1-3.jpg",
-
   "images/portfolio2-1.jpg",
   "images/portfolio2-2.jpg",
   "images/portfolio2-3.jpg",
-
   "images/portfolio3-1.jpg",
   "images/portfolio3-2.jpg",
   "images/portfolio3-3.jpg",
-
   "images/portfolio4-1.jpg",
   "images/portfolio4-2.jpg",
   "images/portfolio4-3.jpg",
-
   "images/portfolio5-1.jpg",
   "images/portfolio5-2.jpg",
   "images/portfolio5-3.jpg",
-
   "images/portfolio6-1.jpg",
   "images/portfolio6-2.jpg",
   "images/portfolio6-3.jpg",
-
   "images/portfolio7-1.jpg",
   "images/portfolio7-2.jpg",
   "images/portfolio7-3.jpg"
@@ -132,6 +157,9 @@ const INDEX_PRELOAD_IMAGES = [
 
 let currentPortfolioId = null;
 let currentPortfolioImageIndex = 0;
+let activeBookingTab = BOOKING_CONFIG[0].id;
+let portfolioTouchStartX = 0;
+let portfolioTouchStartY = 0;
 
 function getStoredUser() {
   return JSON.parse(localStorage.getItem("mw_user") || "null");
@@ -161,9 +189,7 @@ function updateStoredUser(updatedUser) {
 
 function getDisplayName(user) {
   if (!user) return "Login";
-  if (user.email && user.email.includes("@")) {
-    return user.email.split("@")[0];
-  }
+  if (user.email && user.email.includes("@")) return user.email.split("@")[0];
   return "Profil";
 }
 
@@ -176,7 +202,7 @@ function isValidPassword(password) {
 }
 
 function preloadImages(imagePaths) {
-  imagePaths.forEach((path) => {
+  imagePaths.forEach(path => {
     const img = new Image();
     img.decoding = "async";
     img.loading = "eager";
@@ -209,18 +235,14 @@ function applyTheme() {
 function initThemeListener() {
   applyTheme();
   const colorScheme = window.matchMedia("(prefers-color-scheme: light)");
-  if (colorScheme.addEventListener) {
-    colorScheme.addEventListener("change", applyTheme);
-  } else if (colorScheme.addListener) {
-    colorScheme.addListener(applyTheme);
-  }
+  if (colorScheme.addEventListener) colorScheme.addEventListener("change", applyTheme);
+  else if (colorScheme.addListener) colorScheme.addListener(applyTheme);
 }
 
 function initMobileMenu() {
   const menuToggle = document.getElementById("menuToggle");
   const mobileMenu = document.getElementById("mobileMenu");
   const mobileLinks = document.querySelectorAll(".mobile-nav a");
-
   if (!menuToggle || !mobileMenu) return;
 
   function closeMobileMenu() {
@@ -233,41 +255,31 @@ function initMobileMenu() {
     menuToggle.setAttribute("aria-expanded", String(isOpen));
   });
 
-  mobileLinks.forEach(link => {
-    link.addEventListener("click", closeMobileMenu);
-  });
+  mobileLinks.forEach(link => link.addEventListener("click", closeMobileMenu));
 
-  document.addEventListener("click", (event) => {
+  document.addEventListener("click", event => {
     const isClickInsideMenu = mobileMenu.contains(event.target);
     const isClickToggle = menuToggle.contains(event.target);
-
-    if (!isClickInsideMenu && !isClickToggle) {
-      closeMobileMenu();
-    }
+    if (!isClickInsideMenu && !isClickToggle) closeMobileMenu();
   });
 }
 
 function initActiveNav() {
   const sections = document.querySelectorAll("main section[id]");
   const allNavLinks = document.querySelectorAll(".desktop-nav a[href^='#'], .mobile-nav a[href^='#']");
-
   if (!sections.length || !allNavLinks.length) return;
 
   function setActiveNav() {
     let currentId = "home";
-
     sections.forEach(section => {
       const top = window.scrollY + 150;
-      if (top >= section.offsetTop) {
-        currentId = section.getAttribute("id");
-      }
+      if (top >= section.offsetTop) currentId = section.getAttribute("id");
     });
 
     allNavLinks.forEach(link => {
       const href = link.getAttribute("href");
       if (!href.startsWith("#")) return;
-      const target = href.replace("#", "");
-      link.classList.toggle("active", target === currentId);
+      link.classList.toggle("active", href.replace("#", "") === currentId);
     });
   }
 
@@ -279,24 +291,20 @@ function initActiveNav() {
 function initProfileMenu() {
   const profile = document.getElementById("profileBox");
   const trigger = document.getElementById("profileTrigger");
-
   if (!profile || !trigger) return;
 
-  trigger.addEventListener("click", (e) => {
+  trigger.addEventListener("click", e => {
     const loggedOut = profile.classList.contains("logged-out");
     if (loggedOut) {
       window.location.href = "login.html";
       return;
     }
-
     e.preventDefault();
     profile.classList.toggle("open");
   });
 
-  document.addEventListener("click", (e) => {
-    if (!profile.contains(e.target)) {
-      profile.classList.remove("open");
-    }
+  document.addEventListener("click", e => {
+    if (!profile.contains(e.target)) profile.classList.remove("open");
   });
 }
 
@@ -315,25 +323,23 @@ function updateUserUI() {
   const profileLinks = document.querySelectorAll(".requires-user");
   const authOnlyLinks = document.querySelectorAll(".auth-only");
 
-  if (profileTrigger) {
-    profileTrigger.textContent = user ? "Profil" : "Login";
-  }
-
+  if (profileTrigger) profileTrigger.textContent = user ? "Profil" : "Login";
   if (userDisplay) userDisplay.textContent = "Login";
   if (mobileUserDisplay) mobileUserDisplay.textContent = user ? "Profil" : "Login";
   if (profileShort) profileShort.textContent = getDisplayName(user);
-
-  if (profileBox) {
-    profileBox.classList.toggle("logged-out", !user);
-  }
+  if (profileBox) profileBox.classList.toggle("logged-out", !user);
 
   profileLinks.forEach(el => {
     el.style.display = user ? "block" : "none";
   });
 
   authOnlyLinks.forEach(el => {
-    el.style.display = user ? "block" : "none";
+    el.style.display = user ? "none" : "block";
   });
+
+  if (mobileUserDisplay) {
+    mobileUserDisplay.href = user ? "profile.html" : "login.html";
+  }
 }
 
 function getCart() {
@@ -361,6 +367,21 @@ function addToCart(productId) {
   updateCartUI();
 }
 
+function addCustomBookingItem(title, price, category) {
+  const cart = getCart();
+  cart.push({
+    cartId: Date.now() + Math.random(),
+    id: `booking-${Date.now()}`,
+    title: `${category}: ${title}`,
+    price,
+    image: ""
+  });
+  setCart(cart);
+  updateCartUI();
+  renderCartItems();
+  openCart();
+}
+
 function removeFromCart(cartId) {
   const cart = getCart().filter(item => item.cartId !== cartId);
   setCart(cart);
@@ -369,7 +390,7 @@ function removeFromCart(cartId) {
 }
 
 function getCartTotal() {
-  return getCart().reduce((sum, item) => sum + item.price, 0);
+  return getCart().reduce((sum, item) => sum + Number(item.price || 0), 0);
 }
 
 function updateCartUI() {
@@ -389,7 +410,6 @@ function renderCartItems() {
   if (!cartItems) return;
 
   const cart = getCart();
-
   if (!cart.length) {
     cartItems.innerHTML = `<p class="empty-state">Dein Warenkorb ist aktuell leer.</p>`;
     updateCartUI();
@@ -400,9 +420,9 @@ function renderCartItems() {
     <div class="cart-item">
       <div>
         <strong>${item.title}</strong>
-        <span>${item.price.toFixed(2).replace(".", ",")} €</span>
+        <span>${Number(item.price).toFixed(2).replace(".", ",")} €</span>
       </div>
-      <span>${item.price.toFixed(2).replace(".", ",")} €</span>
+      <span>${Number(item.price).toFixed(2).replace(".", ",")} €</span>
       <button class="remove-item" type="button" onclick="removeFromCart(${item.cartId})">Löschen</button>
     </div>
   `).join("");
@@ -430,7 +450,6 @@ function checkout() {
     window.location.href = "login.html";
     return;
   }
-
   window.location.href = "failed.html";
 }
 
@@ -491,7 +510,6 @@ function initHorizontalCarousel(carouselId, prevId, nextId) {
   const carousel = document.getElementById(carouselId);
   const prev = document.getElementById(prevId);
   const next = document.getElementById(nextId);
-
   if (!carousel || !prev || !next) return;
 
   const getStep = () => {
@@ -514,7 +532,7 @@ function initHorizontalCarousel(carouselId, prevId, nextId) {
   let startX = 0;
   let scrollLeft = 0;
 
-  carousel.addEventListener("mousedown", (e) => {
+  carousel.addEventListener("mousedown", e => {
     isDown = true;
     carousel.classList.add("dragging");
     startX = e.pageX - carousel.offsetLeft;
@@ -531,7 +549,7 @@ function initHorizontalCarousel(carouselId, prevId, nextId) {
     carousel.classList.remove("dragging");
   });
 
-  carousel.addEventListener("mousemove", (e) => {
+  carousel.addEventListener("mousemove", e => {
     if (!isDown) return;
     e.preventDefault();
     const x = e.pageX - carousel.offsetLeft;
@@ -575,13 +593,8 @@ function changePortfolioDetailImage(direction) {
 
   currentPortfolioImageIndex += direction;
 
-  if (currentPortfolioImageIndex < 0) {
-    currentPortfolioImageIndex = data.images.length - 1;
-  }
-
-  if (currentPortfolioImageIndex >= data.images.length) {
-    currentPortfolioImageIndex = 0;
-  }
+  if (currentPortfolioImageIndex < 0) currentPortfolioImageIndex = data.images.length - 1;
+  if (currentPortfolioImageIndex >= data.images.length) currentPortfolioImageIndex = 0;
 
   updatePortfolioModalImage();
 }
@@ -606,27 +619,13 @@ function validateRegisterPasswordFields() {
   const pwHint = document.getElementById("registerPasswordHint");
   const matchHint = document.getElementById("registerPasswordMatchHint");
   const button = document.getElementById("registerSubmit");
-
   if (!pw || !pw2 || !button) return;
 
   const validLength = isValidPassword(pw.value);
   const matches = pw.value === pw2.value && pw2.value.length > 0;
 
-  if (pwHint) {
-    if (pw.value.length > 0 && !validLength) {
-      pwHint.classList.add("show");
-    } else {
-      pwHint.classList.remove("show");
-    }
-  }
-
-  if (matchHint) {
-    if (pw2.value.length > 0 && !matches) {
-      matchHint.classList.add("show");
-    } else {
-      matchHint.classList.remove("show");
-    }
-  }
+  if (pwHint) pwHint.classList.toggle("show", pw.value.length > 0 && !validLength);
+  if (matchHint) matchHint.classList.toggle("show", pw2.value.length > 0 && !matches);
 
   button.disabled = !(validLength && matches);
 }
@@ -668,14 +667,7 @@ function registerUser(event) {
     return;
   }
 
-  const newUser = {
-    firstName,
-    lastName,
-    email,
-    password,
-    orders: []
-  };
-
+  const newUser = { firstName, lastName, email, password, orders: [] };
   users.push(newUser);
   setAllUsers(users);
   setStoredUser(newUser);
@@ -801,33 +793,11 @@ function initPasswordPage() {
     const nextValid = isValidPassword(next.value);
     const matches = next.value === confirm.value && confirm.value.length > 0;
 
-    if (currentHint) {
-      if (current.value.length > 0 && !currentMatches) {
-        currentHint.classList.add("show");
-      } else {
-        currentHint.classList.remove("show");
-      }
-    }
-
+    if (currentHint) currentHint.classList.toggle("show", current.value.length > 0 && !currentMatches);
     next.disabled = !currentMatches;
     confirm.disabled = !currentMatches;
-
-    if (lengthHint) {
-      if (next.value.length > 0 && !nextValid) {
-        lengthHint.classList.add("show");
-      } else {
-        lengthHint.classList.remove("show");
-      }
-    }
-
-    if (matchHint) {
-      if (confirm.value.length > 0 && !matches) {
-        matchHint.classList.add("show");
-      } else {
-        matchHint.classList.remove("show");
-      }
-    }
-
+    if (lengthHint) lengthHint.classList.toggle("show", next.value.length > 0 && !nextValid);
+    if (matchHint) matchHint.classList.toggle("show", confirm.value.length > 0 && !matches);
     save.disabled = !(currentMatches && nextValid && matches);
   }
 
@@ -895,10 +865,115 @@ function renderOrders() {
       <p>Datum: ${order.date}</p>
       <p>Gesamt: ${order.total}</p>
       <div class="order-products">
-        ${order.items.map(item => `<div>${item.title} – ${item.price.toFixed(2).replace(".", ",")} €</div>`).join("")}
+        ${order.items.map(item => `<div>${item.title} – ${Number(item.price).toFixed(2).replace(".", ",")} €</div>`).join("")}
       </div>
     </article>
   `).join("");
+}
+
+function renderBookingTabs() {
+  const tabsEl = document.getElementById("bookingTabs");
+  if (!tabsEl) return;
+
+  tabsEl.innerHTML = BOOKING_CONFIG.map(group => `
+    <button type="button"
+      class="booking-tab ${group.id === activeBookingTab ? "active" : ""} ${group.featured ? "booking-tab-highlight" : ""}"
+      data-booking-tab="${group.id}">
+      ${group.label}
+      ${group.featured ? '<span class="booking-tab-save-dot"></span>' : ""}
+    </button>
+  `).join("");
+
+  tabsEl.querySelectorAll("[data-booking-tab]").forEach(button => {
+    button.addEventListener("click", () => {
+      activeBookingTab = button.getAttribute("data-booking-tab");
+      renderBookingTabs();
+      renderBookingConfigurator();
+    });
+  });
+}
+
+function renderBookingConfigurator() {
+  const configurator = document.getElementById("bookingConfigurator");
+  if (!configurator) return;
+
+  const activeGroup = BOOKING_CONFIG.find(group => group.id === activeBookingTab) || BOOKING_CONFIG[0];
+
+  configurator.innerHTML = `
+    <div class="booking-panel ${activeGroup.featured ? "booking-panel-featured" : ""}">
+      ${activeGroup.featured ? `
+        <span class="booking-badge">
+          <span class="booking-badge-dot"></span>
+          ${activeGroup.badge}
+        </span>
+      ` : ""}
+
+      <div class="booking-panel-head">
+        <small class="hero-eyebrow">${activeGroup.label}</small>
+        <h2>${activeGroup.label}</h2>
+        <p>${activeGroup.intro}</p>
+      </div>
+
+      <div class="booking-options-grid">
+        ${activeGroup.items.map(item => `
+          <article class="booking-option-card">
+            <div class="booking-option-head">
+              <h3>${item.title}</h3>
+              <span class="booking-option-price">${item.priceLabel}</span>
+            </div>
+            ${item.note ? `<p class="booking-option-note">${item.note}</p>` : `<p class="booking-option-note">Schätzpreis auf Basis vergangener Projekte.</p>`}
+            <button
+              type="button"
+              class="button ${activeGroup.featured ? "primary" : ""}"
+              data-booking-add='${JSON.stringify({
+                category: activeGroup.label,
+                title: item.title,
+                price: item.price
+              }).replace(/'/g, "&apos;")}'>
+              Zum Warenkorb
+            </button>
+          </article>
+        `).join("")}
+      </div>
+    </div>
+  `;
+
+  configurator.querySelectorAll("[data-booking-add]").forEach(button => {
+    button.addEventListener("click", () => {
+      const data = JSON.parse(button.getAttribute("data-booking-add"));
+      addCustomBookingItem(data.title, data.price, data.category);
+    });
+  });
+}
+
+function initBookingPage() {
+  const configurator = document.getElementById("bookingConfigurator");
+  if (!configurator) return;
+  renderBookingTabs();
+  renderBookingConfigurator();
+}
+
+function initPortfolioSwipe() {
+  const imageEl = document.getElementById("portfolioModalImage");
+  if (!imageEl) return;
+
+  imageEl.addEventListener("touchstart", event => {
+    const touch = event.changedTouches[0];
+    portfolioTouchStartX = touch.clientX;
+    portfolioTouchStartY = touch.clientY;
+  }, { passive: true });
+
+  imageEl.addEventListener("touchend", event => {
+    const touch = event.changedTouches[0];
+    const deltaX = touch.clientX - portfolioTouchStartX;
+    const deltaY = touch.clientY - portfolioTouchStartY;
+
+    if (Math.abs(deltaX) < 40 || Math.abs(deltaY) > 80) return;
+    if (!document.getElementById("portfolioModal")?.classList.contains("open")) return;
+
+    if (deltaX < 0) changePortfolioDetailImage(1);
+    else changePortfolioDetailImage(-1);
+  }, { passive: true });
 }
 
 function initGlobalEvents() {
@@ -907,24 +982,24 @@ function initGlobalEvents() {
   const portfolioModal = document.getElementById("portfolioModal");
 
   if (cartOverlay) {
-    cartOverlay.addEventListener("click", (e) => {
+    cartOverlay.addEventListener("click", e => {
       if (e.target === cartOverlay) closeCart();
     });
   }
 
   if (lightbox) {
-    lightbox.addEventListener("click", (e) => {
+    lightbox.addEventListener("click", e => {
       if (e.target === lightbox) closeLightbox();
     });
   }
 
   if (portfolioModal) {
-    portfolioModal.addEventListener("click", (e) => {
+    portfolioModal.addEventListener("click", e => {
       if (e.target === portfolioModal) closePortfolioModal();
     });
   }
 
-  document.addEventListener("keydown", (e) => {
+  document.addEventListener("keydown", e => {
     if (e.key === "Escape") {
       closeCart();
       closeLightbox();
@@ -936,6 +1011,8 @@ function initGlobalEvents() {
       if (e.key === "ArrowLeft") changePortfolioDetailImage(-1);
     }
   });
+
+  initPortfolioSwipe();
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -954,5 +1031,6 @@ document.addEventListener("DOMContentLoaded", () => {
   initProfilePage();
   initPasswordPage();
   renderOrders();
+  initBookingPage();
   initGlobalEvents();
 });
