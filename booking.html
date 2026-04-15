@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#000000" />
-  <title>Termin buchen – MarlinW Media</title>
+  <title>Konfiguriere dein Projekt – MarlinW Media</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -19,10 +19,8 @@
   </div>
 
   <header class="site-header">
-    <div class="header-inner">
-      <button class="menu-toggle hidden-mobile" type="button" style="visibility:hidden;">Menü</button>
-
-      <a href="index.html#home" class="brand" aria-label="Zur Startseite">
+    <div class="header-inner booking-header-inner">
+      <a href="index.html#home" class="brand brand-left" aria-label="Zur Startseite">
         <img src="logo-white.png" alt="MarlinW Media Logo" class="brand-logo" id="brandLogo" />
       </a>
 
@@ -39,99 +37,51 @@
     <section class="booking-hero">
       <div class="booking-hero-copy">
         <span class="hero-eyebrow">Projekt anfragen</span>
-        <h1>Termin buchen</h1>
+        <h1>Konfiguriere dein Projekt</h1>
         <p>
-          Wähle einfach die passende Leistung aus. Die Felder sind schon vorbereitet,
-          das eigentliche Durchklicken und die Funktion bauen wir im nächsten Schritt ein.
+          Die Preise richten sich nach dem tatsächlichen Arbeitsaufwand. Die Preise im Konfigurator
+          sind nur Schätzpreise aus vergangenen Projekten. Der tatsächliche Stundenlohn lässt sich aus
+          einer <a href="pricelist.html" class="inline-link">Preisliste</a> hervorheben.
         </p>
       </div>
     </section>
 
     <section class="booking-tabs-section">
-      <div class="booking-tabs" aria-label="Leistungsbereiche">
-        <button type="button" class="booking-tab active">Foto</button>
-        <button type="button" class="booking-tab">Video</button>
-        <button type="button" class="booking-tab booking-tab-highlight">
-          Foto &amp; Video Paket
-          <span class="booking-tab-save-dot"></span>
-        </button>
-        <button type="button" class="booking-tab">Grafikdesign</button>
-        <button type="button" class="booking-tab">Website erstellen</button>
-      </div>
-
-      <div class="booking-grid">
-        <article class="booking-card">
-          <div class="booking-card-head">
-            <small class="hero-eyebrow">Foto</small>
-            <h2>Fotografie</h2>
-          </div>
-          <p>
-            Für Portraits, Branding, Social Media, Kampagnen, Events
-            und hochwertige Bildwelten mit klarem visuellen Anspruch.
-          </p>
-          <button type="button" class="button">Später auswählbar</button>
-        </article>
-
-        <article class="booking-card">
-          <div class="booking-card-head">
-            <small class="hero-eyebrow">Video</small>
-            <h2>Videografie</h2>
-          </div>
-          <p>
-            Für Reels, Werbeclips, Eventfilme, Automotive Content,
-            Markenauftritte und moderne Videoformate.
-          </p>
-          <button type="button" class="button">Später auswählbar</button>
-        </article>
-
-        <article class="booking-card booking-card-featured">
-          <span class="booking-badge">
-            <span class="booking-badge-dot"></span>
-            Im Durchschnitt 30 % sparen
-          </span>
-
-          <div class="booking-card-head">
-            <small class="hero-eyebrow">Paket</small>
-            <h2>Foto &amp; Video zusammen</h2>
-          </div>
-          <p>
-            Ideal, wenn du beides in einem einheitlichen Look buchen willst.
-            Besonders stark für Unternehmen, Events, Marken und größere Produktionen.
-          </p>
-          <button type="button" class="button primary">Später auswählbar</button>
-        </article>
-
-        <article class="booking-card">
-          <div class="booking-card-head">
-            <small class="hero-eyebrow">Design</small>
-            <h2>Grafikdesign</h2>
-          </div>
-          <p>
-            Für Logos, Flyer, Poster, Werbemittel und visuelle Gestaltung,
-            die professionell aussieht und zur Marke passt.
-          </p>
-          <button type="button" class="button">Später auswählbar</button>
-        </article>
-
-        <article class="booking-card">
-          <div class="booking-card-head">
-            <small class="hero-eyebrow">Digital</small>
-            <h2>Website erstellen</h2>
-          </div>
-          <p>
-            Moderne Websites mit starkem Auftritt, klarer Struktur
-            und hochwertigem Design für Unternehmen, Marken und Kreative.
-          </p>
-          <button type="button" class="button">Später auswählbar</button>
-        </article>
-      </div>
+      <div class="booking-tabs" id="bookingTabs" aria-label="Leistungsbereiche"></div>
+      <div class="booking-configurator" id="bookingConfigurator"></div>
     </section>
   </main>
+
+  <button class="cart-fab" onclick="openCart()" aria-label="Warenkorb öffnen">
+    🛒
+    <span class="cart-count">0</span>
+  </button>
+
+  <div class="cart-overlay" id="cartOverlay">
+    <div class="cart-sheet">
+      <button class="cart-close" type="button" onclick="closeCart()" aria-label="Schließen">✕</button>
+
+      <div class="cart-brand">
+        <img src="logo-white.png" alt="MarlinW Media Logo" id="cartBrandLogo" />
+        <div>
+          <strong>MarlinW Media</strong>
+          <h2>Warenkorb</h2>
+        </div>
+      </div>
+
+      <div class="cart-items" id="cartItems"></div>
+
+      <div class="cart-footer">
+        <span class="cart-total">Gesamt: <span id="cartTotal">0,00 €</span></span>
+        <button class="button primary" type="button" onclick="checkout()">Kaufen</button>
+      </div>
+    </div>
+  </div>
 
   <footer>
     <div class="footer-inner">
       <span>© 2026 MarlinW Media</span>
-      <span>Termin buchen</span>
+      <span>Konfiguriere dein Projekt</span>
       <a href="impressum.html" class="footer-link">Impressum</a>
     </div>
   </footer>
