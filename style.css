@@ -213,6 +213,10 @@ body.light-mode.impressum-page {
   gap: 18px;
 }
 
+.booking-header-inner {
+  grid-template-columns: auto 1fr;
+}
+
 .impressum-header-inner {
   grid-template-columns: auto 1fr;
 }
@@ -551,7 +555,9 @@ body.light-mode .button.primary {
 .profile-editor-card,
 .order-card,
 .portfolio-modal-panel,
-.booking-card {
+.booking-panel,
+.booking-option-card,
+.price-image-card {
   border: 1px solid var(--line);
   border-radius: 26px;
   overflow: hidden;
@@ -570,7 +576,9 @@ body.light-mode .lightbox-panel,
 body.light-mode .profile-editor-card,
 body.light-mode .order-card,
 body.light-mode .portfolio-modal-panel,
-body.light-mode .booking-card {
+body.light-mode .booking-panel,
+body.light-mode .booking-option-card,
+body.light-mode .price-image-card {
   background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(245,245,245,0.96));
 }
 
@@ -578,7 +586,7 @@ body.light-mode .booking-card {
 .partner-card:hover,
 .contact-card:hover,
 .shop-card:hover,
-.booking-card:hover {
+.booking-option-card:hover {
   transform: translateY(-4px);
   border-color: var(--line-strong);
 }
@@ -628,35 +636,6 @@ body.light-mode .placeholder-media {
 body.light-mode .placeholder-label {
   background: rgba(255,255,255,0.84);
   color: #111111;
-}
-
-.play-badge {
-  position: absolute;
-  top: 18px;
-  right: 18px;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  border: 1px solid var(--line-strong);
-  background: rgba(0,0,0,0.35);
-  display: grid;
-  place-items: center;
-  backdrop-filter: blur(8px);
-}
-
-body.light-mode .play-badge {
-  background: rgba(255,255,255,0.72);
-}
-
-.play-badge::before {
-  content: "";
-  display: block;
-  margin-left: 3px;
-  width: 0;
-  height: 0;
-  border-top: 8px solid transparent;
-  border-bottom: 8px solid transparent;
-  border-left: 12px solid var(--text);
 }
 
 .item-body {
@@ -803,14 +782,6 @@ body.light-mode .play-badge {
   position: relative;
 }
 
-.portfolio-toolbar {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 12px;
-}
-
 .portfolio-controls {
   display: flex;
   gap: 10px;
@@ -908,7 +879,11 @@ body.light-mode .portfolio-open-hint {
 
 .partner-media {
   position: relative;
-  background-color: transparent;
+  background:
+    radial-gradient(circle at 22% 18%, rgba(255,255,255,0.08), transparent 22%),
+    linear-gradient(135deg, rgba(255,255,255,0.06) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.06) 75%, transparent 75%, transparent 100%);
+  background-size: auto, 18px 18px;
+  background-position: center, center;
 }
 
 .partner-image {
@@ -916,7 +891,7 @@ body.light-mode .portfolio-open-hint {
   inset: 0;
   z-index: 1;
   background-repeat: no-repeat;
-  background-size: cover;
+  background-size: contain;
   background-position: center;
 }
 
@@ -1007,6 +982,7 @@ body.light-mode .portfolio-modal-close {
     linear-gradient(135deg, rgba(255,255,255,0.02), transparent 35%, rgba(255,255,255,0.05));
   background-size: cover;
   background-position: center;
+  touch-action: pan-y;
 }
 
 body.light-mode .portfolio-modal-image {
@@ -1438,7 +1414,8 @@ body.light-mode .cart-fab {
   color: var(--text-soft);
 }
 
-.auth-links a {
+.auth-links a,
+.inline-link {
   border-bottom: 1px solid currentColor;
 }
 
@@ -1565,7 +1542,7 @@ body.light-mode .impressum-card {
 }
 
 .booking-hero-copy {
-  max-width: 760px;
+  max-width: 860px;
 }
 
 .booking-tabs-section {
@@ -1623,36 +1600,64 @@ body.light-mode .booking-tab.active {
   box-shadow: 0 0 10px rgba(255, 59, 48, 0.6);
 }
 
-.booking-grid {
+.booking-panel {
+  position: relative;
+  padding: 28px;
+  overflow: visible;
+}
+
+.booking-panel-featured {
+  border-color: rgba(255, 59, 48, 0.32);
+}
+
+.booking-panel-head h2 {
+  font-size: clamp(1.8rem, 3vw, 2.5rem);
+  margin-bottom: 10px;
+}
+
+.booking-panel-head p {
+  color: var(--text-soft);
+  line-height: 1.75;
+  margin-bottom: 24px;
+  max-width: 760px;
+}
+
+.booking-options-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
 }
 
-.booking-card {
-  position: relative;
-  padding: 26px;
-  overflow: visible;
+.booking-option-card {
+  padding: 22px;
 }
 
-.booking-card-head {
-  margin-bottom: 14px;
-}
-
-.booking-card h2 {
-  font-size: 1.45rem;
-  margin-top: 4px;
+.booking-option-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 12px;
   margin-bottom: 10px;
 }
 
-.booking-card p {
-  color: var(--text-soft);
-  line-height: 1.75;
-  margin-bottom: 20px;
+.booking-option-head h3 {
+  font-size: 1.1rem;
 }
 
-.booking-card-featured {
-  border-color: rgba(255, 59, 48, 0.32);
+.booking-option-price {
+  white-space: nowrap;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  font-size: 0.92rem;
+}
+
+.booking-option-note {
+  color: var(--text-soft);
+  line-height: 1.65;
+  min-height: 52px;
+  margin-bottom: 18px;
 }
 
 .booking-badge {
@@ -1678,6 +1683,30 @@ body.light-mode .booking-tab.active {
   border-radius: 50%;
   background: #ffffff;
   opacity: 0.95;
+}
+
+.price-page {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 42px 22px 72px;
+  position: relative;
+  z-index: 1;
+}
+
+.price-image-wrap {
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+.price-image-card {
+  padding: 18px;
+}
+
+.price-image-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 24px;
 }
 
 .footer-simple {
@@ -1767,7 +1796,7 @@ footer {
   .contact-layout,
   .lightbox-grid,
   .portfolio-modal-grid,
-  .booking-grid {
+  .booking-options-grid {
     grid-template-columns: 1fr;
   }
 
@@ -1783,6 +1812,10 @@ footer {
 
 @media (max-width: 760px) {
   .header-inner {
+    grid-template-columns: auto 1fr;
+  }
+
+  .booking-header-inner {
     grid-template-columns: auto 1fr;
   }
 
@@ -1802,6 +1835,10 @@ footer {
     justify-self: end;
   }
 
+  .brand-left {
+    justify-self: start;
+  }
+
   .hidden-mobile {
     display: none !important;
   }
@@ -1813,7 +1850,8 @@ footer {
   .page-intro,
   .profile-page,
   .impressum-wrap,
-  .booking-page {
+  .booking-page,
+  .price-page {
     padding-left: 18px;
     padding-right: 18px;
   }
@@ -1852,7 +1890,9 @@ footer {
   .order-card,
   .portfolio-modal-panel,
   .impressum-card,
-  .booking-card {
+  .booking-panel,
+  .booking-option-card,
+  .price-image-card {
     padding: 24px 20px;
     border-radius: 22px;
   }
@@ -1895,6 +1935,11 @@ footer {
     position: static;
     margin-bottom: 16px;
     width: fit-content;
+  }
+
+  .booking-option-head {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .footer-inner {
