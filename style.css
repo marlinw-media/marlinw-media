@@ -4,6 +4,13 @@
   box-sizing: border-box;
 }
 
+.price-list-upload-image {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 24px;
+}
+
 :root {
   --bg: #050505;
   --bg-soft: #0f0f10;
