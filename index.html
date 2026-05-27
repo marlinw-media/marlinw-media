@@ -5,280 +5,348 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#000000" />
   <title>MarlinW Media</title>
-
-  <!-- PRELOADS -->
-  <link rel="preload" as="image" href="images/header-image.jpg">
-  <link rel="preload" as="image" href="images/portfolio1.jpg">
-  <link rel="preload" as="image" href="images/portfolio2.jpg">
-  <link rel="preload" as="image" href="images/portfolio3.jpg">
-  <link rel="preload" as="image" href="images/partner1.jpg">
-  <link rel="preload" as="image" href="images/partner2.jpg">
-  <link rel="preload" as="image" href="images/partner3.jpg">
-
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-
-  <div class="background">
+  <div class="background" aria-hidden="true">
     <div class="grid"></div>
+    <div class="shape one"></div>
+    <div class="shape two"></div>
+    <div class="shape three"></div>
+    <div class="shape four"></div>
+    <div class="orb one"></div>
+    <div class="orb two"></div>
   </div>
 
   <header class="site-header">
     <div class="header-inner">
+      <button class="menu-toggle" id="menuToggle" aria-expanded="false" aria-controls="mobileMenu">
+        Menü
+      </button>
 
-      <a href="#home" class="brand">
-        <img src="logo-white.png" alt="Logo" class="brand-logo" id="brandLogo">
+      <a href="#home" class="brand" aria-label="Zur Startseite">
+        <img src="logo-white.png" alt="MarlinW Media Logo" class="brand-logo" id="brandLogo" />
       </a>
 
-      <nav class="desktop-nav">
+      <nav class="desktop-nav" aria-label="Hauptnavigation">
         <a href="#portfolio">Portfolio</a>
         <a href="#partner">Partner</a>
         <a href="shop.html">Bilder kaufen</a>
-
-        <a href="konfigurator.html" class="config-link">
-          Konfigurator
-        </a>
-
         <a href="#kontakt">Kontakt</a>
-      </nav>
 
+        <div class="profile" id="profileBox">
+          <button class="profile-trigger" id="profileTrigger" type="button">Login</button>
+          <div class="profile-menu">
+            <div class="profile-short" id="profileShort">User</div>
+            <a href="profile.html" class="requires-user">Profil bearbeiten</a>
+            <button type="button" class="requires-user" onclick="openCart()">Warenkorb</button>
+            <a href="orders.html" class="requires-user">Bestellungen</a>
+            <button type="button" class="requires-user" onclick="logoutUser()">Logout</button>
+            <a href="login.html" class="auth-only" id="userDisplay">Login</a>
+          </div>
+        </div>
+      </nav>
+    </div>
+
+    <div class="mobile-menu" id="mobileMenu">
+      <nav class="mobile-nav" aria-label="Mobile Navigation">
+        <a href="#portfolio">Portfolio</a>
+        <a href="#partner">Partner</a>
+        <a href="shop.html">Bilder kaufen</a>
+        <a href="#kontakt">Kontakt</a>
+        <a href="login.html" id="mobileUserDisplay">Login</a>
+      </nav>
     </div>
   </header>
 
   <main>
-
-    <!-- HERO -->
     <section class="hero" id="home">
-
-      <div class="hero-left">
-        <span class="hero-eyebrow">
-          Kreative Medienproduktion
-        </span>
-
+      <div>
+        <span class="hero-eyebrow">Kreative Medienproduktion</span>
         <h1>MarlinW Media</h1>
-
         <p>
-          Hochwertige Medienproduktionen für Marken,
-          Events, Unternehmen und Social Media.
+          Visuelle Inhalte mit Charakter. Von starken Bildwelten über moderne Videoprojekte
+          bis zu hochwertiger Markenpräsenz: MarlinW Media steht für saubere Ästhetik,
+          klare Kommunikation und Ergebnisse, die im Kopf bleiben.
         </p>
 
         <div class="hero-actions">
+          <a class="button primary" href="#portfolio">Portfolio ansehen</a>
+          <a class="button" href="#kontakt">Kontakt aufnehmen</a>
 
-          <a class="button primary" href="#portfolio">
-            Portfolio ansehen
+          <a class="booking-cta" href="booking.html" aria-label="Jetzt Termin buchen">
+            <span class="booking-rec">
+              <span class="booking-rec-dot"></span>
+            </span>
+            <span>Jetzt Termin buchen</span>
           </a>
-
-          <a class="button" href="#kontakt">
-            Kontakt aufnehmen
-          </a>
-
-          <a class="button rec-button" href="konfigurator.html">
-            <span class="rec-dot"></span>
-            Jetzt Termin buchen
-          </a>
-
         </div>
       </div>
-
-      <!-- HERO IMAGE -->
-      <div class="hero-image-box">
-        <img
-          src="images/header-image.jpg"
-          alt="MarlinW Media"
-          class="hero-image"
-        >
-      </div>
-
     </section>
 
-    <!-- PORTFOLIO -->
     <section id="portfolio">
-
-      <div class="section-top-row">
-
-        <h2>Portfolio</h2>
-
-        <div class="portfolio-controls">
-          <button class="carousel-btn" id="portfolioPrev">
-            ←
-          </button>
-
-          <button class="carousel-btn" id="portfolioNext">
-            →
-          </button>
+      <div class="section-head section-head-inline">
+        <div>
+          <h2>Portfolio</h2>
         </div>
 
+        <div class="portfolio-controls">
+          <button class="carousel-btn" id="portfolioPrev" type="button" aria-label="Zurück">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M15 18l-6-6 6-6"></path>
+            </svg>
+          </button>
+          <button class="carousel-btn" id="portfolioNext" type="button" aria-label="Weiter">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 18l6-6-6-6"></path>
+            </svg>
+          </button>
+        </div>
       </div>
 
-      <div class="portfolio-carousel" id="portfolioCarousel">
+      <div class="portfolio-carousel-wrap">
+        <div class="portfolio-carousel" id="portfolioCarousel">
+          <article class="portfolio-slide gallery-item portfolio-clickable" onclick="openPortfolioModal(1)">
+            <div class="placeholder-media portfolio-thumb" style="background-image:url('images/portfolio1.jpg'); background-size:cover; background-position:center;">
+              <span class="portfolio-open-hint">Mehr ansehen</span>
+              <span class="placeholder-label">Fotografie</span>
+            </div>
+            <div class="item-body">
+              <h3>Editorial Shooting</h3>
+            </div>
+          </article>
 
-        <article class="portfolio-slide">
-          <div
-            class="placeholder-media"
-            style="background-image:url('images/portfolio1.jpg')"
-          >
-            <span class="placeholder-label">
-              Editorial
-            </span>
-          </div>
+          <article class="portfolio-slide gallery-item portfolio-clickable" onclick="openPortfolioModal(2)">
+            <div class="placeholder-media portfolio-thumb" style="background-image:url('images/portfolio2.jpg'); background-size:cover; background-position:center;">
+              <span class="portfolio-open-hint">Mehr ansehen</span>
+              <span class="placeholder-label">Auto Content</span>
+            </div>
+            <div class="item-body">
+              <h3>Automotive Content</h3>
+            </div>
+          </article>
 
-          <div class="item-body">
-            <h3>Editorial Shooting</h3>
-          </div>
-        </article>
+          <article class="portfolio-slide gallery-item portfolio-clickable" onclick="openPortfolioModal(3)">
+            <div class="placeholder-media portfolio-thumb" style="background-image:url('images/portfolio3.jpg'); background-size:cover; background-position:center;">
+              <span class="portfolio-open-hint">Mehr ansehen</span>
+              <span class="placeholder-label">Branding</span>
+            </div>
+            <div class="item-body">
+              <h3>Branding Content</h3>
+            </div>
+          </article>
 
-        <article class="portfolio-slide">
-          <div
-            class="placeholder-media"
-            style="background-image:url('images/portfolio2.jpg')"
-          >
-            <span class="placeholder-label">
-              Automotive
-            </span>
-          </div>
+          <article class="portfolio-slide gallery-item portfolio-clickable" onclick="openPortfolioModal(4)">
+            <div class="placeholder-media portfolio-thumb" style="background-image:url('images/portfolio4.jpg'); background-size:cover; background-position:center;">
+              <span class="portfolio-open-hint">Mehr ansehen</span>
+              <span class="placeholder-label">Events</span>
+            </div>
+            <div class="item-body">
+              <h3>Event Coverage</h3>
+            </div>
+          </article>
 
-          <div class="item-body">
-            <h3>Auto Produktionen</h3>
-          </div>
-        </article>
+          <article class="portfolio-slide gallery-item portfolio-clickable" onclick="openPortfolioModal(5)">
+            <div class="placeholder-media portfolio-thumb" style="background-image:url('images/portfolio5.jpg'); background-size:cover; background-position:center;">
+              <span class="portfolio-open-hint">Mehr ansehen</span>
+              <span class="placeholder-label">Hochzeiten</span>
+            </div>
+            <div class="item-body">
+              <h3>Wedding Content</h3>
+            </div>
+          </article>
 
-        <article class="portfolio-slide">
-          <div
-            class="placeholder-media"
-            style="background-image:url('images/portfolio3.jpg')"
-          >
-            <span class="placeholder-label">
-              Branding
-            </span>
-          </div>
+          <article class="portfolio-slide gallery-item portfolio-clickable" onclick="openPortfolioModal(6)">
+            <div class="placeholder-media portfolio-thumb" style="background-image:url('images/portfolio6.jpg'); background-size:cover; background-position:center;">
+              <span class="portfolio-open-hint">Mehr ansehen</span>
+              <span class="placeholder-label">Grafikdesign</span>
+            </div>
+            <div class="item-body">
+              <h3>Grafikdesign</h3>
+            </div>
+          </article>
 
-          <div class="item-body">
-            <h3>Branding & Kampagnen</h3>
-          </div>
-        </article>
-
+          <article class="portfolio-slide gallery-item portfolio-clickable" onclick="openPortfolioModal(7)">
+            <div class="placeholder-media portfolio-thumb" style="background-image:url('images/portfolio7.jpg'); background-size:cover; background-position:center;">
+              <span class="portfolio-open-hint">Mehr ansehen</span>
+              <span class="placeholder-label">Webdesign</span>
+            </div>
+            <div class="item-body">
+              <h3>Webdesign</h3>
+            </div>
+          </article>
+        </div>
       </div>
-
     </section>
 
-    <!-- PARTNER -->
     <section id="partner">
-
-      <div class="section-top-row">
-
-        <h2>Partner</h2>
-
-        <div class="portfolio-controls">
-          <button class="carousel-btn" id="partnerPrev">
-            ←
-          </button>
-
-          <button class="carousel-btn" id="partnerNext">
-            →
-          </button>
+      <div class="section-head section-head-inline">
+        <div>
+          <h2>Partner</h2>
         </div>
 
+        <div class="portfolio-controls">
+          <button class="carousel-btn" id="partnerPrev" type="button" aria-label="Zurück">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M15 18l-6-6 6-6"></path>
+            </svg>
+          </button>
+          <button class="carousel-btn" id="partnerNext" type="button" aria-label="Weiter">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 18l6-6-6-6"></path>
+            </svg>
+          </button>
+        </div>
       </div>
 
-      <div class="partner-carousel" id="partnerCarousel">
+      <div class="partner-carousel-wrap">
+        <div class="partner-carousel" id="partnerCarousel">
+          <article class="partner-card partner-slide">
+            <div class="placeholder-media partner-media">
+              <div class="partner-image" style="background-image:url('images/partner1.jpg');"></div>
+              <span class="placeholder-label">Partner 01</span>
+            </div>
+            <div class="item-body">
+              <h3>CU Visuals</h3>
+              <p>Foto- und Videograf für gemeinsame Großprojekte mit starkem visuellen Anspruch.</p>
+            </div>
+          </article>
 
-        <article class="partner-slide">
+          <article class="partner-card partner-slide">
+            <div class="placeholder-media partner-media">
+              <div class="partner-image" style="background-image:url('images/partner2.jpg');"></div>
+              <span class="placeholder-label">Partner 02</span>
+            </div>
+            <div class="item-body">
+              <h3>Closed Circle Studios</h3>
+              <p>Ein Schweizer Studio für hochwertige Produktionen und kreative Zusammenarbeit.</p>
+            </div>
+          </article>
 
-          <div
-            class="partner-image-full"
-            style="background-image:url('images/partner1.jpg')"
-          ></div>
-
-          <div class="item-body">
-            <h3>CU Visuals</h3>
-
-            <p>
-              Foto & Videograf für gemeinsame Großprojekte.
-            </p>
-          </div>
-
-        </article>
-
-        <article class="partner-slide">
-
-          <div
-            class="partner-image-full"
-            style="background-image:url('images/partner2.jpg')"
-          ></div>
-
-          <div class="item-body">
-            <h3>Closed Circle Studios</h3>
-
-            <p>
-              Schweizer Studio Partner.
-            </p>
-          </div>
-
-        </article>
-
-        <article class="partner-slide">
-
-          <div
-            class="partner-image-full"
-            style="background-image:url('images/partner3.jpg')"
-          ></div>
-
-          <div class="item-body">
-            <h3>MatoDigital</h3>
-
-            <p>
-              Partner für moderne Webprojekte.
-            </p>
-          </div>
-
-        </article>
-
+          <article class="partner-card partner-slide">
+            <div class="placeholder-media partner-media">
+              <div class="partner-image" style="background-image:url('images/partner3.jpg');"></div>
+              <span class="placeholder-label">Partner 03</span>
+            </div>
+            <div class="item-body">
+              <h3>MatoDigital</h3>
+              <p>Kooperationspartner für Webprojekte mit Fokus auf digitale Lösungen und saubere Umsetzung.</p>
+            </div>
+          </article>
+        </div>
       </div>
-
     </section>
 
-    <!-- KONTAKT -->
     <section id="kontakt">
-
-      <h2>Kontakt</h2>
-
-      <div class="contact-row">
-
-        <a href="tel:+4915231036109">
-          +49 152 31036109
-        </a>
-
-        <a
-          href="https://wa.me/4915231036109"
-          target="_blank"
-          class="whatsapp-btn"
-        >
-          WhatsApp
-        </a>
-
+      <div class="section-head">
+        <div>
+          <h2>Kontakt</h2>
+        </div>
+        <p>
+          Für Projekte, Kooperationen oder Anfragen kannst du dich direkt melden.
+        </p>
       </div>
 
-    </section>
+      <div class="contact-layout">
+        <article class="contact-card">
+          <img src="profil.jpg" alt="Marlin Wiesenberg" class="portrait-image" />
+          <div class="item-body">
+            <h3 class="signature">Marlin Wiesenberg</h3>
+            <p>Gründer von MarlinW Media</p>
+          </div>
+        </article>
 
+        <article class="contact-card">
+          <div class="item-body">
+            <h3 style="margin-bottom: 10px;">Direkt erreichbar</h3>
+            <p style="color: var(--text-soft); line-height: 1.7;">
+              Melde dich gerne telefonisch, per E-Mail oder über Instagram.
+            </p>
+
+            <div class="contact-list">
+              <div class="contact-row">
+                <small>Telefon</small>
+                <div class="contact-inline-actions">
+                  <a href="tel:+4915231036109" class="phone-link">+49 152 31036109</a>
+                  <a href="https://wa.me/4915231036109" target="_blank" rel="noopener noreferrer" class="contact-chip whatsapp-chip">
+                    WhatsApp
+                  </a>
+                </div>
+              </div>
+
+              <div class="contact-row">
+                <small>E-Mail</small>
+                <a href="mailto:marlinw.media@gmail.com">marlinw.media@gmail.com</a>
+              </div>
+
+              <div class="contact-row">
+                <small>Instagram</small>
+                <a href="https://instagram.com/marlinw_media" target="_blank" rel="noopener noreferrer">
+                  @marlinw_media
+                </a>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
   </main>
 
-  <footer>
+  <button class="cart-fab" onclick="openCart()" aria-label="Warenkorb öffnen">
+    🛒
+    <span class="cart-count">0</span>
+  </button>
 
-    <div class="footer-inner">
+  <div class="cart-overlay" id="cartOverlay">
+    <div class="cart-sheet">
+      <button class="cart-close" type="button" onclick="closeCart()" aria-label="Schließen">✕</button>
 
-      <span>
-        © 2026 MarlinW Media
-      </span>
+      <div class="cart-brand">
+        <img src="logo-white.png" alt="MarlinW Media Logo" id="cartBrandLogo" />
+        <div>
+          <strong>MarlinW Media</strong>
+          <h2>Warenkorb</h2>
+        </div>
+      </div>
 
-      <a href="impressum.html">
-        Impressum
-      </a>
+      <div class="cart-items" id="cartItems"></div>
 
+      <div class="cart-footer">
+        <span class="cart-total">Gesamt: <span id="cartTotal">0,00 €</span></span>
+        <button class="button primary" type="button" onclick="checkout()">Kaufen</button>
+      </div>
     </div>
+  </div>
 
+  <div class="portfolio-modal" id="portfolioModal">
+    <div class="portfolio-modal-panel">
+      <button class="portfolio-modal-close" type="button" onclick="closePortfolioModal()" aria-label="Schließen">✕</button>
+
+      <div class="portfolio-modal-grid">
+        <div class="portfolio-modal-visual">
+          <button class="portfolio-modal-nav prev" type="button" onclick="changePortfolioDetailImage(-1)" aria-label="Vorheriges Bild">‹</button>
+          <div class="portfolio-modal-image" id="portfolioModalImage"></div>
+          <button class="portfolio-modal-nav next" type="button" onclick="changePortfolioDetailImage(1)" aria-label="Nächstes Bild">›</button>
+        </div>
+
+        <div class="portfolio-modal-meta">
+          <small class="hero-eyebrow" id="portfolioModalCategory">Kategorie</small>
+          <h2 id="portfolioModalTitle">Projekt</h2>
+          <p id="portfolioModalText">Zusatztext</p>
+          <div class="portfolio-modal-counter" id="portfolioModalCounter">1 / 3</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <span>© 2026 MarlinW Media</span>
+      <span>Foto • Video • Content • Creative Production</span>
+      <a href="impressum.html" class="footer-link">Impressum</a>
+    </div>
   </footer>
 
   <script src="script.js"></script>
-
 </body>
 </html>
