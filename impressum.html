@@ -1,101 +1,85 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#000000" />
-  <title>Impressum – MarlinW Media</title>
-  <link rel="stylesheet" href="style.css" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Impressum — MarlinW Media</title>
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="stylesheet" href="css/style.css">
 </head>
-<body class="impressum-page">
-  <header class="site-header site-header-simple">
-    <div class="header-inner impressum-header-inner">
-      <a href="index.html#home" class="brand brand-left" aria-label="Zur Startseite">
-        <img src="logo-white.png" alt="MarlinW Media Logo" class="brand-logo brand-logo-impressum" id="brandLogo" />
-      </a>
+<body>
 
-      <nav class="desktop-nav" aria-label="Hauptnavigation">
-        <a href="index.html#portfolio">Portfolio</a>
-        <a href="shop.html">Bilder kaufen</a>
-        <a href="index.html#kontakt">Kontakt</a>
-      </nav>
+<header class="site-header">
+  <div class="container">
+    <a href="index.html" class="logo">
+      <img src="assets/logo-white.png" alt="MarlinW Media" class="logo-img logo-dark">
+      <img src="assets/logo-black.png" alt="MarlinW Media" class="logo-img logo-light">
+    </a>
+    <nav class="nav-links">
+      <a href="portfolio.html">Portfolio</a>
+      <a href="index.html#kontakt">Kontakt</a>
+    </nav>
+    <div class="header-actions">
+      <button class="theme-switch" type="button" role="switch" aria-checked="false" aria-label="Farbmodus wechseln">
+        <span class="ts-track">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.5M12 19v2.5M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M2.5 12H5M19 12h2.5M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.8 6.8 0 0 0 10.5 10.5Z"/></svg>
+        </span>
+        <span class="ts-knob"></span>
+      </button>
     </div>
-  </header>
+  </div>
+</header>
 
-  <main class="impressum-main">
-    <section class="impressum-wrap">
-      <div class="impressum-head">
-        <h1>Impressum</h1>
-        <p>Angaben gemäß § 5 TMG</p>
+<main class="legal-page">
+  <div class="container">
+    <a href="index.html" class="back">&larr; Zurück zur Startseite</a>
+    <h1>Impressum</h1>
+    <p class="updated">Angaben gemäß § 5 TMG</p>
+
+    <h2>Anbieter</h2>
+    <p>
+      Marlin Wiesenberg<br>
+      Churfirstenstr. 17<br>
+      78247 Hilzingen
+    </p>
+
+    <h2>Kontakt</h2>
+    <p>
+      Telefon: <a href="tel:+4915231036109">+49 152 31036109</a><br>
+      E-Mail: <a href="mailto:marlinw.media@gmail.com">marlinw.media@gmail.com</a><br>
+      Instagram: <a href="https://instagram.com/marlinw_media" target="_blank" rel="noopener">@marlinw_media</a>
+    </p>
+
+    <h2>Verantwortlich für den Inhalt</h2>
+    <p>Verantwortlich für den Inhalt dieser Website ist Marlin Wiesenberg, Churfirstenstr. 17, 78247 Hilzingen.</p>
+
+    <h2>Urheberrecht und Nutzungsrechte</h2>
+    <p>Alle auf dieser Website verwendeten Bilder, Fotografien, Grafiken und Inhalte wurden, sofern nicht anders gekennzeichnet, von Marlin Wiesenberg selbst erstellt. Die Inhalte dieser Website unterliegen dem deutschen Urheberrecht. Eine Vervielfältigung, Bearbeitung, Verbreitung oder sonstige Verwertung außerhalb der Grenzen des Urheberrechts bedarf der ausdrücklichen schriftlichen Zustimmung des Urhebers.</p>
+
+    <h2>Haftung für Inhalte</h2>
+    <p>Als Diensteanbieter bin ich gemäß § 7 Abs. 1 TMG für eigene Inhalte auf diesen Seiten nach den allgemeinen Gesetzen verantwortlich. Nach §§ 8 bis 10 TMG bin ich als Diensteanbieter jedoch nicht verpflichtet, übermittelte oder gespeicherte fremde Informationen zu überwachen oder nach Umständen zu forschen, die auf eine rechtswidrige Tätigkeit hinweisen.</p>
+
+    <h2>Haftung für Links</h2>
+    <p>Diese Website enthält Links zu externen Websites Dritter, auf deren Inhalte ich keinen Einfluss habe. Für die Inhalte der verlinkten Seiten ist stets der jeweilige Anbieter verantwortlich. Zum Zeitpunkt der Verlinkung waren keine Rechtsverstöße erkennbar.</p>
+
+    <h2>Kleinunternehmerhinweis</h2>
+    <p>Es handelt sich um ein Kleinunternehmen im Sinne von § 19 UStG. Daher wird keine Umsatzsteuer ausgewiesen und keine Steuernummer auf dieser Website veröffentlicht.</p>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-bottom">
+      <span>© <span id="year"></span> MarlinW Media · Marlin Wiesenberg</span>
+      <div class="legal-links">
+        <a href="impressum.html">Impressum</a>
+        <a href="datenschutz.html">Datenschutz</a>
       </div>
-
-      <div class="impressum-grid">
-        <article class="impressum-card">
-          <h2>Anbieter</h2>
-          <p>
-            Marlin Wiesenberg<br />
-            Churfirstenstr. 17<br />
-            78247 Hilzingen
-          </p>
-        </article>
-
-        <article class="impressum-card">
-          <h2>Kontakt</h2>
-          <p>
-            Telefon: +49 152 31036109<br />
-            E-Mail: marlinw.media@gmail.com<br />
-            Instagram: @marlinw_media
-          </p>
-        </article>
-
-        <article class="impressum-card">
-          <h2>Verantwortlich für den Inhalt</h2>
-          <p>
-            Verantwortlich für den Inhalt dieser Website ist Marlin Wiesenberg,
-            Churfirstenstr. 17, 78247 Hilzingen.
-          </p>
-        </article>
-
-        <article class="impressum-card">
-          <h2>Urheberrecht und Nutzungsrechte</h2>
-          <p>
-            Alle auf dieser Website verwendeten Bilder, Fotografien, Grafiken und Inhalte wurden,
-            sofern nicht anders gekennzeichnet, von Marlin Wiesenberg selbst erstellt.
-            Die Inhalte dieser Website unterliegen dem deutschen Urheberrecht.
-            Eine Vervielfältigung, Bearbeitung, Verbreitung oder sonstige Verwertung außerhalb der
-            Grenzen des Urheberrechts bedarf der ausdrücklichen schriftlichen Zustimmung des Urhebers.
-          </p>
-        </article>
-
-        <article class="impressum-card">
-          <h2>Haftung für Inhalte</h2>
-          <p>
-            Als Diensteanbieter bin ich gemäß § 7 Abs. 1 TMG für eigene Inhalte auf diesen Seiten
-            nach den allgemeinen Gesetzen verantwortlich. Nach §§ 8 bis 10 TMG bin ich als
-            Diensteanbieter jedoch nicht verpflichtet, übermittelte oder gespeicherte fremde
-            Informationen zu überwachen oder nach Umständen zu forschen, die auf eine rechtswidrige
-            Tätigkeit hinweisen.
-          </p>
-        </article>
-
-        <article class="impressum-card">
-          <h2>Kleinunternehmerhinweis</h2>
-          <p>
-            Es handelt sich um ein Kleinunternehmen. Daher wird keine Umsatzsteuer ausgewiesen und
-            keine Steuernummer auf dieser Website veröffentlicht.
-          </p>
-        </article>
-      </div>
-    </section>
-  </main>
-
-  <footer class="footer-simple">
-    <div class="footer-inner">
-      <span>© 2026 MarlinW Media</span>
-      <span>Impressum</span>
     </div>
-  </footer>
+  </div>
+</footer>
 
-  <script src="script.js"></script>
+<script src="js/main.js"></script>
 </body>
 </html>
