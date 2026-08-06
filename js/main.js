@@ -34,6 +34,47 @@
     });
   });
 
+  /* ---------- Accent color picker ---------- */
+  const ACCENTS = {
+    red: { accent: '#e11d2e', hover: '#ff2d40' },
+    pink: { accent: '#e0399b', hover: '#f062b3' },
+    blue: { accent: '#0ea5e9', hover: '#38bdf8' },
+    yellow: { accent: '#d97706', hover: '#f59e0b' },
+  };
+
+  function applyAccent(key) {
+    const preset = ACCENTS[key] || ACCENTS.red;
+    root.style.setProperty('--accent', preset.accent);
+    root.style.setProperty('--accent-hover', preset.hover);
+    document.querySelectorAll('.swatch').forEach((sw) => {
+      sw.classList.toggle('active', sw.dataset.accent === key);
+    });
+  }
+
+  const storedAccent = localStorage.getItem('mw-accent') || 'red';
+  applyAccent(storedAccent);
+
+  document.querySelectorAll('.swatch').forEach((sw) => {
+    sw.addEventListener('click', () => {
+      const key = sw.dataset.accent;
+      applyAccent(key);
+      localStorage.setItem('mw-accent', key);
+    });
+  });
+
+  document.querySelectorAll('.color-picker-btn').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const panel = btn.parentElement.querySelector('.color-swatches');
+      const isOpen = panel.classList.contains('open');
+      document.querySelectorAll('.color-swatches.open').forEach((p) => p.classList.remove('open'));
+      if (!isOpen) panel.classList.add('open');
+    });
+  });
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.color-swatches.open').forEach((p) => p.classList.remove('open'));
+  });
+
   /* ---------- Mobile nav ---------- */
   const navToggle = document.querySelector('.nav-toggle');
   const mobileNav = document.querySelector('.mobile-nav');
@@ -83,7 +124,7 @@
           }
         });
       },
-      { threshold: 0, rootMargin: '0px 0px 10% 0px' }
+      { threshold: 0, rootMargin: '0px 0px 18% 0px' }
     );
     revealEls.forEach((el) => {
       const rect = el.getBoundingClientRect();

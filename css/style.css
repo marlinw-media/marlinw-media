@@ -73,8 +73,16 @@
   }
 }
 
-* { box-sizing: border-box; }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html { scroll-behavior: smooth; }
+
+button {
+  -webkit-appearance: none;
+  appearance: none;
+  font: inherit;
+  color: inherit;
+  margin: 0;
+}
 
 body {
   margin: 0;
@@ -216,6 +224,37 @@ section.tight { padding: 72px 0; }
 .icon-btn:hover { background: var(--surface-hover); }
 .icon-btn svg { width: 19px; height: 19px; }
 
+/* ---------- Accent color picker ---------- */
+.color-picker { position: relative; }
+.color-swatches {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  display: flex;
+  gap: 9px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  padding: 10px 12px;
+  box-shadow: var(--shadow-md);
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
+  transition: opacity 180ms ease, transform 180ms ease;
+  z-index: 60;
+}
+.color-swatches.open { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  padding: 0;
+  cursor: pointer;
+  box-shadow: 0 0 0 1px var(--border-strong);
+}
+.swatch.active { border-color: var(--bg); box-shadow: 0 0 0 2px var(--text); }
+
 .rec-dot {
   width: 9px;
   height: 9px;
@@ -235,8 +274,10 @@ section.tight { padding: 72px 0; }
   position: sticky;
   top: 0;
   z-index: 100;
+  background: var(--bg);
   background: color-mix(in srgb, var(--bg) 82%, transparent);
   backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--border);
 }
 
@@ -1045,12 +1086,15 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
   z-index: 200;
   display: flex;
   flex-direction: column;
-  padding: 24px;
+  padding: 0 24px 24px;
   transform: translateX(100%);
   transition: transform 260ms ease;
 }
 .mobile-nav.open { transform: translateX(0); }
-.mobile-nav-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
+/* height matches .site-header .container exactly so the close button lands
+   in the same spot the hamburger was tapped from */
+.mobile-nav-top { display: flex; justify-content: space-between; align-items: center; height: 76px; flex-shrink: 0; margin-bottom: 24px; }
+.mobile-nav-actions { display: flex; align-items: center; gap: 12px; }
 .mobile-nav a { font-size: 22px; font-weight: 600; padding: 14px 0; border-bottom: 1px solid var(--border); }
 .mobile-nav .btn { margin-top: 14px; }
 .mobile-nav .btn-row { display: flex; flex-direction: column; gap: 12px; margin-top: 10px; }
@@ -1068,8 +1112,8 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 /* also lift+fade on entry, snappier and lighter on small screens so long
    scroll pages (portfolio gallery) don't feel tedious */
 @media (max-width: 760px) {
-  .reveal { transition-duration: 320ms; }
-  .reveal.reveal-pending { transform: translateY(10px); }
+  .reveal { transition-duration: 220ms; }
+  .reveal.reveal-pending { transform: translateY(8px); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1091,7 +1135,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 
 @media (max-width: 760px) {
   .p-card, .teaser-tile, .price-card, .service-card, .testi-card, .why-item {
-    transition-duration: 320ms, 320ms, 320ms, 320ms;
+    transition-duration: 220ms, 220ms, 220ms, 220ms;
   }
 }
 
