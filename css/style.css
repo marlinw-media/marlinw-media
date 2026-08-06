@@ -356,6 +356,7 @@ section.tight { padding: 72px 0; }
   display: none;
   width: 42px;
   height: 42px;
+  flex-shrink: 0;
   border-radius: 50%;
   border: 1px solid var(--border-strong);
   background: var(--surface);
@@ -364,6 +365,7 @@ section.tight { padding: 72px 0; }
   cursor: pointer;
   color: var(--text);
 }
+.nav-toggle svg { width: 20px; height: 20px; flex-shrink: 0; display: block; }
 
 /* ---------- Hero ---------- */
 .hero {
@@ -497,9 +499,18 @@ section.tight { padding: 72px 0; }
   color: #fff;
   position: relative;
 }
-[data-theme="light"] .service-card.featured { background: linear-gradient(160deg, #17171a, #060607); }
+/* Light mode: a full black card reads as too heavy/loud next to an otherwise
+   white page — use a soft, elevated grey highlight instead. */
+[data-theme="light"] .service-card.featured {
+  background: var(--bg-alt);
+  color: var(--text);
+  border-color: var(--border-strong);
+}
 .service-card.featured p, .service-card.featured .price { color: rgba(255,255,255,0.72); }
+[data-theme="light"] .service-card.featured p,
+[data-theme="light"] .service-card.featured .price { color: var(--text-muted); }
 .service-card.featured .service-icon { background: rgba(255,255,255,0.1); color: #fff; }
+[data-theme="light"] .service-card.featured .service-icon { background: rgba(0,0,0,0.06); color: var(--text); }
 .service-card.featured .tag {
   position: absolute; top: 24px; right: 24px;
   background: var(--accent); color: #fff; font-size: 11px; font-weight: 700;
@@ -1043,6 +1054,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
   .nav-links { display: none; }
   .nav-toggle { display: flex; }
   .header-actions .btn { display: none; }
+  .header-actions .color-picker { display: none; }
   .logo .sub { display: none; }
   .services-grid { grid-template-columns: 1fr; }
   .why-grid { grid-template-columns: 1fr; }
