@@ -58,3 +58,4 @@ Das Formular funktioniert **nur über eine echte URL** (nicht beim lokalen Öffn
 
 Der Modus wird automatisch anhand der Systemeinstellung vorausgewählt und lässt sich über
 den Schalter oben rechts umschalten; die Wahl wird im Browser gespeichert (Local Storage).
+
