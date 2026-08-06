@@ -83,7 +83,7 @@
           }
         });
       },
-      { threshold: 0.1, rootMargin: '0px 0px -8% 0px' }
+      { threshold: 0, rootMargin: '0px 0px 10% 0px' }
     );
     revealEls.forEach((el) => {
       const rect = el.getBoundingClientRect();
@@ -153,6 +153,13 @@
     return n.toLocaleString('de-DE', { maximumFractionDigits: 0 }) + ' €';
   }
 
+  function updateRangeFill(el) {
+    const min = Number(el.min) || 0;
+    const max = Number(el.max) || 100;
+    const pct = ((Number(el.value) - min) / (max - min)) * 100;
+    el.style.background = `linear-gradient(to right, var(--text) 0%, var(--text) ${pct}%, var(--border-strong) ${pct}%, var(--border-strong) 100%)`;
+  }
+
   function updateCalc() {
     if (!rangePlanning) return;
     const planning = Number(rangePlanning.value);
@@ -175,7 +182,13 @@
   }
 
   [rangePlanning, rangeShooting, rangeEditing, rangeKm].forEach((el) => {
-    if (el) el.addEventListener('input', updateCalc);
+    if (el) {
+      el.addEventListener('input', () => {
+        updateCalc();
+        updateRangeFill(el);
+      });
+      updateRangeFill(el);
+    }
   });
   updateCalc();
 

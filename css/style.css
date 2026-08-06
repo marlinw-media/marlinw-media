@@ -125,6 +125,7 @@ section.tight { padding: 72px 0; }
   content: '';
   width: 8px;
   height: 8px;
+  flex-shrink: 0;
   border-radius: 50%;
   background: var(--accent);
   box-shadow: 0 0 0 4px rgba(225,29,46,0.18);
@@ -156,6 +157,20 @@ section.tight { padding: 72px 0; }
   white-space: nowrap;
 }
 .btn:active { transform: scale(0.97); }
+
+.btn-split { padding: 0; overflow: hidden; }
+.btn-split > a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex: 1 1 50%;
+  align-self: stretch;
+  padding: 15px 16px;
+  color: #fff;
+}
+.btn-split > a:active { background: rgba(0,0,0,0.12); }
+.btn-split .divider { width: 1px; align-self: stretch; background: rgba(255,255,255,0.3); flex-shrink: 0; }
 
 .btn-primary {
   background: var(--text);
@@ -518,6 +533,7 @@ section.tight { padding: 72px 0; }
   font-size: 13.5px;
   font-weight: 600;
   cursor: pointer;
+  flex-shrink: 0;
   transition: all var(--transition);
 }
 .filter-btn:hover { color: var(--text); }
@@ -796,7 +812,7 @@ input[type="range"]::-webkit-slider-thumb {
 input[type="range"]::-moz-range-track {
   height: 6px;
   border-radius: 999px;
-  background: var(--border-strong);
+  background: transparent;
 }
 input[type="range"]::-moz-range-thumb {
   width: 18px;
@@ -998,12 +1014,24 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
   .price-overview { grid-template-columns: 1fr 1fr; }
   .portfolio-teaser { grid-template-columns: 1fr 1fr; }
   .portfolio-cta { flex-direction: column; align-items: flex-start; }
+
+  .portfolio-filters {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    margin-left: -24px;
+    margin-right: -24px;
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+  .portfolio-filters::-webkit-scrollbar { display: none; }
 }
 
 @media (max-width: 480px) {
-  .portfolio-grid { grid-template-columns: 1fr; }
   .footer-top { grid-template-columns: 1fr; }
   .container { padding: 0 18px; }
+  .portfolio-filters { margin-left: -18px; margin-right: -18px; padding-left: 18px; padding-right: 18px; }
   .price-overview { grid-template-columns: 1fr; }
   .portfolio-teaser { grid-template-columns: 1fr; }
   .teaser-tile.tall { grid-row: auto; }
