@@ -1,352 +1,571 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#000000" />
-  <title>MarlinW Media</title>
-  <link rel="stylesheet" href="style.css" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MarlinW Media — Videoproduktion, Fotografie & Design aus Hilzingen</title>
+<meta name="description" content="MarlinW Media produziert Videos, Fotos, Grafikdesign und Websites für Unternehmen und Privatkunden. Transparente Stundenpreise, ein Ansprechpartner, professionelle Ergebnisse.">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <div class="background" aria-hidden="true">
-    <div class="grid"></div>
-    <div class="shape one"></div>
-    <div class="shape two"></div>
-    <div class="shape three"></div>
-    <div class="shape four"></div>
-    <div class="orb one"></div>
-    <div class="orb two"></div>
-  </div>
 
-  <header class="site-header">
-    <div class="header-inner">
-      <button class="menu-toggle" id="menuToggle" aria-expanded="false" aria-controls="mobileMenu">
-        Menü
+<header class="site-header">
+  <div class="container">
+    <a href="index.html" class="logo">
+      <img src="assets/logo-white.png" alt="MarlinW Media" class="logo-img logo-dark">
+      <img src="assets/logo-black.png" alt="MarlinW Media" class="logo-img logo-light">
+    </a>
+
+    <nav class="nav-links">
+      <a href="#leistungen">Leistungen</a>
+      <a href="portfolio.html">Portfolio</a>
+      <a href="#konfigurator">Preise</a>
+      <a href="#bewertungen">Bewertungen</a>
+      <a href="#kontakt">Kontakt</a>
+    </nav>
+
+    <div class="header-actions">
+      <button class="theme-switch" type="button" role="switch" aria-checked="false" aria-label="Farbmodus wechseln">
+        <span class="ts-track">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.5M12 19v2.5M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M2.5 12H5M19 12h2.5M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.8 6.8 0 0 0 10.5 10.5Z"/></svg>
+        </span>
+        <span class="ts-knob"></span>
       </button>
-
-      <a href="#home" class="brand" aria-label="Zur Startseite">
-        <img src="logo-white.png" alt="MarlinW Media Logo" class="brand-logo" id="brandLogo" />
+      <a href="https://wa.me/4915231036109" target="_blank" rel="noopener" class="btn btn-whatsapp btn-sm">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.1-8.6A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.7a2 2 0 0 1-.5 2.1L8 9.7a16 16 0 0 0 6 6l1.2-1.2a2 2 0 0 1 2.1-.5c.9.3 1.8.5 2.7.6a2 2 0 0 1 1.7 2Z"/></svg>
+        WhatsApp
       </a>
-
-      <nav class="desktop-nav" aria-label="Hauptnavigation">
-        <a href="#portfolio">Portfolio</a>
-        <a href="#partner">Partner</a>
-        <a href="shop.html">Bilder kaufen</a>
-        <a href="#kontakt">Kontakt</a>
-
-        <div class="profile" id="profileBox">
-          <button class="profile-trigger" id="profileTrigger" type="button">Login</button>
-          <div class="profile-menu">
-            <div class="profile-short" id="profileShort">User</div>
-            <a href="profile.html" class="requires-user">Profil bearbeiten</a>
-            <button type="button" class="requires-user" onclick="openCart()">Warenkorb</button>
-            <a href="orders.html" class="requires-user">Bestellungen</a>
-            <button type="button" class="requires-user" onclick="logoutUser()">Logout</button>
-            <a href="login.html" class="auth-only" id="userDisplay">Login</a>
-          </div>
-        </div>
-      </nav>
+      <a href="#kontakt" class="btn btn-primary btn-sm">Anfragen</a>
+      <button class="nav-toggle" type="button" aria-label="Menü öffnen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
     </div>
+  </div>
+</header>
 
-    <div class="mobile-menu" id="mobileMenu">
-      <nav class="mobile-nav" aria-label="Mobile Navigation">
-        <a href="#portfolio">Portfolio</a>
-        <a href="#partner">Partner</a>
-        <a href="shop.html">Bilder kaufen</a>
-        <a href="#kontakt">Kontakt</a>
-        <a href="login.html" id="mobileUserDisplay">Login</a>
-      </nav>
-    </div>
-  </header>
+<div class="mobile-nav">
+  <div class="mobile-nav-top">
+    <span class="logo">
+      <img src="assets/logo-white.png" alt="MarlinW Media" class="logo-img logo-dark">
+      <img src="assets/logo-black.png" alt="MarlinW Media" class="logo-img logo-light">
+    </span>
+    <button class="icon-btn mobile-nav-close" type="button" aria-label="Menü schließen">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <a href="#leistungen">Leistungen</a>
+  <a href="portfolio.html">Portfolio</a>
+  <a href="#konfigurator">Preise</a>
+  <a href="#bewertungen">Bewertungen</a>
+  <a href="#kontakt">Kontakt</a>
+  <div class="btn-row">
+    <a href="#kontakt" class="btn btn-primary btn-block">Projekt anfragen</a>
+    <a href="https://wa.me/4915231036109" target="_blank" rel="noopener" class="btn btn-whatsapp btn-block">WhatsApp schreiben</a>
+    <button class="theme-switch" type="button" role="switch" aria-checked="false" aria-label="Farbmodus wechseln" style="margin:6px auto 0">
+      <span class="ts-track">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.5M12 19v2.5M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M2.5 12H5M19 12h2.5M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.8 6.8 0 0 0 10.5 10.5Z"/></svg>
+      </span>
+      <span class="ts-knob"></span>
+    </button>
+  </div>
+</div>
 
-  <main>
-    <section class="hero" id="home">
+<main id="home">
+
+  <!-- ================= HERO ================= -->
+  <section class="hero">
+    <div class="container hero-grid">
       <div>
-        <span class="hero-eyebrow">Kreative Medienproduktion</span>
-        <h1>MarlinW Media</h1>
-        <p>
-          Visuelle Inhalte mit Charakter. Von starken Bildwelten über moderne Videoprojekte
-          bis zu hochwertiger Markenpräsenz: MarlinW Media steht für saubere Ästhetik,
-          klare Kommunikation und Ergebnisse, die im Kopf bleiben.
-        </p>
-
+        <div class="eyebrow">Videoproduktion &amp; kreative Medien · Raum Hilzingen / Bodensee</div>
+        <h1>Bewegtbild,<br>das <span class="accent-text">verkauft.</span></h1>
+        <p class="hero-lead">MarlinW Media produziert Video-, Foto- und Designinhalte für Unternehmen, die auffallen wollen. Von der ersten Idee bis zum fertigen Schnitt — aus einer Hand und transparent nach Stundensatz kalkuliert.</p>
         <div class="hero-actions">
-          <a class="button primary" href="#portfolio">Portfolio ansehen</a>
-          <a class="button" href="#kontakt">Kontakt aufnehmen</a>
-
-          <a class="booking-cta" href="booking.html" aria-label="Jetzt Termin buchen">
-            <span class="booking-rec">
-              <span class="booking-rec-dot"></span>
-            </span>
-            <span>Jetzt Termin buchen</span>
+          <a href="portfolio.html" class="btn btn-primary">Portfolio ansehen</a>
+          <a href="https://wa.me/4915231036109" target="_blank" rel="noopener" class="btn btn-whatsapp">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.1-8.6A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.7a2 2 0 0 1-.5 2.1L8 9.7a16 16 0 0 0 6 6l1.2-1.2a2 2 0 0 1 2.1-.5c.9.3 1.8.5 2.7.6a2 2 0 0 1 1.7 2Z"/></svg>
+            WhatsApp / Anrufen
           </a>
+          <a href="#kontakt" class="btn btn-accent"><span class="rec-dot"></span>Projekt anfragen</a>
         </div>
-      </div>
-    </section>
-
-    <section id="portfolio">
-      <div class="section-head section-head-inline">
-        <div>
-          <h2>Portfolio</h2>
-        </div>
-
-        <div class="portfolio-controls">
-          <button class="carousel-btn" id="portfolioPrev" type="button" aria-label="Zurück">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M15 18l-6-6 6-6"></path>
-            </svg>
-          </button>
-          <button class="carousel-btn" id="portfolioNext" type="button" aria-label="Weiter">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 18l6-6-6-6"></path>
-            </svg>
-          </button>
+        <div class="hero-trust">
+          <div class="item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8l6 4-6 4V8Z"/><rect x="10" y="6" width="10" height="12" rx="2"/></svg>Schwerpunkt Business- &amp; Markenvideos</div>
+          <div class="item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4v5c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V7l8-4Z"/></svg>Foto, Video, Design &amp; Web aus einer Hand</div>
+          <div class="item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>Transparente Stundensätze statt Blackbox-Angebote</div>
+          <div class="item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.1-8.6A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.7a2 2 0 0 1-.5 2.1L8 9.7a16 16 0 0 0 6 6l1.2-1.2a2 2 0 0 1 2.1-.5c.9.3 1.8.5 2.7.6a2 2 0 0 1 1.7 2Z"/></svg>Fast rund um die Uhr per Telefon &amp; WhatsApp erreichbar</div>
         </div>
       </div>
 
-      <div class="portfolio-carousel-wrap">
-        <div class="portfolio-carousel" id="portfolioCarousel">
-          <article class="portfolio-slide gallery-item portfolio-clickable" onclick="openPortfolioModal(1)">
-            <div class="placeholder-media portfolio-thumb" style="background-image:url('images/portfolio1.jpg'); background-size:cover; background-position:center;">
-              <span class="portfolio-open-hint">Mehr ansehen</span>
-              <span class="placeholder-label">Fotografie</span>
-            </div>
-            <div class="item-body">
-              <h3>Editorial Shooting</h3>
-            </div>
-          </article>
-
-          <article class="portfolio-slide gallery-item portfolio-clickable" onclick="openPortfolioModal(2)">
-            <div class="placeholder-media portfolio-thumb" style="background-image:url('images/portfolio2.jpg'); background-size:cover; background-position:center;">
-              <span class="portfolio-open-hint">Mehr ansehen</span>
-              <span class="placeholder-label">Auto Content</span>
-            </div>
-            <div class="item-body">
-              <h3>Automotive Content</h3>
-            </div>
-          </article>
-
-          <article class="portfolio-slide gallery-item portfolio-clickable" onclick="openPortfolioModal(3)">
-            <div class="placeholder-media portfolio-thumb" style="background-image:url('images/portfolio3.jpg'); background-size:cover; background-position:center;">
-              <span class="portfolio-open-hint">Mehr ansehen</span>
-              <span class="placeholder-label">Branding</span>
-            </div>
-            <div class="item-body">
-              <h3>Branding Content</h3>
-            </div>
-          </article>
-
-          <article class="portfolio-slide gallery-item portfolio-clickable" onclick="openPortfolioModal(4)">
-            <div class="placeholder-media portfolio-thumb" style="background-image:url('images/portfolio4.jpg'); background-size:cover; background-position:center;">
-              <span class="portfolio-open-hint">Mehr ansehen</span>
-              <span class="placeholder-label">Events</span>
-            </div>
-            <div class="item-body">
-              <h3>Event Coverage</h3>
-            </div>
-          </article>
-
-          <article class="portfolio-slide gallery-item portfolio-clickable" onclick="openPortfolioModal(5)">
-            <div class="placeholder-media portfolio-thumb" style="background-image:url('images/portfolio5.jpg'); background-size:cover; background-position:center;">
-              <span class="portfolio-open-hint">Mehr ansehen</span>
-              <span class="placeholder-label">Hochzeiten</span>
-            </div>
-            <div class="item-body">
-              <h3>Wedding Content</h3>
-            </div>
-          </article>
-
-          <article class="portfolio-slide gallery-item portfolio-clickable" onclick="openPortfolioModal(6)">
-            <div class="placeholder-media portfolio-thumb" style="background-image:url('images/portfolio6.jpg'); background-size:cover; background-position:center;">
-              <span class="portfolio-open-hint">Mehr ansehen</span>
-              <span class="placeholder-label">Grafikdesign</span>
-            </div>
-            <div class="item-body">
-              <h3>Grafikdesign</h3>
-            </div>
-          </article>
-
-          <article class="portfolio-slide gallery-item portfolio-clickable" onclick="openPortfolioModal(7)">
-            <div class="placeholder-media portfolio-thumb" style="background-image:url('images/portfolio7.jpg'); background-size:cover; background-position:center;">
-              <span class="portfolio-open-hint">Mehr ansehen</span>
-              <span class="placeholder-label">Webdesign</span>
-            </div>
-            <div class="item-body">
-              <h3>Webdesign</h3>
-            </div>
-          </article>
-        </div>
+      <div class="hero-visual">
+        <img src="images/portfolio/video-1.jpg" alt="Videodreh für einen Business-Kunden" class="hero-photo" data-lightbox>
+        <div class="hero-photo-overlay"></div>
+        <div class="rec-badge"><span class="rec-dot"></span>REC · 00:12:47</div>
+        <div class="corner-tl"></div>
+        <div class="corner-br"></div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <section id="partner">
-      <div class="section-head section-head-inline">
-        <div>
-          <h2>Partner</h2>
-        </div>
+  <div class="strip">
+    <div class="container">
+      <span>Business-Content</span>
+      <span>Automotive</span>
+      <span>Hochzeiten</span>
+      <span>Events</span>
+      <span>Branding</span>
+      <span>Webdesign</span>
+    </div>
+  </div>
 
-        <div class="portfolio-controls">
-          <button class="carousel-btn" id="partnerPrev" type="button" aria-label="Zurück">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M15 18l-6-6 6-6"></path>
-            </svg>
-          </button>
-          <button class="carousel-btn" id="partnerNext" type="button" aria-label="Weiter">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 18l6-6-6-6"></path>
-            </svg>
-          </button>
-        </div>
+  <!-- ================= LEISTUNGEN ================= -->
+  <section id="leistungen">
+    <div class="container">
+      <div class="section-head center">
+        <div class="eyebrow" style="justify-content:center">Leistungen</div>
+        <h2>Alles, was dein Auftritt braucht</h2>
+        <p>Ich bin auf Videoproduktion spezialisiert — und decke darüber hinaus Fotografie, Grafikdesign und Webdesign ab, damit dein gesamter Auftritt aus einer Hand kommt.</p>
       </div>
 
-      <div class="partner-carousel-wrap">
-        <div class="partner-carousel" id="partnerCarousel">
-          <article class="partner-card partner-slide">
-            <div class="placeholder-media partner-media">
-              <div class="partner-image" style="background-image:url('images/partner1.jpg');"></div>
-              <span class="placeholder-label">Partner 01</span>
-            </div>
-            <div class="item-body">
-              <h3>CU Visuals</h3>
-              <p>Foto- und Videograf für gemeinsame Großprojekte mit starkem visuellen Anspruch.</p>
-            </div>
-          </article>
+      <div class="services-grid">
+        <div class="service-card featured reveal">
+          <span class="tag">Kernleistung</span>
+          <div class="service-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8l6 4-6 4V8Z"/><rect x="10" y="6" width="10" height="12" rx="2"/></svg></div>
+          <h3>Videoproduktion</h3>
+          <p>Imagefilme, Social-Content, Automotive- und Eventvideos — geschnitten mit klarem Blick für Marke und Zielgruppe.</p>
+          <div class="price">ab <strong>ca. 400 €</strong> pro Projekt</div>
+          <a href="#konfigurator" class="card-link">Preise ansehen →</a>
+        </div>
 
-          <article class="partner-card partner-slide">
-            <div class="placeholder-media partner-media">
-              <div class="partner-image" style="background-image:url('images/partner2.jpg');"></div>
-              <span class="placeholder-label">Partner 02</span>
-            </div>
-            <div class="item-body">
-              <h3>Closed Circle Studios</h3>
-              <p>Ein Schweizer Studio für hochwertige Produktionen und kreative Zusammenarbeit.</p>
-            </div>
-          </article>
+        <div class="service-card reveal">
+          <div class="service-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h3l2-3h6l2 3h3a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13" r="3.4"/></svg></div>
+          <h3>Fotografie</h3>
+          <p>Business-, Werbe- und Editorial-Shootings, die Persönlichkeit und Produkt gleichermaßen in Szene setzen.</p>
+          <div class="price">ab <strong>ca. 250 €</strong> pro Shooting</div>
+          <a href="#konfigurator" class="card-link">Preise ansehen →</a>
+        </div>
 
-          <article class="partner-card partner-slide">
-            <div class="placeholder-media partner-media">
-              <div class="partner-image" style="background-image:url('images/partner3.jpg');"></div>
-              <span class="placeholder-label">Partner 03</span>
-            </div>
-            <div class="item-body">
-              <h3>MatoDigital</h3>
-              <p>Kooperationspartner für Webprojekte mit Fokus auf digitale Lösungen und saubere Umsetzung.</p>
-            </div>
-          </article>
+        <div class="service-card reveal">
+          <div class="service-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3a6 6 0 0 0 0 18c1.5 0 1.5-1.2 1-2-.4-.6-.2-1.4.6-1.6 1.8-.4 3.4-1.6 3.4-3.4a2 2 0 0 0-2-2h-.2a1.6 1.6 0 0 1 0-3.2"/><circle cx="9" cy="10" r="1"/><circle cx="8" cy="14" r="1"/><circle cx="14" cy="8" r="1"/></svg></div>
+          <h3>Grafikdesign</h3>
+          <p>Logos, Flyer, Plakate und Fahrzeugfolierungen — Design, das zur restlichen Bildsprache passt.</p>
+          <div class="price">ab <strong>ca. 150 €</strong> pro Projekt</div>
+          <a href="#konfigurator" class="card-link">Preise ansehen →</a>
+        </div>
+
+        <div class="service-card reveal">
+          <div class="service-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v5"/><path d="m8 13 2 2-2 2M13 13h4"/></svg></div>
+          <h3>Webdesign</h3>
+          <p>Moderne, schnelle Websites und Onlineshops — informativ oder verkaufsstark, ganz nach Bedarf.</p>
+          <div class="price">ab <strong>800 €</strong> pro Website</div>
+          <a href="#konfigurator" class="card-link">Preise ansehen →</a>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <section id="kontakt">
+  <!-- ================= WARUM ================= -->
+  <section class="tight" style="background:var(--bg-alt)">
+    <div class="container">
       <div class="section-head">
-        <div>
-          <h2>Kontakt</h2>
-        </div>
-        <p>
-          Für Projekte, Kooperationen oder Anfragen kannst du dich direkt melden.
-        </p>
+        <div class="eyebrow">Warum MarlinW Media</div>
+        <h2>Gebaut für Unternehmen, die verlässliche Ergebnisse wollen</h2>
+        <p>Der Großteil meiner Projekte entsteht für Geschäftskunden — entsprechend liegt der Fokus auf klarer Kommunikation, verbindlichen Terminen und Ergebnissen, die sofort einsetzbar sind.</p>
       </div>
 
-      <div class="contact-layout">
-        <article class="contact-card">
-          <img src="profil.jpg" alt="Marlin Wiesenberg" class="portrait-image" />
-          <div class="item-body">
-            <h3 class="signature">Marlin Wiesenberg</h3>
-            <p>Gründer von MarlinW Media</p>
-          </div>
-        </article>
+      <div class="why-grid">
+        <div class="why-item reveal">
+          <div class="num">01</div>
+          <h3>Ein Ansprechpartner für alles</h3>
+          <p>Video, Foto, Design und Web aus einer Hand — kein Abstimmungschaos zwischen mehreren Dienstleistern.</p>
+        </div>
+        <div class="why-item reveal">
+          <div class="num">02</div>
+          <h3>Erfahren im B2B-Umfeld</h3>
+          <p>Die meisten Projekte entstehen für Unternehmen, die einen professionellen, planbaren Partner suchen.</p>
+        </div>
+        <div class="why-item reveal">
+          <div class="num">03</div>
+          <h3>Transparente Stundensätze</h3>
+          <p>Jede Kalkulation basiert auf einer offenen Preisliste — keine versteckten Kosten, kein Rätselraten.</p>
+        </div>
+        <div class="why-item reveal">
+          <div class="num">04</div>
+          <h3>Schnell &amp; flexibel</h3>
+          <p>Kurze Reaktionszeiten, flexible Terminfindung und Umsetzung, die sich an deinem Zeitplan orientiert.</p>
+        </div>
+      </div>
 
-        <article class="contact-card">
-          <div class="item-body">
-            <h3 style="margin-bottom: 10px;">Direkt erreichbar</h3>
-            <p style="color: var(--text-soft); line-height: 1.7;">
-              Melde dich gerne telefonisch, per E-Mail oder über Instagram.
-            </p>
+      <div class="business-banner reveal">
+        <div>
+          <h3>Du planst ein Projekt für dein Unternehmen?</h3>
+          <p>Von der Produktfotografie bis zum kompletten Markenauftritt — ich unterstütze Unternehmen dabei, professionell und einheitlich aufzutreten.</p>
+        </div>
+        <a href="#kontakt" class="btn btn-primary">Projekt besprechen</a>
+      </div>
+    </div>
+  </section>
 
-            <div class="contact-list">
-              <div class="contact-row">
-                <small>Telefon</small>
-                <div class="contact-inline-actions">
-                  <a href="tel:+4915231036109" class="phone-link">+49 152 31036109</a>
-                  <a href="https://wa.me/4915231036109" target="_blank" rel="noopener noreferrer" class="contact-chip whatsapp-chip">
-                    WhatsApp
-                  </a>
-                </div>
-              </div>
+  <!-- ================= PORTFOLIO TEASER ================= -->
+  <section id="portfolio">
+    <div class="container">
+      <div class="section-head">
+        <div class="eyebrow">Portfolio</div>
+        <h2>Ein Blick in die Arbeit</h2>
+        <p>Die vollständige, sortierte Galerie mit allen Projektbereichen gibt's auf der Portfolio-Seite.</p>
+      </div>
 
-              <div class="contact-row">
-                <small>E-Mail</small>
-                <a href="mailto:marlinw.media@gmail.com">marlinw.media@gmail.com</a>
-              </div>
+      <div class="portfolio-teaser">
+        <div class="teaser-tile tall reveal">
+          <img src="images/portfolio/video-1.jpg" alt="Videodreh vor Ort" class="p-photo" data-lightbox>
+          <div class="label">Video</div>
+        </div>
+        <div class="teaser-tile reveal">
+          <img src="images/portfolio/editorial-1.jpg" alt="Editorial Shooting" class="p-photo" data-lightbox>
+          <div class="label">Fotografie</div>
+        </div>
+        <div class="teaser-tile reveal">
+          <img src="images/portfolio/automotive-1.jpg" alt="Automotive Content" class="p-photo" data-lightbox>
+          <div class="label">Automotive</div>
+        </div>
+        <div class="teaser-tile reveal">
+          <img src="images/portfolio/event-1.jpg" alt="Event Coverage" class="p-photo" data-lightbox>
+          <div class="label">Events</div>
+        </div>
+        <div class="teaser-tile reveal" data-tone="6">
+          <div class="art-bg"></div>
+          <div class="art"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3a6 6 0 0 0 0 18c1.5 0 1.5-1.2 1-2-.4-.6-.2-1.4.6-1.6 1.8-.4 3.4-1.6 3.4-3.4a2 2 0 0 0-2-2h-.2a1.6 1.6 0 0 1 0-3.2"/></svg></div>
+          <div class="label">Grafikdesign</div>
+        </div>
+      </div>
 
-              <div class="contact-row">
-                <small>Instagram</small>
-                <a href="https://instagram.com/marlinw_media" target="_blank" rel="noopener noreferrer">
-                  @marlinw_media
-                </a>
-              </div>
+      <div class="portfolio-cta reveal">
+        <div>
+          <h3>Komplettes Portfolio ansehen</h3>
+          <p>Sortiert nach Video, Fotografie, Branding, Events, Hochzeiten, Grafik- &amp; Webdesign.</p>
+        </div>
+        <a href="portfolio.html" class="btn btn-primary">Zur Galerie</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= KONFIGURATOR ================= -->
+  <section id="konfigurator" style="background:var(--bg-alt)">
+    <div class="container">
+      <div class="section-head center">
+        <div class="eyebrow" style="justify-content:center">Preise</div>
+        <h2>Konfiguriere dein Projekt</h2>
+        <p>Alle Pakete unten sind Schätzpreise auf Basis vergangener Projekte — der tatsächliche Preis richtet sich nach dem realen Arbeitsaufwand. Ganz unten kannst du dir mit den echten Stundensätzen eine individuelle Kalkulation erstellen.</p>
+      </div>
+
+      <div class="config-panel reveal">
+        <div class="config-body">
+          <div class="price-overview">
+            <div class="price-card reveal">
+              <h4>Fotografie</h4>
+              <div class="from">ab 250 € <span>Schätzpreis</span></div>
+              <details>
+                <summary>Alle Pakete</summary>
+                <ul class="pkg-list">
+                  <li><span class="pname">Business</span><span class="pprice">~400 €</span></li>
+                  <li><span class="pname">Werbung</span><span class="pprice">~300 €</span></li>
+                  <li><span class="pname">Immobilien</span><span class="pprice">~250 €</span></li>
+                  <li><span class="pname">Auto</span><span class="pprice">~250 €</span></li>
+                  <li><span class="pname">Artist</span><span class="pprice">~250 €</span></li>
+                </ul>
+                <a href="#kontakt" data-request-package="Fotografie" data-request-category="Fotografie">Fotografie anfragen →</a>
+              </details>
+            </div>
+
+            <div class="price-card reveal">
+              <h4>Video</h4>
+              <div class="from">ab 400 € <span>Schätzpreis</span></div>
+              <details>
+                <summary>Alle Pakete</summary>
+                <ul class="pkg-list">
+                  <li><span class="pname">Business Video</span><span class="pprice">~500 €</span></li>
+                  <li><span class="pname">Immobilien Video</span><span class="pprice">ab ~400 €</span></li>
+                  <li><span class="pname">Auto Videos</span><span class="pprice">ab ~400 €</span></li>
+                  <li><span class="pname">Musikvideo</span><span class="pprice">ab ~450 €</span></li>
+                  <li><span class="pname">Events</span><span class="pprice">ab ~700 €</span></li>
+                  <li><span class="pname">Hochzeits-Paket</span><span class="pprice">ab ~1.900 €</span></li>
+                </ul>
+                <a href="#kontakt" data-request-package="Video" data-request-category="Video">Video anfragen →</a>
+              </details>
+            </div>
+
+            <div class="price-card reveal">
+              <h4>Foto &amp; Video</h4>
+              <div class="from">ab 450 € <span>im Bundle</span></div>
+              <details>
+                <summary>Alle Pakete</summary>
+                <ul class="pkg-list">
+                  <li><span class="pname">Auto Paket</span><span class="pprice">ab ~450 €</span></li>
+                  <li><span class="pname">Artist Video &amp; Fotos</span><span class="pprice">ab ~500 €</span></li>
+                  <li><span class="pname">Immobilien Paket</span><span class="pprice">ab ~600 €</span></li>
+                  <li><span class="pname">Commercial Business</span><span class="pprice">ab ~750 €</span></li>
+                </ul>
+                <a href="#kontakt" data-request-package="Foto & Video" data-request-category="Foto & Video">Foto &amp; Video anfragen →</a>
+              </details>
+            </div>
+
+            <div class="price-card reveal">
+              <h4>Grafikdesign</h4>
+              <div class="from">ab 150 € <span>Schätzpreis</span></div>
+              <details>
+                <summary>Alle Pakete</summary>
+                <ul class="pkg-list">
+                  <li><span class="pname">Kleidung</span><span class="pprice">ab ~150 €</span></li>
+                  <li><span class="pname">Flyer</span><span class="pprice">~200 €</span></li>
+                  <li><span class="pname">Plakate</span><span class="pprice">~200 €</span></li>
+                  <li><span class="pname">Logo</span><span class="pprice">~250 €</span></li>
+                  <li><span class="pname">Autofolierungen</span><span class="pprice">~500 €</span></li>
+                </ul>
+                <a href="#kontakt" data-request-package="Grafikdesign" data-request-category="Grafikdesign">Grafikdesign anfragen →</a>
+              </details>
+            </div>
+
+            <div class="price-card reveal">
+              <h4>Website</h4>
+              <div class="from">ab 800 € <span>Festpreis</span></div>
+              <details>
+                <summary>Alle Pakete</summary>
+                <ul class="pkg-list">
+                  <li><span class="pname">Informative Website</span><span class="pprice">800 €</span></li>
+                  <li><span class="pname">Online Shop</span><span class="pprice">1.200 €</span></li>
+                </ul>
+                <a href="#kontakt" data-request-package="Website" data-request-category="Webdesign">Website anfragen →</a>
+              </details>
             </div>
           </div>
-        </article>
+
+          <div class="calc-box">
+            <div>
+              <div class="eyebrow">Individuelle Kalkulation</div>
+              <h3>Rechne mit den echten Stundensätzen</h3>
+              <p>Alles bei MarlinW Media basiert auf Stundenlohn. Schätze dein Projekt mit den realen Sätzen aus der Preisliste.</p>
+
+              <div class="calc-field">
+                <label>Planung &amp; Organisation <span class="rate">40 €/Std.</span><span class="val" id="val-planning">2 Std.</span></label>
+                <input type="range" id="range-planning" min="0" max="10" step="0.5" value="2">
+              </div>
+              <div class="calc-field">
+                <label>Shooting / Dreh <span class="rate">90 €/Std.</span><span class="val" id="val-shooting">3 Std.</span></label>
+                <input type="range" id="range-shooting" min="0" max="12" step="0.5" value="3">
+              </div>
+              <div class="calc-field">
+                <label>Editing <span class="rate">55 €/Std.</span><span class="val" id="val-editing">4 Std.</span></label>
+                <input type="range" id="range-editing" min="0" max="20" step="0.5" value="4">
+              </div>
+              <div class="calc-field">
+                <label>Anfahrt <span class="rate">0,50 €/km</span><span class="val" id="val-km">10 km</span></label>
+                <input type="range" id="range-km" min="0" max="150" step="5" value="10">
+              </div>
+            </div>
+
+            <div class="calc-result">
+              <div class="label">Geschätzter Gesamtpreis</div>
+              <div class="amount" id="calc-total">0 €</div>
+              <p class="hint">Zzgl. Datensicherung (0,09 €/GB) &amp; ggf. Zollgebühr nach Aufwand. Unverbindliche Schätzung.</p>
+              <button class="btn btn-primary btn-block" id="calc-send">Diese Kalkulation anfragen</button>
+            </div>
+          </div>
+        </div>
       </div>
-    </section>
-  </main>
+    </div>
+  </section>
 
-  <button class="cart-fab" onclick="openCart()" aria-label="Warenkorb öffnen">
-    🛒
-    <span class="cart-count">0</span>
-  </button>
+  <!-- ================= BEWERTUNGEN ================= -->
+  <!-- Platzhalter-Testimonials: bei Erhalt echter Kundenstimmen ersetzen -->
+  <section id="bewertungen">
+    <div class="container">
+      <div class="section-head center">
+        <div class="eyebrow" style="justify-content:center">Bewertungen</div>
+        <h2>Was Kunden sagen</h2>
+        <p>Beispielhafte Stimmen zur Zusammenarbeit mit MarlinW Media.</p>
+      </div>
 
-  <div class="cart-overlay" id="cartOverlay">
-    <div class="cart-sheet">
-      <button class="cart-close" type="button" onclick="closeCart()" aria-label="Schließen">✕</button>
+      <div class="testi-grid">
+        <div class="testi-card reveal">
+          <div class="testi-stars">★★★★★</div>
+          <p class="quote">„Von der Planung bis zum fertigen Video lief alles reibungslos. Genau der Partner, den man sich für wiederkehrende Projekte wünscht.“</p>
+          <div class="testi-person">
+            <div class="testi-avatar">SK</div>
+            <div><div class="name">Sandra K.</div><div class="role">Marketingleitung, mittelständisches Unternehmen</div></div>
+          </div>
+        </div>
+        <div class="testi-card reveal">
+          <div class="testi-stars">★★★★★</div>
+          <p class="quote">„Die Aufnahmen unserer Fahrzeuge haben unsere Anfragen spürbar erhöht. Schnelle Abstimmung, starke Ergebnisse.“</p>
+          <div class="testi-person">
+            <div class="testi-avatar">JR</div>
+            <div><div class="name">Jonas R.</div><div class="role">Inhaber, Autohaus</div></div>
+          </div>
+        </div>
+        <div class="testi-card reveal">
+          <div class="testi-stars">★★★★★</div>
+          <p class="quote">„Transparente Preise, klare Kommunikation, und das Ergebnis hat unsere Erwartungen übertroffen.“</p>
+          <div class="testi-person">
+            <div class="testi-avatar">TH</div>
+            <div><div class="name">Tobias H.</div><div class="role">Geschäftsführer, Handwerksbetrieb</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-      <div class="cart-brand">
-        <img src="logo-white.png" alt="MarlinW Media Logo" id="cartBrandLogo" />
-        <div>
-          <strong>MarlinW Media</strong>
-          <h2>Warenkorb</h2>
+  <!-- ================= KONTAKT ================= -->
+  <section id="kontakt" style="background:var(--bg-alt)">
+    <div class="container">
+      <div class="section-head center">
+        <div class="eyebrow" style="justify-content:center">Kontakt</div>
+        <h2>Lass uns dein Projekt besprechen</h2>
+        <p>Ob Video, Foto, Design oder Website — schreib mir kurz, worum es geht. Ich melde mich schnellstmöglich mit den nächsten Schritten zurück.</p>
+        <div class="founder-card" style="justify-content:center; margin:24px auto 0;">
+          <img src="images/profil.jpg" alt="Marlin Wiesenberg" data-lightbox>
+          <div style="text-align:left">
+            <div class="name">Marlin Wiesenberg</div>
+            <div class="role">Gründer von MarlinW Media</div>
+          </div>
         </div>
       </div>
 
-      <div class="cart-items" id="cartItems"></div>
+      <div class="contact-grid">
+        <form class="contact-form reveal" id="contact-form" action="https://formsubmit.co/marlinw.media@gmail.com" method="POST">
+          <input type="hidden" name="_subject" value="Neue Projektanfrage über marlinw-media">
+          <input type="hidden" name="_template" value="table">
+          <input type="hidden" name="_captcha" value="false">
+          <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off">
 
-      <div class="cart-footer">
-        <span class="cart-total">Gesamt: <span id="cartTotal">0,00 €</span></span>
-        <button class="button primary" type="button" onclick="checkout()">Kaufen</button>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="field-name">Name *</label>
+              <input type="text" id="field-name" name="Name" required>
+            </div>
+            <div class="form-group">
+              <label for="field-email">E-Mail *</label>
+              <input type="email" id="field-email" name="E-Mail" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="field-phone">Telefon (optional)</label>
+              <input type="tel" id="field-phone" name="Telefon">
+            </div>
+            <div class="form-group">
+              <label for="field-service">Projektart</label>
+              <select id="field-service" name="Projektart">
+                <option>Video</option>
+                <option>Fotografie</option>
+                <option>Foto &amp; Video</option>
+                <option>Grafikdesign</option>
+                <option>Webdesign</option>
+                <option>Sonstiges</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="field-message">Nachricht *</label>
+            <textarea id="field-message" name="Nachricht" required placeholder="Erzähl mir kurz von deinem Projekt: Was, wann, wo?"></textarea>
+          </div>
+
+          <label class="form-check">
+            <input type="checkbox" required>
+            Ich stimme zu, dass meine Angaben zur Bearbeitung meiner Anfrage gespeichert werden. Details in der <a href="datenschutz.html" style="text-decoration:underline">Datenschutzerklärung</a>.
+          </label>
+
+          <button type="submit" class="btn btn-accent btn-block"><span class="rec-dot"></span>Anfrage senden</button>
+          <div class="form-status" id="form-status"></div>
+        </form>
+
+        <div class="contact-info">
+          <div class="whatsapp-card reveal">
+            <h3>Am schnellsten: WhatsApp oder Anruf</h3>
+            <p>Das ist mein Hauptkanal — ich bin fast rund um die Uhr erreichbar und antworte meist innerhalb kurzer Zeit.</p>
+            <div class="btn-row">
+              <a href="https://wa.me/4915231036109" target="_blank" rel="noopener" class="btn btn-whatsapp">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.1-8.6A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.7a2 2 0 0 1-.5 2.1L8 9.7a16 16 0 0 0 6 6l1.2-1.2a2 2 0 0 1 2.1-.5c.9.3 1.8.5 2.7.6a2 2 0 0 1 1.7 2Z"/></svg>
+                WhatsApp
+              </a>
+              <a href="tel:+4915231036109" class="btn btn-whatsapp">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.1-8.6A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.7a2 2 0 0 1-.5 2.1L8 9.7a16 16 0 0 0 6 6l1.2-1.2a2 2 0 0 1 2.1-.5c.9.3 1.8.5 2.7.6a2 2 0 0 1 1.7 2Z"/></svg>
+                +49 152 31036109
+              </a>
+            </div>
+          </div>
+          <div class="contact-info-card reveal">
+            <div class="service-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></div>
+            <div><h4>E-Mail</h4><a href="mailto:marlinw.media@gmail.com">marlinw.media@gmail.com</a></div>
+          </div>
+          <div class="contact-info-card reveal">
+            <div class="service-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.3" cy="6.7" r="1"/></svg></div>
+            <div><h4>Instagram</h4><a href="https://instagram.com/marlinw_media" target="_blank" rel="noopener">@marlinw_media</a></div>
+          </div>
+          <div class="contact-info-card reveal">
+            <div class="service-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.5-9.5-9C.6 8 3 4 7 4c2 0 4 1 5 3 1-2 3-3 5-3 4 0 6.4 4 4.5 8-2.5 4.5-9.5 9-9.5 9Z"/></svg></div>
+            <div><h4>Standort</h4><span>Hilzingen · Raum Bodensee / Singen / Konstanz</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-top">
+      <div>
+        <a href="index.html" class="logo">
+          <img src="assets/logo-white.png" alt="MarlinW Media" class="logo-img logo-dark">
+          <img src="assets/logo-black.png" alt="MarlinW Media" class="logo-img logo-light">
+        </a>
+        <p>Videoproduktion, Fotografie, Grafikdesign &amp; Webdesign aus Hilzingen — für Unternehmen und Privatkunden, die auffallen wollen.</p>
+        <div class="footer-social">
+          <a href="https://instagram.com/marlinw_media" target="_blank" rel="noopener" aria-label="Instagram"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.3" cy="6.7" r="1"/></svg></a>
+          <a href="https://wa.me/4915231036109" target="_blank" rel="noopener" aria-label="WhatsApp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.1-8.6A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.7a2 2 0 0 1-.5 2.1L8 9.7a16 16 0 0 0 6 6l1.2-1.2a2 2 0 0 1 2.1-.5c.9.3 1.8.5 2.7.6a2 2 0 0 1 1.7 2Z"/></svg></a>
+          <a href="mailto:marlinw.media@gmail.com" aria-label="E-Mail"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h5>Leistungen</h5>
+        <ul>
+          <li><a href="#leistungen">Videoproduktion</a></li>
+          <li><a href="#leistungen">Fotografie</a></li>
+          <li><a href="#leistungen">Grafikdesign</a></li>
+          <li><a href="#leistungen">Webdesign</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Unternehmen</h5>
+        <ul>
+          <li><a href="portfolio.html">Portfolio</a></li>
+          <li><a href="#konfigurator">Preise</a></li>
+          <li><a href="#bewertungen">Bewertungen</a></li>
+          <li><a href="#kontakt">Kontakt</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Rechtliches</h5>
+        <ul>
+          <li><a href="impressum.html">Impressum</a></li>
+          <li><a href="datenschutz.html">Datenschutz</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© <span id="year"></span> MarlinW Media · Marlin Wiesenberg</span>
+      <div class="legal-links">
+        <a href="impressum.html">Impressum</a>
+        <a href="datenschutz.html">Datenschutz</a>
       </div>
     </div>
   </div>
+</footer>
 
-  <div class="portfolio-modal" id="portfolioModal">
-    <div class="portfolio-modal-panel">
-      <button class="portfolio-modal-close" type="button" onclick="closePortfolioModal()" aria-label="Schließen">✕</button>
-
-      <div class="portfolio-modal-grid">
-        <div class="portfolio-modal-visual">
-          <button class="portfolio-modal-nav prev" type="button" onclick="changePortfolioDetailImage(-1)" aria-label="Vorheriges Bild">‹</button>
-          <div class="portfolio-modal-image" id="portfolioModalImage"></div>
-          <button class="portfolio-modal-nav next" type="button" onclick="changePortfolioDetailImage(1)" aria-label="Nächstes Bild">›</button>
-        </div>
-
-        <div class="portfolio-modal-meta">
-          <small class="hero-eyebrow" id="portfolioModalCategory">Kategorie</small>
-          <h2 id="portfolioModalTitle">Projekt</h2>
-          <p id="portfolioModalText">Zusatztext</p>
-          <div class="portfolio-modal-counter" id="portfolioModalCounter">1 / 3</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <footer>
-    <div class="footer-inner">
-      <span>© 2026 MarlinW Media</span>
-      <span>Foto • Video • Content • Creative Production</span>
-      <a href="impressum.html" class="footer-link">Impressum</a>
-    </div>
-  </footer>
-
-  <script src="script.js"></script>
+<script src="js/main.js"></script>
 </body>
 </html>
