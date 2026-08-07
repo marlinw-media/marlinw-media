@@ -141,6 +141,8 @@
 
   if (filterBtns.length && portfolioGrid) {
     const cards = portfolioGrid.querySelectorAll('.p-card');
+    const initialActive = Array.from(filterBtns).find((b) => b.classList.contains('active'));
+    portfolioGrid.classList.toggle('collage', !initialActive || initialActive.dataset.filter === 'all');
     filterBtns.forEach((btn) => {
       btn.addEventListener('click', () => {
         filterBtns.forEach((b) => b.classList.remove('active'));
@@ -153,6 +155,7 @@
           if (match) visible++;
         });
         portfolioGrid.classList.toggle('list-empty', visible === 0);
+        portfolioGrid.classList.toggle('collage', cat === 'all');
       });
     });
   }

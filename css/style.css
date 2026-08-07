@@ -596,6 +596,32 @@ section.tight { padding: 72px 0; }
   grid-template-columns: repeat(3, 1fr);
   gap: 20px;
 }
+
+/* Collage mode ("Alle" tab): a self-adjusting masonry made with CSS columns —
+   real photos keep their natural aspect ratio (no crop), placeholder tiles
+   (no <img>) fall back to a fixed ratio. Adapts automatically to however
+   many cards exist, no manual layout needed. */
+.portfolio-grid.collage {
+  display: block;
+  column-count: 2;
+  column-gap: 18px;
+}
+.portfolio-grid.collage .p-card {
+  display: inline-block;
+  width: 100%;
+  break-inside: avoid;
+  margin-bottom: 18px;
+  aspect-ratio: auto;
+}
+.portfolio-grid.collage .p-card:not(:has(.p-photo)) { aspect-ratio: 4 / 5; }
+.portfolio-grid.collage .p-photo { position: static; width: 100%; height: auto; display: block; }
+
+@media (min-width: 640px) {
+  .portfolio-grid.collage { column-count: 3; }
+}
+@media (min-width: 1200px) {
+  .portfolio-grid.collage { column-count: 4; }
+}
 .portfolio-grid.list-empty::after {
   content: 'In dieser Kategorie sind bald neue Projekte zu sehen.';
   grid-column: 1 / -1;
@@ -1086,8 +1112,6 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
   .container { padding: 0 18px; }
   .portfolio-filters { margin-left: -18px; margin-right: -18px; padding-left: 18px; padding-right: 18px; }
   .price-overview { grid-template-columns: 1fr; }
-  .portfolio-teaser { grid-template-columns: 1fr; }
-  .teaser-tile.tall { grid-row: auto; }
 }
 
 /* ---------- Mobile nav drawer ---------- */
