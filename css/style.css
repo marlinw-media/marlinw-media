@@ -1086,8 +1086,8 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
   .why-grid { grid-template-columns: 1fr; }
   .portfolio-grid { grid-template-columns: 1fr 1fr; gap: 4px; }
   .portfolio-grid.collage { column-gap: 4px; }
-  .portfolio-grid.collage .p-card { margin-bottom: 4px; }
-  .p-card { border-radius: 4px; }
+  .portfolio-grid.collage .p-card { margin-bottom: 4px !important; }
+  .p-card { border-radius: 0; }
   .testi-grid { grid-template-columns: 1fr; }
   .form-row { grid-template-columns: 1fr; }
   .footer-top { grid-template-columns: 1fr 1fr; }
