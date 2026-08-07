@@ -579,6 +579,11 @@
         drag: 0.996,
         life: 0,
         maxLife: 430 + Math.random() * 110,
+        fallSwayPhase: Math.random() * Math.PI * 2,
+        fallSwaySpeed: 0.025 + Math.random() * 0.05,
+        fallSwayAmp: 0.3 + Math.random() * 0.9,
+        fallDriftX: (Math.random() - 0.5) * 0.5,
+        fallStartVx: (Math.random() - 0.5) * 1.6,
       });
     }
 
@@ -793,12 +798,15 @@
           p.t++;
           p.x = p.targetX;
           p.y = p.targetY;
-          if (p.t > p.holdDur) p.phase = 'fall';
+          if (p.t > p.holdDur) {
+            p.phase = 'fall';
+            p.vx = p.fallStartVx;
+          }
         } else {
           p.vy += p.gravity;
           p.vx *= p.drag;
           p.vy *= p.drag;
-          p.x += p.vx + Math.sin(p.life * 0.05) * 0.4;
+          p.x += p.vx + Math.sin(p.life * p.fallSwaySpeed + p.fallSwayPhase) * p.fallSwayAmp + p.fallDriftX;
           p.y += p.vy;
         }
 
