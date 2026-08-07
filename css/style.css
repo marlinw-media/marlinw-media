@@ -1084,7 +1084,10 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
   .logo .sub { display: none; }
   .services-grid { grid-template-columns: 1fr; }
   .why-grid { grid-template-columns: 1fr; }
-  .portfolio-grid { grid-template-columns: 1fr 1fr; }
+  .portfolio-grid { grid-template-columns: 1fr 1fr; gap: 4px; }
+  .portfolio-grid.collage { column-gap: 4px; }
+  .portfolio-grid.collage .p-card { margin-bottom: 4px; }
+  .p-card { border-radius: 4px; }
   .testi-grid { grid-template-columns: 1fr; }
   .form-row { grid-template-columns: 1fr; }
   .footer-top { grid-template-columns: 1fr 1fr; }
