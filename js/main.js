@@ -470,84 +470,357 @@
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const colors = getConfettiColors();
     const { canvas, ctx, W, H } = createConfettiCanvas();
+    const centerX = W / 2 + (Math.random() - 0.5) * W * 0.1;
+    const centerY = H * 0.4;
 
+    function spawnSparks(originX, originY, n, spread) {
+      const sparks = [];
+      for (let j = 0; j < n; j++) {
+        const angle = (j / n) * Math.PI * 2 + Math.random() * 0.25;
+        const speed = (2 + Math.random() * 2.6) * spread;
+        sparks.push({
+          x: originX,
+          y: originY,
+          prevX: originX,
+          prevY: originY,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          size: 2 + Math.random() * 1.8,
+        });
+      }
+      return sparks;
+    }
+
+    /* ---- the hero rocket: arcs up (curved path), trailing orange fire,
+       then explodes — and the heart blooms out of that explosion. ---- */
+    const launchX = W * (0.4 + Math.random() * 0.2);
+    const arcControlX = launchX + (Math.random() - 0.5) * W * 0.35;
+    const hero = {
+      stage: 'rising',
+      p: 0,
+      speed: 0.0062 + Math.random() * 0.0018,
+      trail: [],
+      fromX: launchX,
+      fromY: H + 24,
+      toX: centerX,
+      toY: centerY,
+      ctrlX: arcControlX,
+    };
+
+    /* ---- a few smaller, subtler background fireworks for ambience ---- */
+    function makeFirework(delay) {
+      const originX = W * (0.1 + Math.random() * 0.8);
+      const targetY = H * (0.12 + Math.random() * 0.4);
+      return {
+        stage: 'rising',
+        startFrame: delay,
+        x: originX,
+        y: H + 24,
+        targetY,
+        speed: 3.2 + Math.random() * 1.4,
+        trail: [],
+        sparks: null,
+        life: 0,
+        maxLife: 60 + Math.random() * 20,
+        drag: 0.963,
+        gravity: 0.045,
+      };
+    }
+    const fireworkCount = window.innerWidth < 640 ? 2 : 4;
+    const fireworks = [];
+    for (let i = 0; i < fireworkCount; i++) {
+      fireworks.push(makeFirework(30 + i * 55 + Math.floor(Math.random() * 30)));
+    }
+
+    /* ---- ambient drifting glitter, twinkling on and off throughout ---- */
+    const sparkleCount = window.innerWidth < 640 ? 30 : 54;
+    const sparkles = [];
+    for (let i = 0; i < sparkleCount; i++) {
+      sparkles.push({
+        x: W * (0.12 + Math.random() * 0.76),
+        y: H * (0.1 + Math.random() * 0.6),
+        size: 1.5 + Math.random() * 2.2,
+        color: Math.random() < 0.5 ? '#ffffff' : colors[Math.floor(Math.random() * colors.length)],
+        phase: Math.random() * Math.PI * 2,
+        speed: 0.04 + Math.random() * 0.07,
+        drift: 0.05 + Math.random() * 0.15,
+        startFrame: 60 + Math.floor(Math.random() * 60),
+        maxLife: 340 + Math.random() * 220,
+        life: 0,
+      });
+    }
+
+    /* ---- the heart itself: dots that bloom out from the rocket's burst
+       point, hold as a calm glowing heart (no pulsing), then drift and
+       fade slowly downward like falling glitter. ---- */
     const count = window.innerWidth < 640 ? 110 : 190;
     const scale = Math.min(W, H) * 0.017;
-    const centerX = W / 2;
-    const centerY = H * 0.42;
-    const startX = W / 2;
-    const startY = H * 0.8;
-
     const particles = [];
     for (let i = 0; i < count; i++) {
       const t = (i / count) * Math.PI * 2 + (Math.random() - 0.5) * 0.05;
       const hp = heartCurvePoint(t);
-      const jitter = 0.9 + Math.random() * 0.25;
+      const jitter = 0.92 + Math.random() * 0.16;
       particles.push({
-        x: startX,
-        y: startY,
-        startX: startX + (Math.random() - 0.5) * 60,
-        startY: startY + Math.random() * 30,
+        x: centerX,
+        y: centerY,
         targetX: centerX + hp.x * scale * jitter,
         targetY: centerY - hp.y * scale * jitter,
-        size: 5 + Math.random() * 5,
+        size: 4 + Math.random() * 4,
         color: colors[Math.floor(Math.random() * colors.length)],
-        rotation: Math.random() * 360,
-        rotationSpeed: (Math.random() - 0.5) * 8,
-        shape: Math.random() < 0.5 ? 'rect' : 'circle',
-        phase: 'explode',
+        phase: 'wait',
         t: 0,
-        explodeDur: 38 + Math.random() * 16,
-        holdDur: 55 + Math.random() * 35,
+        explodeDur: 34 + Math.random() * 16,
+        holdDur: 130 + Math.random() * 40,
+        twinklePhase: Math.random() * Math.PI * 2,
         vx: 0,
         vy: 0,
-        gravity: 0.1 + Math.random() * 0.07,
-        drag: 0.99,
+        gravity: 0.018 + Math.random() * 0.012,
+        drag: 0.996,
         life: 0,
-        maxLife: 340 + Math.random() * 110,
+        maxLife: 430 + Math.random() * 110,
       });
     }
 
     let frame = 0;
+    let heartArmed = false;
+
     function tick() {
       frame++;
       ctx.clearRect(0, 0, W, H);
       let alive = 0;
+
+      /* -- hero rocket -- */
+      if (hero.stage === 'rising') {
+        alive++;
+        hero.p = Math.min(1, hero.p + hero.speed);
+        const t = hero.p;
+        const x = (1 - t) * (1 - t) * hero.fromX + 2 * (1 - t) * t * hero.ctrlX + t * t * hero.toX;
+        const y = (1 - t) * (1 - t) * hero.fromY + 2 * (1 - t) * t * (hero.fromY * 0.35) + t * t * hero.toY;
+        hero.x = x;
+        hero.y = y;
+        hero.trail.push({ x, y });
+        if (hero.trail.length > 18) hero.trail.shift();
+
+        ctx.save();
+        for (let i = 1; i < hero.trail.length; i++) {
+          const a = hero.trail[i - 1];
+          const b = hero.trail[i];
+          const tt = i / hero.trail.length;
+          ctx.globalAlpha = tt * 0.75;
+          ctx.strokeStyle = `rgba(255, ${120 + Math.round(tt * 70)}, 40, 1)`;
+          ctx.lineWidth = 2 + tt * 2.6;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(a.x, a.y);
+          ctx.lineTo(b.x, b.y);
+          ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = '#ffd8a3';
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = '#ff9a3d';
+        ctx.beginPath();
+        ctx.arc(hero.x, hero.y, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        if (hero.p >= 1) {
+          hero.stage = 'exploded';
+          hero.sparks = spawnSparks(hero.x, hero.y, 34, 1.3);
+          hero.life = 0;
+          hero.maxLife = 70;
+          heartArmed = true;
+        }
+      } else {
+        hero.life++;
+        if (hero.life <= hero.maxLife) {
+          const fadeStart = hero.maxLife * 0.5;
+          const opacity = hero.life > fadeStart ? Math.max(0, 1 - (hero.life - fadeStart) / (hero.maxLife - fadeStart)) : 1;
+          if (opacity > 0) {
+            alive++;
+            hero.sparks.forEach((s) => {
+              s.prevX = s.x;
+              s.prevY = s.y;
+              s.vy += 0.05;
+              s.vx *= 0.96;
+              s.vy *= 0.96;
+              s.x += s.vx;
+              s.y += s.vy;
+              ctx.save();
+              ctx.globalAlpha = opacity;
+              ctx.strokeStyle = s.color;
+              ctx.lineWidth = s.size;
+              ctx.lineCap = 'round';
+              ctx.beginPath();
+              ctx.moveTo(s.prevX, s.prevY);
+              ctx.lineTo(s.x, s.y);
+              ctx.stroke();
+              ctx.restore();
+            });
+          }
+        }
+      }
+
+      /* -- background fireworks -- */
+      fireworks.forEach((fw) => {
+        if (frame < fw.startFrame) {
+          alive++;
+          return;
+        }
+        if (fw.stage === 'rising') {
+          alive++;
+          fw.y -= fw.speed;
+          fw.trail.push({ x: fw.x, y: fw.y });
+          if (fw.trail.length > 12) fw.trail.shift();
+          ctx.save();
+          for (let i = 1; i < fw.trail.length; i++) {
+            const a = fw.trail[i - 1];
+            const b = fw.trail[i];
+            const tt = i / fw.trail.length;
+            ctx.globalAlpha = tt * 0.6;
+            ctx.strokeStyle = `rgba(255, ${120 + Math.round(tt * 60)}, 40, 1)`;
+            ctx.lineWidth = 1.3 + tt * 1.6;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.stroke();
+          }
+          ctx.globalAlpha = 1;
+          ctx.fillStyle = '#ffcf8a';
+          ctx.beginPath();
+          ctx.arc(fw.x, fw.y, 1.8, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+          if (fw.y <= fw.targetY) {
+            fw.stage = 'exploded';
+            fw.sparks = spawnSparks(fw.x, fw.y, 18, 1);
+          }
+          return;
+        }
+        fw.life++;
+        if (fw.life > fw.maxLife) return;
+        const fadeStart = fw.maxLife * 0.55;
+        const opacity = fw.life > fadeStart ? Math.max(0, 1 - (fw.life - fadeStart) / (fw.maxLife - fadeStart)) : 1;
+        if (opacity <= 0) return;
+        alive++;
+        fw.sparks.forEach((s) => {
+          s.prevX = s.x;
+          s.prevY = s.y;
+          s.vy += fw.gravity;
+          s.vx *= fw.drag;
+          s.vy *= fw.drag;
+          s.x += s.vx;
+          s.y += s.vy;
+          ctx.save();
+          ctx.globalAlpha = opacity;
+          ctx.strokeStyle = s.color;
+          ctx.lineWidth = s.size;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(s.prevX, s.prevY);
+          ctx.lineTo(s.x, s.y);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.fillStyle = s.color;
+          ctx.arc(s.x, s.y, s.size / 2, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        });
+      });
+
+      /* -- ambient glitter twinkle -- */
+      sparkles.forEach((sp) => {
+        if (frame < sp.startFrame) {
+          alive++;
+          return;
+        }
+        sp.life++;
+        if (sp.life > sp.maxLife) return;
+        alive++;
+        const fadeStart = sp.maxLife * 0.8;
+        const envelope = sp.life > fadeStart ? Math.max(0, 1 - (sp.life - fadeStart) / (sp.maxLife - fadeStart)) : 1;
+        const twinkle = (Math.sin(sp.life * sp.speed + sp.phase) + 1) / 2;
+        const opacity = twinkle * twinkle * envelope;
+        sp.y += sp.drift;
+        if (opacity <= 0.04) return;
+        ctx.save();
+        ctx.globalAlpha = opacity;
+        ctx.fillStyle = sp.color;
+        ctx.shadowBlur = 6;
+        ctx.shadowColor = sp.color;
+        const s = sp.size * (0.7 + twinkle * 0.6);
+        ctx.beginPath();
+        ctx.moveTo(sp.x, sp.y - s);
+        ctx.lineTo(sp.x + s * 0.28, sp.y - s * 0.28);
+        ctx.lineTo(sp.x + s, sp.y);
+        ctx.lineTo(sp.x + s * 0.28, sp.y + s * 0.28);
+        ctx.lineTo(sp.x, sp.y + s);
+        ctx.lineTo(sp.x - s * 0.28, sp.y + s * 0.28);
+        ctx.lineTo(sp.x - s, sp.y);
+        ctx.lineTo(sp.x - s * 0.28, sp.y - s * 0.28);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      });
+
+      /* -- the heart -- */
       particles.forEach((p) => {
         if (p.life > p.maxLife) return;
         p.life++;
+
+        if (p.phase === 'wait') {
+          alive++;
+          if (heartArmed) {
+            p.phase = 'explode';
+            p.t = 0;
+          }
+          return;
+        }
 
         if (p.phase === 'explode') {
           p.t++;
           const progress = Math.min(1, p.t / p.explodeDur);
           const eased = 1 - Math.pow(1 - progress, 3);
-          p.x = p.startX + (p.targetX - p.startX) * eased;
-          p.y = p.startY + (p.targetY - p.startY) * eased;
+          p.x = centerX + (p.targetX - centerX) * eased;
+          p.y = centerY + (p.targetY - centerY) * eased;
           if (progress >= 1) {
             p.phase = 'hold';
             p.t = 0;
           }
         } else if (p.phase === 'hold') {
           p.t++;
-          p.x = p.targetX + Math.sin(p.life * 0.15) * 1.4;
-          p.y = p.targetY + Math.cos(p.life * 0.12) * 1.4;
+          p.x = p.targetX;
+          p.y = p.targetY;
           if (p.t > p.holdDur) p.phase = 'fall';
         } else {
           p.vy += p.gravity;
           p.vx *= p.drag;
           p.vy *= p.drag;
-          p.x += p.vx + Math.sin(p.life * 0.08) * 0.6;
+          p.x += p.vx + Math.sin(p.life * 0.05) * 0.4;
           p.y += p.vy;
         }
 
-        p.rotation += p.rotationSpeed;
         const fadeStart = p.maxLife * 0.8;
         const opacity = p.life > fadeStart ? Math.max(0, 1 - (p.life - fadeStart) / (p.maxLife - fadeStart)) : 1;
         if (opacity <= 0) return;
         alive++;
-        drawParticle(ctx, p, opacity);
+        const twinkle = p.phase === 'hold' ? 0.78 + 0.22 * ((Math.sin(p.life * 0.12 + p.twinklePhase) + 1) / 2) : 1;
+        ctx.save();
+        ctx.globalAlpha = opacity * twinkle;
+        ctx.fillStyle = p.color;
+        if (p.phase !== 'fall') {
+          ctx.shadowBlur = 11;
+          ctx.shadowColor = p.color;
+        }
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size / 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
       });
-      if (alive > 0 && frame < 600) {
+
+      if (alive > 0 && frame < 900) {
         requestAnimationFrame(tick);
       } else {
         canvas.remove();
