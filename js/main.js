@@ -260,6 +260,19 @@
     });
   }
 
+  /* ---------- Easter-egg email check (hashed, not plaintext — this file is
+     public on GitHub, so the real address never appears in the source) ---------- */
+  const SPECIAL_EMAIL_HASH = '2938f999fc9046ea1191ea7c7e4575df1bdc3cebda2c5ebc1f0cb2c974e35c63';
+  async function isSpecialEmail(value) {
+    if (!value || !window.crypto?.subtle) return false;
+    const bytes = new TextEncoder().encode(value);
+    const digest = await crypto.subtle.digest('SHA-256', bytes);
+    const hex = Array.from(new Uint8Array(digest))
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('');
+    return hex === SPECIAL_EMAIL_HASH;
+  }
+
   /* ---------- Contact form submit (FormSubmit.co, no backend required) ---------- */
   const form = document.getElementById('contact-form');
   const formStatus = document.getElementById('form-status');
@@ -286,7 +299,7 @@
           formStatus.classList.add('show', 'ok');
           form.reset();
           updateCalc();
-          if (emailVal === 'marinela5marusic@gmail.com') {
+          if (await isSpecialEmail(emailVal)) {
             fireHeartConfetti();
           } else {
             fireConfetti();
