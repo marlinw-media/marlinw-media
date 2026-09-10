@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
 <link rel="stylesheet" href="/css/style.css">
 <style>
-  .shop-wrap { max-width: 960px; margin: 0 auto; padding: 48px 24px 120px; }
+  .shop-wrap { max-width: 960px; margin: 0 auto; padding: 48px 24px 96px; transition: padding-bottom 200ms ease; }
   .shop-head { margin-bottom: 28px; }
   .shop-head h1 { font-size: clamp(26px, 5vw, 38px); }
   .shop-head p { font-size: 14.5px; }
@@ -139,9 +139,12 @@
   .cart-body {
     max-width: 960px;
     margin: 0 auto;
-    padding: 6px 24px 28px;
-    max-height: 62vh;
+    padding: 6px 24px 24px;
+  }
+  #cart-lines {
+    max-height: 168px;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
   .cart-empty { color: var(--text-faint); font-size: 14px; padding: 12px 0 20px; }
   .cart-line {
@@ -280,6 +283,19 @@
       '</svg>';
   }
 
+  function muesliSVG() {
+    return '<svg viewBox="0 0 140 150" xmlns="http://www.w3.org/2000/svg">' +
+      '<path d="M18 62h104a52 52 0 0 1-52 52 52 52 0 0 1-52-52z" fill="#e8e2d4"/>' +
+      '<ellipse cx="70" cy="62" rx="52" ry="14" fill="#c9a35b"/>' +
+      '<g fill="#8a5a34">' +
+      '<circle cx="52" cy="60" r="5"/><circle cx="70" cy="64" r="5"/><circle cx="88" cy="59" r="5"/>' +
+      '<rect x="60" y="52" width="12" height="5" rx="2" transform="rotate(20 66 54)"/>' +
+      '<rect x="78" y="66" width="12" height="5" rx="2" transform="rotate(-15 84 68)"/>' +
+      '</g>' +
+      '<g fill="#d64545"><circle cx="46" cy="66" r="3.5"/><circle cx="96" cy="66" r="3.5"/></g>' +
+      '</svg>';
+  }
+
   function coffeeSVG() {
     return '<svg viewBox="0 0 140 150" xmlns="http://www.w3.org/2000/svg">' +
       '<path d="M40 20c0 6-6 8-6 14s6 8 6 14" fill="none" stroke="#b7bcc4" stroke-width="4" stroke-linecap="round"/>' +
@@ -297,6 +313,7 @@
     { id: 'cs-fairydrink', name: 'Capri-Sun Fairy Drink', art: pouchSVG('#ec4899', '#9d174d') },
     { id: 'cs-safarifruits', name: 'Capri-Sun Safari Fruits', art: pouchSVG('#22c55e', '#15803d') },
     { id: 'kaffee', name: 'Kaffee', art: coffeeSVG() },
+    { id: 'muesli', name: 'Müsli', art: muesliSVG() },
     { id: 'chips', name: 'Chips (Zufallssorte)', art: chipsSVG() },
     { id: 'popcorn', name: 'Popcorn', art: popcornSVG() },
     {
@@ -327,6 +344,15 @@
   var cartLines = document.getElementById('cart-lines');
   var cartCount = document.getElementById('cart-count');
   var orderStatus = document.getElementById('order-status');
+  var shopWrap = document.querySelector('.shop-wrap');
+
+  // keep enough space below the list so the last product is always
+  // scrollable above the cart, whether the cart is open or collapsed
+  function syncBottomSpace() {
+    var h = cartEl.classList.contains('open') ? cartEl.offsetHeight : 58;
+    shopWrap.style.paddingBottom = (h + 32) + 'px';
+  }
+  window.addEventListener('resize', syncBottomSpace);
 
   PRODUCTS.forEach(function (p) {
     var card = document.createElement('div');
@@ -344,6 +370,7 @@
     save();
     render();
     cartEl.classList.add('open');
+    syncBottomSpace();
   }
 
   /* ---- topping modal ---- */
@@ -423,10 +450,12 @@
     else { delete cart[k]; }
     save();
     render();
+    syncBottomSpace();
   });
 
   document.getElementById('cart-toggle').addEventListener('click', function () {
     cartEl.classList.toggle('open');
+    syncBottomSpace();
   });
 
   document.getElementById('order-btn').addEventListener('click', async function () {
@@ -436,6 +465,7 @@
     if (!keys.length) {
       orderStatus.textContent = 'Der Warenkorb ist leer.';
       orderStatus.classList.add('show', 'err');
+      syncBottomSpace();
       return;
     }
 
@@ -470,10 +500,12 @@
     } finally {
       btn.disabled = false;
       btn.textContent = original;
+      syncBottomSpace();
     }
   });
 
   render();
+  syncBottomSpace();
 })();
 </script>
 </body>
