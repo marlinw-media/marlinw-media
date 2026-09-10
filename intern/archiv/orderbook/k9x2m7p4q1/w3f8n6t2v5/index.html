@@ -60,6 +60,43 @@
     text-align: center;
   }
 
+  /* topping modal */
+  .topping-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(5,5,6,0.72);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 180ms ease;
+  }
+  .topping-modal.open { opacity: 1; pointer-events: auto; }
+  .tm-panel {
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-lg);
+    padding: 26px;
+    width: 100%;
+    max-width: 360px;
+  }
+  .tm-panel h3 { margin: 0 0 16px; font-size: 18px; }
+  .tm-opt {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 15px;
+    cursor: pointer;
+  }
+  .tm-opt input { width: 18px; height: 18px; accent-color: var(--accent); }
+  .tm-actions { display: flex; gap: 10px; margin-top: 20px; }
+  .tm-actions .btn { flex: 1; }
+
   /* cart */
   .cart {
     position: fixed;
@@ -115,6 +152,7 @@
     border-bottom: 1px solid var(--border);
   }
   .cart-line .cl-name { flex: 1; font-size: 14.5px; font-weight: 500; }
+  .cart-line .cl-name small { display: block; font-weight: 400; color: var(--text-faint); font-size: 12.5px; margin-top: 2px; }
   .qty { display: flex; align-items: center; gap: 4px; }
   .qty button {
     width: 30px; height: 30px;
@@ -161,6 +199,17 @@
   </div>
 
   <div class="shop-grid" id="shop-grid"></div>
+</div>
+
+<div class="topping-modal" id="topping-modal">
+  <div class="tm-panel">
+    <h3 id="tm-title">Belegen</h3>
+    <div id="tm-options"></div>
+    <div class="tm-actions">
+      <button class="btn btn-ghost btn-sm" id="tm-cancel" type="button">Abbrechen</button>
+      <button class="btn btn-accent btn-sm" id="tm-add" type="button">Hinzufügen</button>
+    </div>
+  </div>
 </div>
 
 <div class="cart" id="cart">
@@ -215,8 +264,7 @@
     return '<svg viewBox="0 0 120 150" xmlns="http://www.w3.org/2000/svg">' +
       '<g fill="#f4d35e">' +
       '<circle cx="42" cy="42" r="13"/><circle cx="62" cy="34" r="14"/><circle cx="82" cy="44" r="12"/>' +
-      '<circle cx="52" cy="52" r="12"/><circle cx="74" cy="52" r="11"/>' +
-      '</g>' +
+      '<circle cx="52" cy="52" r="12"/><circle cx="74" cy="52" r="11"/></g>' +
       '<path d="M34 56h52l-8 74a6 6 0 0 1-6 5H48a6 6 0 0 1-6-5z" fill="#d64545"/>' +
       '<rect x="46" y="62" width="8" height="66" fill="#fff" opacity=".85"/>' +
       '<rect x="66" y="62" width="8" height="66" fill="#fff" opacity=".85"/>' +
@@ -251,15 +299,27 @@
     { id: 'kaffee', name: 'Kaffee', art: coffeeSVG() },
     { id: 'chips', name: 'Chips (Zufallssorte)', art: chipsSVG() },
     { id: 'popcorn', name: 'Popcorn', art: popcornSVG() },
-    { id: 'sandwich', name: 'Sandwich', art: sandwichSVG(), note: 'Achtung: erhöhte Bearbeitungszeit' }
+    {
+      id: 'sandwich', name: 'Sandwich', art: sandwichSVG(),
+      note: 'Achtung: erhöhte Bearbeitungszeit',
+      options: ['Salami', 'Butter', 'Senf', 'Spezialsauce', 'Gouda', 'verschiedene Käsesorten']
+    }
   ];
 
   var STORE_KEY = 'mw-drinks-cart';
   var cart = {};
   try { cart = JSON.parse(localStorage.getItem(STORE_KEY)) || {}; } catch (e) { cart = {}; }
+  function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(cart)); } catch (e) {} }
 
-  function save() {
-    try { localStorage.setItem(STORE_KEY, JSON.stringify(cart)); } catch (e) {}
+  function baseId(key) { return key.split('::')[0]; }
+  function toppingsOf(key) { var t = key.split('::')[1]; return t ? t.split('|') : []; }
+  function keyFor(id, toppings) { return toppings.length ? id + '::' + toppings.join('|') : id; }
+  function productOf(key) { var b = baseId(key); return PRODUCTS.find(function (x) { return x.id === b; }); }
+  function lineText(key) {
+    var p = productOf(key);
+    var name = p ? p.name : baseId(key);
+    var t = toppingsOf(key);
+    return t.length ? name + ' mit ' + t.join(', ') : name;
   }
 
   var grid = document.getElementById('shop-grid');
@@ -279,14 +339,48 @@
     grid.appendChild(card);
   });
 
-  grid.addEventListener('click', function (e) {
-    var btn = e.target.closest('[data-add]');
-    if (!btn) return;
-    var id = btn.dataset.add;
-    cart[id] = (cart[id] || 0) + 1;
+  function addToCart(key) {
+    cart[key] = (cart[key] || 0) + 1;
     save();
     render();
     cartEl.classList.add('open');
+  }
+
+  /* ---- topping modal ---- */
+  var modal = document.getElementById('topping-modal');
+  var modalTitle = document.getElementById('tm-title');
+  var modalOptions = document.getElementById('tm-options');
+  var pendingProduct = null;
+
+  function openToppingModal(product) {
+    pendingProduct = product;
+    modalTitle.textContent = product.name + ' belegen';
+    modalOptions.innerHTML = product.options.map(function (o, i) {
+      return '<label class="tm-opt"><input type="checkbox" value="' + o + '" id="tm-o' + i + '">' + o + '</label>';
+    }).join('');
+    modal.classList.add('open');
+  }
+  function closeToppingModal() {
+    modal.classList.remove('open');
+    pendingProduct = null;
+  }
+
+  document.getElementById('tm-cancel').addEventListener('click', closeToppingModal);
+  modal.addEventListener('click', function (e) { if (e.target === modal) closeToppingModal(); });
+  document.getElementById('tm-add').addEventListener('click', function () {
+    if (!pendingProduct) return;
+    var chosen = Array.from(modalOptions.querySelectorAll('input:checked')).map(function (c) { return c.value; });
+    addToCart(keyFor(pendingProduct.id, chosen));
+    closeToppingModal();
+  });
+
+  grid.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-add]');
+    if (!btn) return;
+    var product = PRODUCTS.find(function (x) { return x.id === btn.dataset.add; });
+    if (!product) return;
+    if (product.options) { openToppingModal(product); return; }
+    addToCart(product.id);
   });
 
   function totalItems() {
@@ -295,35 +389,38 @@
 
   function render() {
     cartCount.textContent = totalItems();
-    var ids = Object.keys(cart).filter(function (k) { return cart[k] > 0; });
-    if (!ids.length) {
+    var keys = Object.keys(cart).filter(function (k) { return cart[k] > 0; });
+    if (!keys.length) {
       cartLines.innerHTML = '<div class="cart-empty">Noch nichts im Warenkorb.</div>';
       return;
     }
     cartLines.innerHTML = '';
-    ids.forEach(function (id) {
-      var p = PRODUCTS.find(function (x) { return x.id === id; });
-      if (!p) return;
+    keys.forEach(function (key) {
+      var p = productOf(key);
+      var t = toppingsOf(key);
       var line = document.createElement('div');
       line.className = 'cart-line';
       line.innerHTML =
-        '<span class="cl-name">' + p.name + '</span>' +
-        '<span class="qty">' +
-          '<button data-dec="' + id + '" aria-label="weniger">–</button>' +
-          '<span class="val">' + cart[id] + '</span>' +
-          '<button data-inc="' + id + '" aria-label="mehr">+</button>' +
+        '<span class="cl-name">' + (p ? p.name : baseId(key)) +
+          (t.length ? '<small>mit ' + t.join(', ') + '</small>' : '') +
         '</span>' +
-        '<button class="cl-remove" data-del="' + id + '">entfernen</button>';
+        '<span class="qty">' +
+          '<button data-dec="' + key + '" aria-label="weniger">–</button>' +
+          '<span class="val">' + cart[key] + '</span>' +
+          '<button data-inc="' + key + '" aria-label="mehr">+</button>' +
+        '</span>' +
+        '<button class="cl-remove" data-del="' + key + '">entfernen</button>';
       cartLines.appendChild(line);
     });
   }
 
   cartLines.addEventListener('click', function (e) {
     var t = e.target;
-    if (t.dataset.inc) { cart[t.dataset.inc]++; }
-    else if (t.dataset.dec) { cart[t.dataset.dec] = Math.max(0, cart[t.dataset.dec] - 1); if (!cart[t.dataset.dec]) delete cart[t.dataset.dec]; }
-    else if (t.dataset.del) { delete cart[t.dataset.del]; }
-    else return;
+    var k = t.dataset.inc || t.dataset.dec || t.dataset.del;
+    if (!k) return;
+    if (t.dataset.inc) { cart[k]++; }
+    else if (t.dataset.dec) { cart[k] = Math.max(0, cart[k] - 1); if (!cart[k]) delete cart[k]; }
+    else { delete cart[k]; }
     save();
     render();
   });
@@ -334,18 +431,15 @@
 
   document.getElementById('order-btn').addEventListener('click', async function () {
     var btn = this;
-    var ids = Object.keys(cart).filter(function (k) { return cart[k] > 0; });
+    var keys = Object.keys(cart).filter(function (k) { return cart[k] > 0; });
     orderStatus.className = 'order-status';
-    if (!ids.length) {
+    if (!keys.length) {
       orderStatus.textContent = 'Der Warenkorb ist leer.';
       orderStatus.classList.add('show', 'err');
       return;
     }
 
-    var lines = ids.map(function (id) {
-      var p = PRODUCTS.find(function (x) { return x.id === id; });
-      return cart[id] + '× ' + (p ? p.name : id);
-    });
+    var lines = keys.map(function (k) { return cart[k] + '× ' + lineText(k); });
 
     btn.disabled = true;
     var original = btn.textContent;
