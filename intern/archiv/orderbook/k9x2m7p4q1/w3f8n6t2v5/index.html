@@ -8,27 +8,35 @@
 <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
 <link rel="stylesheet" href="/css/style.css">
 <style>
-  .shop-wrap { max-width: 1000px; margin: 0 auto; padding: 56px 24px 120px; }
-  .shop-head { margin-bottom: 40px; }
-  .shop-head h1 { font-size: clamp(28px, 5vw, 40px); }
-  .shop-head p { font-size: 15px; }
+  .shop-wrap { max-width: 960px; margin: 0 auto; padding: 48px 24px 120px; }
+  .shop-head { margin-bottom: 28px; }
+  .shop-head h1 { font-size: clamp(26px, 5vw, 38px); }
+  .shop-head p { font-size: 14.5px; }
 
   .shop-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 18px;
+    gap: 12px;
   }
   .drink-card {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
+    padding: 14px;
+    display: grid;
+    grid-template-columns: 72px 1fr;
+    grid-template-areas:
+      "art name"
+      "note note"
+      "btn btn";
+    column-gap: 14px;
+    row-gap: 10px;
+    align-items: center;
   }
   .drink-art {
-    aspect-ratio: 16 / 10;
+    grid-area: art;
+    width: 72px;
+    height: 72px;
     border-radius: var(--radius-sm);
     display: flex;
     align-items: center;
@@ -36,13 +44,20 @@
     background: var(--bg-alt);
     overflow: hidden;
   }
-  .drink-art svg { width: 56%; height: 86%; }
-  .drink-card h3 { font-size: 16px; margin: 0; }
-  .drink-card .add-btn { margin-top: auto; }
-  .drink-card .in-cart {
-    font-size: 12.5px;
-    font-weight: 600;
-    color: var(--accent);
+  .drink-art svg { width: 74%; height: 90%; }
+  .drink-card h3 { grid-area: name; font-size: 15px; margin: 0; line-height: 1.25; }
+  .drink-card .add-btn { grid-area: btn; width: 100%; }
+  .drink-note {
+    grid-area: note;
+    background: var(--accent);
+    color: #fff;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    padding: 5px 10px;
+    border-radius: 999px;
+    text-align: center;
   }
 
   /* cart */
@@ -85,7 +100,7 @@
     padding: 0 7px;
   }
   .cart-body {
-    max-width: 1000px;
+    max-width: 960px;
     margin: 0 auto;
     padding: 6px 24px 28px;
     max-height: 62vh;
@@ -100,11 +115,7 @@
     border-bottom: 1px solid var(--border);
   }
   .cart-line .cl-name { flex: 1; font-size: 14.5px; font-weight: 500; }
-  .qty {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
+  .qty { display: flex; align-items: center; gap: 4px; }
   .qty button {
     width: 30px; height: 30px;
     border-radius: 8px;
@@ -117,8 +128,7 @@
   }
   .qty .val { min-width: 26px; text-align: center; font-weight: 600; font-size: 14px; }
   .cl-remove {
-    background: none;
-    border: 0;
+    background: none; border: 0;
     color: var(--text-faint);
     cursor: pointer;
     font-size: 13px;
@@ -137,7 +147,7 @@
   .order-status.ok { background: rgba(34,197,94,0.12); color: #22c55e; }
   .order-status.err { background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--accent); }
 
-  @media (max-width: 560px) {
+  @media (max-width: 620px) {
     .shop-grid { grid-template-columns: 1fr; }
   }
 </style>
@@ -146,8 +156,8 @@
 
 <div class="shop-wrap">
   <div class="shop-head">
-    <h1>Getränke</h1>
-    <p>Zum Hochholen aus dem Keller — anklicken, Menge einstellen, bestellen.</p>
+    <h1>Bestellliste</h1>
+    <p>Anklicken, Menge einstellen, bestellen — kommt dann hoch.</p>
   </div>
 
   <div class="shop-grid" id="shop-grid"></div>
@@ -175,13 +185,12 @@
 
   function bottleSVG(fill, bubbles) {
     var b = bubbles
-      ? '<circle cx="50" cy="70" r="3" fill="#fff" opacity=".55"/><circle cx="60" cy="90" r="2.4" fill="#fff" opacity=".5"/><circle cx="45" cy="105" r="2" fill="#fff" opacity=".45"/>'
+      ? '<circle cx="50" cy="72" r="3" fill="#fff" opacity=".55"/><circle cx="60" cy="92" r="2.4" fill="#fff" opacity=".5"/><circle cx="45" cy="106" r="2" fill="#fff" opacity=".45"/>'
       : '';
     return '<svg viewBox="0 0 100 150" xmlns="http://www.w3.org/2000/svg">' +
       '<rect x="42" y="6" width="16" height="12" rx="2" fill="#c9ccd2"/>' +
       '<path d="M38 20h24c2 0 3 3 3 6l4 10c2 5 3 9 3 16v78c0 6-4 10-10 10H38c-6 0-10-4-10-10V52c0-7 1-11 3-16l4-10c0-3 1-6 3-6z" fill="' + fill + '"/>' +
-      '<rect x="30" y="70" width="40" height="34" rx="4" fill="#fff" opacity=".9"/>' +
-      b +
+      '<rect x="30" y="72" width="40" height="32" rx="4" fill="#fff" opacity=".9"/>' + b +
       '</svg>';
   }
 
@@ -194,12 +203,55 @@
       '</svg>';
   }
 
+  function chipsSVG() {
+    return '<svg viewBox="0 0 120 150" xmlns="http://www.w3.org/2000/svg">' +
+      '<path d="M30 14l6 6-6 6 6 6-6 6v82a6 6 0 0 0 6 6h48a6 6 0 0 0 6-6V44l-6-6 6-6-6-6 6-6H30z" fill="#e0a63c"/>' +
+      '<rect x="38" y="52" width="44" height="46" rx="5" fill="#fff" opacity=".9"/>' +
+      '<path d="M50 66l16 4-6 14z" fill="#e0a63c"/>' +
+      '</svg>';
+  }
+
+  function popcornSVG() {
+    return '<svg viewBox="0 0 120 150" xmlns="http://www.w3.org/2000/svg">' +
+      '<g fill="#f4d35e">' +
+      '<circle cx="42" cy="42" r="13"/><circle cx="62" cy="34" r="14"/><circle cx="82" cy="44" r="12"/>' +
+      '<circle cx="52" cy="52" r="12"/><circle cx="74" cy="52" r="11"/>' +
+      '</g>' +
+      '<path d="M34 56h52l-8 74a6 6 0 0 1-6 5H48a6 6 0 0 1-6-5z" fill="#d64545"/>' +
+      '<rect x="46" y="62" width="8" height="66" fill="#fff" opacity=".85"/>' +
+      '<rect x="66" y="62" width="8" height="66" fill="#fff" opacity=".85"/>' +
+      '</svg>';
+  }
+
+  function sandwichSVG() {
+    return '<svg viewBox="0 0 140 150" xmlns="http://www.w3.org/2000/svg">' +
+      '<path d="M20 110L70 30l50 80z" fill="#e8c98d"/>' +
+      '<path d="M30 104L70 40l40 64z" fill="#6db26d"/>' +
+      '<path d="M40 98L70 52l30 46z" fill="#d96b6b"/>' +
+      '<path d="M50 92L70 62l20 30z" fill="#f2e6c9"/>' +
+      '</svg>';
+  }
+
+  function coffeeSVG() {
+    return '<svg viewBox="0 0 140 150" xmlns="http://www.w3.org/2000/svg">' +
+      '<path d="M40 20c0 6-6 8-6 14s6 8 6 14" fill="none" stroke="#b7bcc4" stroke-width="4" stroke-linecap="round"/>' +
+      '<path d="M60 20c0 6-6 8-6 14s6 8 6 14" fill="none" stroke="#b7bcc4" stroke-width="4" stroke-linecap="round"/>' +
+      '<path d="M28 58h72v34a30 30 0 0 1-30 30H58a30 30 0 0 1-30-30z" fill="#8a5a44"/>' +
+      '<path d="M100 66h10a14 14 0 0 1 0 28h-10z" fill="none" stroke="#8a5a44" stroke-width="8"/>' +
+      '<rect x="28" y="58" width="72" height="10" fill="#f2e6c9"/>' +
+      '</svg>';
+  }
+
   var PRODUCTS = [
     { id: 'wasser-still', name: 'Stilles Wasser', art: bottleSVG('#bfe3f5', false) },
     { id: 'wasser-medium', name: 'Medium Wasser', art: bottleSVG('#6db8e0', true) },
     { id: 'cs-multivitamin', name: 'Capri-Sun Multivitamin', art: pouchSVG('#f59e0b', '#c2410c') },
     { id: 'cs-fairydrink', name: 'Capri-Sun Fairy Drink', art: pouchSVG('#ec4899', '#9d174d') },
-    { id: 'cs-safarifruits', name: 'Capri-Sun Safari Fruits', art: pouchSVG('#22c55e', '#15803d') }
+    { id: 'cs-safarifruits', name: 'Capri-Sun Safari Fruits', art: pouchSVG('#22c55e', '#15803d') },
+    { id: 'kaffee', name: 'Kaffee', art: coffeeSVG() },
+    { id: 'chips', name: 'Chips (Zufallssorte)', art: chipsSVG() },
+    { id: 'popcorn', name: 'Popcorn', art: popcornSVG() },
+    { id: 'sandwich', name: 'Sandwich', art: sandwichSVG(), note: 'Achtung: erhöhte Bearbeitungszeit' }
   ];
 
   var STORE_KEY = 'mw-drinks-cart';
@@ -222,6 +274,7 @@
     card.innerHTML =
       '<div class="drink-art">' + p.art + '</div>' +
       '<h3>' + p.name + '</h3>' +
+      (p.note ? '<div class="drink-note">' + p.note + '</div>' : '') +
       '<button class="btn btn-ghost btn-sm add-btn" data-add="' + p.id + '">In den Warenkorb</button>';
     grid.appendChild(card);
   });
