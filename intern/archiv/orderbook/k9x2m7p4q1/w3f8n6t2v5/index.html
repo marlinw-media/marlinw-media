@@ -6,218 +6,702 @@
 <meta name="robots" content="noindex, nofollow, noarchive">
 <title>Getränke</title>
 <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
-<link rel="stylesheet" href="/css/style.css">
 <style>
-  .shop-wrap { max-width: 960px; margin: 0 auto; padding: 48px 24px 110px; }
-  .shop-head { margin-bottom: 28px; }
-  .shop-head h1 { font-size: clamp(26px, 5vw, 38px); }
-  .shop-head p { font-size: 14.5px; }
+  /* ============ self-contained — beeinflusst nichts am Rest der Website ============ */
+  @font-face {
+    font-family: 'Space Grotesk';
+    src: url('/assets/fonts/space-grotesk-latin.woff2') format('woff2');
+    font-weight: 300 700;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Inter var';
+    src: url('/assets/fonts/inter-latin.woff2') format('woff2');
+    font-weight: 100 900;
+    font-display: swap;
+  }
 
+  :root {
+    --bg-0: #0a0612;
+    --ink: #f4eefb;
+    --ink-dim: #b4a7c9;
+    --ink-faint: #7d6f96;
+    --pink: #ff3d9a;
+    --violet: #a855f7;
+    --cyan: #22d3ee;
+    --glass: rgba(255, 255, 255, 0.045);
+    --glass-line: rgba(255, 255, 255, 0.09);
+    /* weicher, vielstufiger Verlauf, der ohne Kante durchläuft */
+    --grad: linear-gradient(100deg,
+      #ff3d9a 0%, #ff6fae 14%, #d16be0 30%, #a855f7 44%,
+      #7c8cf8 58%, #43c6e8 72%, #22d3ee 84%, #6fd0d8 100%);
+    --grad-soft: linear-gradient(120deg, rgba(255,61,154,.16), rgba(168,85,247,.16) 50%, rgba(34,211,238,.14));
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter var', system-ui, -apple-system, sans-serif;
+    color: var(--ink);
+    background: var(--bg-0);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+    -webkit-font-smoothing: antialiased;
+    touch-action: manipulation;
+  }
+
+  /* ---------- animierter Aurora-Hintergrund ---------- */
+  .aurora {
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse 80% 55% at 50% -10%, rgba(168,85,247,.28), transparent 60%),
+      var(--bg-0);
+  }
+  .aurora::before,
+  .aurora::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(90px);
+    opacity: .55;
+    will-change: transform;
+  }
+  .aurora::before {
+    width: 55vw; height: 55vw;
+    left: -12vw; top: -8vw;
+    background: radial-gradient(circle, var(--pink), transparent 68%);
+    animation: drift1 22s ease-in-out infinite alternate;
+  }
+  .aurora::after {
+    width: 50vw; height: 50vw;
+    right: -14vw; bottom: -12vw;
+    background: radial-gradient(circle, var(--cyan), transparent 68%);
+    animation: drift2 26s ease-in-out infinite alternate;
+  }
+  .aurora i {
+    position: absolute;
+    width: 42vw; height: 42vw;
+    left: 30vw; top: 35vh;
+    border-radius: 50%;
+    filter: blur(100px);
+    opacity: .4;
+    background: radial-gradient(circle, var(--violet), transparent 66%);
+    animation: drift3 30s ease-in-out infinite alternate;
+  }
+  @keyframes drift1 { to { transform: translate(18vw, 14vh) scale(1.15); } }
+  @keyframes drift2 { to { transform: translate(-16vw, -12vh) scale(1.2); } }
+  @keyframes drift3 { to { transform: translate(-10vw, 8vh) scale(1.1) rotate(40deg); } }
+
+  .grain {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: .035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .aurora::before, .aurora::after, .aurora i { animation: none; }
+  }
+
+  /* ---------- layout ---------- */
+  .shop-wrap {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: clamp(44px, 9vw, 96px) clamp(18px, 5vw, 40px) 150px;
+  }
+
+  .shop-head {
+    margin-bottom: clamp(28px, 5vw, 52px);
+    animation: rise .8s cubic-bezier(.2, .7, .2, 1) both;
+  }
+  .shop-head h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: clamp(40px, 9.5vw, 82px);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -.02em;
+    background: linear-gradient(100deg,
+      #ff3d9a, #ff8fc4, #c98cf0, #a855f7, #8aa2ff, #52d0ec, #22d3ee, #9fe3e0, #ff3d9a);
+    background-size: 320% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: flow 14s ease-in-out infinite;
+  }
+  /* symmetrischer Verlauf -> kein ruckartiges Umspringen */
+  @keyframes flow {
+    0%   { background-position:   0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position:   0% 50%; }
+  }
+  .shop-head .rule {
+    height: 3px;
+    width: 0;
+    margin-top: 18px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #ff3d9a, #a855f7, #22d3ee, transparent);
+    background-size: 220% 100%;
+    animation: ruleIn 1.1s .35s cubic-bezier(.2,.7,.2,1) forwards, flow 14s ease-in-out infinite;
+  }
+  @keyframes ruleIn { to { width: min(260px, 60%); } }
+  .shop-head p {
+    margin-top: 18px;
+    font-size: clamp(14px, 2.5vw, 17px);
+    color: var(--ink-dim);
+    max-width: 46ch;
+  }
+
+  /* ---------- product grid ---------- */
   .shop-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: clamp(12px, 2.4vw, 20px);
   }
+
   .drink-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    padding: 14px;
+    position: relative;
     display: grid;
-    grid-template-columns: 72px 1fr;
+    grid-template-columns: 84px 1fr;
+    grid-template-areas:
+      "art name"
+      "btn  btn";
+    column-gap: 18px;
+    row-gap: 14px;
+    align-content: start;
+    align-items: center;
+    padding: clamp(16px, 3vw, 22px);
+    border-radius: 22px;
+    background: var(--glass);
+    border: 1px solid var(--glass-line);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    overflow: hidden;
+    transition: transform .3s cubic-bezier(.2,.7,.2,1), box-shadow .35s;
+    animation: rise .7s cubic-bezier(.2,.7,.2,1) both;
+  }
+  .drink-card.has-note {
     grid-template-areas:
       "art name"
       "note note"
-      "btn btn";
-    column-gap: 14px;
-    row-gap: 10px;
-    align-items: center;
+      "btn  btn";
   }
+  .drink-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: var(--grad);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity .35s;
+    pointer-events: none;
+  }
+  .drink-card::after {
+    content: "";
+    position: absolute;
+    inset: -40% 60% 60% -40%;
+    background: var(--grad-soft);
+    filter: blur(30px);
+    opacity: 0;
+    transition: opacity .4s;
+    pointer-events: none;
+  }
+  .drink-card:active {
+    transform: translateY(-2px) scale(.985);
+    box-shadow: 0 24px 50px -22px rgba(168,85,247,.5);
+  }
+  .drink-card:active::before { opacity: 1; }
+  .drink-card:active::after { opacity: 1; }
+
   .drink-art {
     grid-area: art;
-    width: 72px;
-    height: 72px;
-    border-radius: var(--radius-sm);
+    width: 84px; height: 84px;
+    border-radius: 18px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--bg-alt);
-    overflow: hidden;
+    background: linear-gradient(150deg, rgba(255,255,255,.1), rgba(255,255,255,.02));
+    border: 1px solid var(--glass-line);
+    position: relative;
+    z-index: 1;
+    transition: transform .35s cubic-bezier(.2,.7,.2,1);
   }
-  .drink-art svg { width: 74%; height: 90%; }
-  .drink-card h3 { grid-area: name; font-size: 15px; margin: 0; line-height: 1.25; }
-  .drink-card .add-btn { grid-area: btn; width: 100%; }
-  .drink-note {
-    grid-area: note;
-    background: var(--accent);
-    color: #fff;
-    font-size: 11.5px;
-    font-weight: 700;
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
-    padding: 5px 10px;
-    border-radius: 999px;
-    text-align: center;
+  .drink-card:active .drink-art { transform: rotate(-4deg) scale(1.06); }
+  .drink-art svg { width: 74%; height: 90%; display: block; }
+
+  .drink-card h3 {
+    grid-area: name;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: clamp(15px, 2.6vw, 18px);
+    font-weight: 600;
+    line-height: 1.25;
+    position: relative;
+    z-index: 1;
   }
 
-  /* modals (topping + cart share this look) */
+  .drink-note {
+    grid-area: note;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: #ffd9ea;
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: linear-gradient(120deg, rgba(255,61,154,.22), rgba(168,85,247,.22));
+    border: 1px solid rgba(255,61,154,.4);
+  }
+  .drink-note::before {
+    content: "";
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--pink);
+    box-shadow: 0 0 8px var(--pink);
+    flex-shrink: 0;
+    animation: blink 2s ease-in-out infinite;
+  }
+  @keyframes blink { 50% { opacity: .3; } }
+
+  /* ---------- buttons ---------- */
+  .btn {
+    position: relative;
+    overflow: hidden;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    border: 0;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: transform .13s ease, box-shadow .3s, opacity .2s, background .3s, color .2s;
+    -webkit-appearance: none;
+    appearance: none;
+    color: inherit;
+  }
+  .btn:active { transform: scale(.96); }
+  .btn:disabled { opacity: .6; cursor: default; }
+
+  .add-btn {
+    grid-area: btn;
+    z-index: 1;
+    width: 100%;
+    padding: 13px 16px;
+    color: var(--ink);
+    background: rgba(255,255,255,.06);
+    border: 1px solid var(--glass-line);
+    letter-spacing: .02em;
+  }
+  .add-btn:active {
+    background: var(--grad);
+    background-size: 200% 100%;
+    box-shadow: 0 12px 28px -10px rgba(255,61,154,.6);
+    color: #fff;
+  }
+
+  .btn-accent {
+    background: linear-gradient(100deg, #ff3d9a, #ff7eb8, #c07cf0, #a855f7, #7f9bff, #35c4e8, #22d3ee);
+    background-size: 260% 100%;
+    color: #fff;
+    padding: 16px 22px;
+    box-shadow: 0 16px 34px -12px rgba(168,85,247,.65);
+    animation: flow 12s ease-in-out infinite;
+  }
+  .btn-accent:active { box-shadow: 0 20px 44px -12px rgba(255,61,154,.7); }
+  .btn-block { width: 100%; }
+
+  .btn-ghost {
+    background: rgba(255,255,255,.05);
+    border: 1px solid var(--glass-line);
+    color: var(--ink-dim);
+    padding: 14px 18px;
+  }
+  .btn-ghost:active { color: var(--ink); border-color: var(--pink); }
+
+  /* ---------- floating cart button ---------- */
+  .cart-fab {
+    position: fixed;
+    left: 50%;
+    bottom: 26px;
+    transform: translateX(-50%);
+    z-index: 60;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: .02em;
+    color: #fff;
+    padding: 16px 26px;
+    border: 0;
+    border-radius: 999px;
+    cursor: pointer;
+    background: linear-gradient(100deg, #ff3d9a, #ff7eb8, #c07cf0, #a855f7, #7f9bff, #35c4e8, #22d3ee, #ff3d9a);
+    background-size: 300% 100%;
+    box-shadow: 0 18px 46px -12px rgba(255,61,154,.55), 0 0 0 1px rgba(255,255,255,.08) inset;
+    animation: flow 12s ease-in-out infinite, floatFab 3.6s ease-in-out infinite;
+    transition: transform .22s;
+  }
+  .cart-fab::after {
+    content: "";
+    position: absolute;
+    inset: -60%;
+    background: conic-gradient(from 0deg, transparent 0 60%, rgba(255,255,255,.35) 75%, transparent 90% 100%);
+    mix-blend-mode: overlay;
+    animation: sheen 6s linear infinite;
+    pointer-events: none;
+  }
+  @keyframes sheen { to { transform: rotate(1turn); } }
+  .cart-fab:active { transform: translateX(-50%) scale(.95); }
+  @keyframes floatFab {
+    50% { box-shadow: 0 26px 58px -12px rgba(168,85,247,.65), 0 0 0 1px rgba(255,255,255,.08) inset; }
+  }
+
+  .cart-fab svg { width: 19px; height: 19px; position: relative; z-index: 1; }
+  .cart-fab .label, .cart-fab .count { position: relative; z-index: 1; }
+  .cart-fab .count {
+    min-width: 24px;
+    height: 24px;
+    padding: 0 7px;
+    border-radius: 999px;
+    background: #fff;
+    color: var(--violet);
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .cart-fab .count.bump { animation: bump .45s cubic-bezier(.2,.7,.2,1); }
+  @keyframes bump { 30% { transform: scale(1.55) rotate(-8deg); } 60% { transform: scale(.9); } }
+
+  /* ---------- modals ---------- */
   .modal {
     position: fixed;
     inset: 0;
-    z-index: 80;
+    z-index: 90;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 24px;
-    background: rgba(5,5,6,0.72);
+    padding: 22px;
+    background: rgba(6, 3, 12, .6);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
     opacity: 0;
     pointer-events: none;
-    transition: opacity 180ms ease;
+    transition: opacity .28s ease;
   }
   .modal.open { opacity: 1; pointer-events: auto; }
+
   .modal-panel {
-    background: var(--surface);
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius-lg);
-    padding: 24px;
+    position: relative;
     width: 100%;
-    max-width: 380px;
-    max-height: 82vh;
+    max-width: 420px;
+    max-height: 84vh;
     display: flex;
     flex-direction: column;
+    padding: 26px;
+    border-radius: 26px;
+    background: linear-gradient(165deg, #1a1026, #120a1c);
+    border: 1px solid var(--glass-line);
+    box-shadow: 0 40px 90px -30px rgba(0,0,0,.8);
+    transform: translateY(24px) scale(.94);
+    opacity: 0;
+    transition: transform .32s cubic-bezier(.2,.8,.2,1), opacity .28s;
   }
+  .modal.open .modal-panel { transform: translateY(0) scale(1); opacity: 1; }
+  .modal-panel::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: var(--grad);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: .55;
+    pointer-events: none;
+  }
+
   .modal-head {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 12px;
+    margin-bottom: 16px;
   }
-  .modal-head h3 { margin: 0; font-size: 18px; }
+  .modal-head h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 21px;
+    font-weight: 700;
+    background: linear-gradient(100deg, #ff3d9a, #c98cf0, #a855f7, #52d0ec, #22d3ee);
+    background-size: 260% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: flow 12s ease-in-out infinite;
+  }
   .modal-close {
-    width: 34px; height: 34px;
+    position: relative;
+    overflow: hidden;
+    width: 36px; height: 36px;
     border-radius: 50%;
-    border: 1px solid var(--border-strong);
-    background: var(--bg-alt);
-    color: var(--text);
-    font-size: 18px;
+    border: 1px solid var(--glass-line);
+    background: rgba(255,255,255,.05);
+    color: var(--ink-dim);
+    font-size: 19px;
     line-height: 1;
     cursor: pointer;
+    transition: color .2s, border-color .2s, transform .25s;
   }
+  .modal-close:active { color: #fff; border-color: var(--pink); transform: rotate(90deg); }
 
+  /* topping options */
   .tm-opt {
+    position: relative;
+    overflow: hidden;
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 11px 0;
-    border-bottom: 1px solid var(--border);
+    gap: 13px;
+    padding: 13px 8px;
+    border-radius: 12px;
+    border-bottom: 1px solid var(--glass-line);
     font-size: 15px;
     cursor: pointer;
+    transition: color .2s, background .2s;
   }
-  .tm-opt input { width: 18px; height: 18px; accent-color: var(--accent); }
-  .tm-actions { display: flex; gap: 10px; margin-top: 20px; }
-  .tm-actions .btn { flex: 1; }
-
-  /* floating cart button */
-  .cart-fab {
-    position: fixed;
-    left: 50%;
-    bottom: 20px;
-    transform: translateX(-50%);
-    z-index: 60;
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    padding: 13px 22px;
-    border: 0;
-    border-radius: 999px;
-    background: var(--accent);
-    color: #fff;
-    font-weight: 700;
-    font-size: 15px;
+  .tm-opt:active { color: var(--pink); background: rgba(255,61,154,.08); }
+  .tm-opt input {
+    width: 19px; height: 19px;
+    accent-color: var(--pink);
     cursor: pointer;
-    box-shadow: 0 12px 30px -8px rgba(0,0,0,0.45);
   }
-  .cart-fab .count {
-    background: #fff;
-    color: var(--accent);
-    border-radius: 999px;
-    min-width: 22px;
-    height: 22px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12.5px;
+  #tm-options {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 0 -6px;
     padding: 0 6px;
   }
+  #tm-options::-webkit-scrollbar { width: 6px; }
+  #tm-options::-webkit-scrollbar-thumb { background: var(--glass-line); border-radius: 999px; }
 
-  /* cart contents */
+  .tm-opt.tm-special { border-bottom: 0; transition: opacity .25s ease, color .2s, background .2s; }
+  .tm-opt.tm-special.dim { opacity: .38; }
+  .tm-wish-wrap {
+    margin: 2px 4px 4px;
+    animation: rise .28s ease both;
+  }
+  .tm-wish-wrap textarea {
+    width: 100%;
+    min-height: 66px;
+    resize: vertical;
+    background: rgba(255,255,255,.05);
+    border: 1px solid var(--glass-line);
+    border-radius: 12px;
+    color: var(--ink);
+    font-family: 'Inter var', system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.45;
+    padding: 10px 12px;
+  }
+  .tm-wish-wrap textarea:focus {
+    outline: none;
+    border-color: var(--pink);
+    background: rgba(255,61,154,.07);
+  }
+  .tm-wish-wrap textarea::placeholder { color: var(--ink-faint); }
+
+  .tm-actions { display: flex; gap: 12px; margin-top: 22px; }
+  .tm-actions .btn { flex: 1; }
+
+  /* cart lines */
   #cart-lines {
     flex: 1;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    margin: 0 -4px;
-    padding: 0 4px;
+    margin: 0 -6px;
+    padding: 0 6px;
   }
-  .cart-empty { color: var(--text-faint); font-size: 14px; padding: 12px 0 20px; }
+  #cart-lines::-webkit-scrollbar { width: 6px; }
+  #cart-lines::-webkit-scrollbar-thumb { background: var(--glass-line); border-radius: 999px; }
+
+  .cart-empty {
+    color: var(--ink-faint);
+    font-size: 14px;
+    text-align: center;
+    padding: 32px 0;
+  }
+
   .cart-line {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 12px 0;
-    border-bottom: 1px solid var(--border);
+    padding: 15px 0;
+    border-bottom: 1px solid var(--glass-line);
+    animation: rise .4s ease both;
   }
-  .cart-line .cl-name { flex: 1; font-size: 14.5px; font-weight: 500; }
-  .cart-line .cl-name small { display: block; font-weight: 400; color: var(--text-faint); font-size: 12.5px; margin-top: 2px; }
-  .qty { display: flex; align-items: center; gap: 4px; }
+  .cart-line .cl-name {
+    flex: 1;
+    font-size: 14.5px;
+    font-weight: 500;
+    font-family: 'Space Grotesk', sans-serif;
+  }
+  .cart-line .cl-name small {
+    display: block;
+    font-family: 'Inter var', sans-serif;
+    font-weight: 400;
+    color: var(--ink-faint);
+    font-size: 12px;
+    margin-top: 3px;
+  }
+  .qty { display: flex; align-items: center; gap: 5px; }
   .qty button {
-    width: 30px; height: 30px;
-    border-radius: 8px;
-    border: 1px solid var(--border-strong);
-    background: var(--surface);
-    color: var(--text);
-    font-size: 16px;
+    position: relative;
+    overflow: hidden;
+    width: 32px; height: 32px;
+    border-radius: 10px;
+    border: 1px solid var(--glass-line);
+    background: rgba(255,255,255,.05);
+    color: var(--ink);
+    font-size: 17px;
     line-height: 1;
     cursor: pointer;
+    transition: background .2s, border-color .2s, color .2s, transform .12s;
   }
-  .qty .val { min-width: 26px; text-align: center; font-weight: 600; font-size: 14px; }
+  .qty button:active { background: var(--grad); background-size: 200% 100%; border-color: transparent; color: #fff; transform: scale(.9); }
+  .qty .val { min-width: 24px; text-align: center; font-weight: 700; font-size: 14px; }
   .cl-remove {
-    background: none; border: 0;
-    color: var(--text-faint);
+    background: none;
+    border: 0;
+    color: var(--ink-faint);
     cursor: pointer;
-    font-size: 13px;
+    font-size: 12.5px;
     text-decoration: underline;
+    text-underline-offset: 3px;
+    transition: color .2s;
   }
-  .cl-remove:hover { color: var(--accent); }
-  .cart-foot { padding-top: 16px; }
+  .cl-remove:active { color: var(--pink); }
+
+  .cart-foot { padding-top: 20px; }
   .order-status {
-    margin-top: 12px;
-    font-size: 14px;
-    padding: 12px 14px;
-    border-radius: var(--radius-sm);
+    margin-top: 14px;
+    font-size: 13.5px;
+    line-height: 1.5;
+    padding: 13px 15px;
+    border-radius: 14px;
     display: none;
   }
-  .order-status.show { display: block; }
-  .order-status.ok { background: rgba(34,197,94,0.12); color: #22c55e; }
-  .order-status.err { background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--accent); }
+  .order-status.show { display: block; animation: rise .35s ease both; }
+  .order-status.ok {
+    background: linear-gradient(120deg, rgba(34,211,238,.16), rgba(168,85,247,.16));
+    border: 1px solid rgba(34,211,238,.4);
+    color: #baf5ff;
+  }
+  .order-status.err {
+    background: rgba(255,61,154,.14);
+    border: 1px solid rgba(255,61,154,.4);
+    color: #ffcfe4;
+  }
 
-  @media (max-width: 620px) {
+  @keyframes rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ---------- Hover nur für echte Zeigergeräte (kein "hängender" Touch-Zustand) ---------- */
+  @media (hover: hover) {
+    .drink-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 24px 50px -22px rgba(168,85,247,.5);
+    }
+    .drink-card:hover::before { opacity: 1; }
+    .drink-card:hover::after { opacity: 1; }
+    .drink-card:hover .drink-art { transform: rotate(-4deg) scale(1.06); }
+    .add-btn:hover { background: var(--grad); background-size: 200% 100%; box-shadow: 0 12px 28px -10px rgba(255,61,154,.6); color: #fff; }
+    .btn-accent:hover { box-shadow: 0 20px 44px -12px rgba(255,61,154,.7); }
+    .btn-ghost:hover { color: var(--ink); border-color: var(--pink); }
+    .cart-fab:hover { transform: translateX(-50%) translateY(-4px) scale(1.03); }
+    .modal-close:hover { color: #fff; border-color: var(--pink); transform: rotate(90deg); }
+    .tm-opt:hover { color: var(--pink); }
+    .qty button:hover { background: var(--grad); background-size: 200% 100%; border-color: transparent; color: #fff; }
+    .cl-remove:hover { color: var(--pink); }
+  }
+
+  /* ---------- Touch-/Klick-Feedback ---------- */
+  .ripple {
+    position: absolute;
+    z-index: 2;
+    border-radius: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    background: radial-gradient(circle, rgba(255,255,255,.55), rgba(255,255,255,0) 68%);
+    pointer-events: none;
+    mix-blend-mode: screen;
+    animation: ripple .62s cubic-bezier(.2,.7,.2,1) forwards;
+  }
+  @keyframes ripple { to { transform: translate(-50%, -50%) scale(1); opacity: 0; } }
+
+  .touch-aura {
+    position: fixed;
+    left: 0; top: 0;
+    width: 260px; height: 260px;
+    margin: -130px 0 0 -130px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 70;
+    opacity: 0;
+    transition: opacity .22s ease;
+    background: radial-gradient(circle, rgba(255,61,154,.20), rgba(168,85,247,.12) 42%, transparent 70%);
+    mix-blend-mode: screen;
+    will-change: transform, opacity;
+  }
+  .touch-aura.on { opacity: 1; }
+
+  #fx {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    pointer-events: none;
+  }
+
+  @media (max-width: 640px) {
     .shop-grid { grid-template-columns: 1fr; }
   }
 </style>
 </head>
 <body>
 
+<div class="aurora"><i></i></div>
+<div class="grain"></div>
+
 <div class="shop-wrap">
   <div class="shop-head">
     <h1>Bestellliste</h1>
-    <p>Anklicken, Menge einstellen, bestellen — kommt dann hoch.</p>
+    <div class="rule"></div>
+    <p>Antippen, Menge einstellen, bestellen — kommt dann aus dem Keller hoch.</p>
   </div>
 
   <div class="shop-grid" id="shop-grid"></div>
 </div>
 
+<div class="touch-aura" id="touch-aura"></div>
+<canvas id="fx"></canvas>
+
 <button class="cart-fab" id="cart-fab" type="button">
-  Warenkorb <span class="count" id="cart-count">0</span>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.6"/><circle cx="18" cy="20" r="1.6"/><path d="M2.5 3h2.2l2.4 12.4a2 2 0 0 0 2 1.6h8.3a2 2 0 0 0 2-1.6L23 6.5H6"/></svg>
+  <span class="label">Warenkorb</span> <span class="count" id="cart-count">0</span>
 </button>
 
 <!-- topping modal -->
@@ -229,8 +713,8 @@
     </div>
     <div id="tm-options"></div>
     <div class="tm-actions">
-      <button class="btn btn-ghost btn-sm" id="tm-cancel" type="button">Abbrechen</button>
-      <button class="btn btn-accent btn-sm" id="tm-add" type="button">Hinzufügen</button>
+      <button class="btn btn-ghost" id="tm-cancel" type="button">Abbrechen</button>
+      <button class="btn btn-accent" id="tm-add" type="button">Hinzufügen</button>
     </div>
   </div>
 </div>
@@ -251,6 +735,436 @@
 </div>
 
 <script>
+/* ============================================================
+   Partikel-Engine + Effekte
+   ============================================================ */
+var FX = (function () {
+  'use strict';
+  var cv = document.getElementById('fx');
+  var ctx = cv.getContext('2d');
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  var W = 0, H = 0;
+  var RM = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function resize() {
+    W = cv.width = Math.floor(innerWidth * dpr);
+    H = cv.height = Math.floor(innerHeight * dpr);
+    cv.style.width = innerWidth + 'px';
+    cv.style.height = innerHeight + 'px';
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  var PAL = ['#ff3d9a', '#ff7eb3', '#a855f7', '#7dd3fc', '#22d3ee', '#fbbf24'];
+  var parts = [];
+  var planes = [];
+  var running = false, last = 0;
+
+  function rnd(a, b) { return a + Math.random() * (b - a); }
+  function pick(a) { return a[(Math.random() * a.length) | 0]; }
+
+  function add(p) {
+    p.max = p.life;
+    p.vx = p.vx || 0; p.vy = p.vy || 0;
+    p.g = p.g || 0; p.drag = p.drag == null ? 1 : p.drag;
+    p.rot = p.rot || 0; p.spin = p.spin || 0;
+    p.shape = p.shape || 'circle';
+    parts.push(p);
+    kick();
+  }
+  function kick() {
+    if (running) return;
+    running = true;
+    last = performance.now();
+    requestAnimationFrame(tick);
+  }
+
+  function star(x, y, outer, inner, pts) {
+    ctx.beginPath();
+    for (var i = 0; i < pts * 2; i++) {
+      var r = i % 2 ? inner : outer;
+      var a = (i / (pts * 2)) * Math.PI * 2 - Math.PI / 2;
+      ctx.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r);
+    }
+    ctx.closePath();
+  }
+
+  function heartPath(r) {
+    ctx.beginPath();
+    ctx.moveTo(0, r * 0.32);
+    ctx.bezierCurveTo(r * 0.92, -r * 0.42, r * 0.5, -r * 1.02, 0, -r * 0.4);
+    ctx.bezierCurveTo(-r * 0.5, -r * 1.02, -r * 0.92, -r * 0.42, 0, r * 0.32);
+    ctx.closePath();
+  }
+
+  function drawEnvelope(p) {
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(Math.atan2(p.vy, p.vx) * 0.35);
+    var s = dpr;
+    ctx.shadowColor = '#ff3d9a';
+    ctx.shadowBlur = 16 * s;
+    ctx.fillStyle = 'rgba(255,255,255,0.97)';
+    ctx.fillRect(-19 * s, -13 * s, 38 * s, 26 * s);
+    ctx.strokeStyle = 'rgba(168,85,247,0.85)';
+    ctx.lineWidth = 1.3 * s;
+    ctx.strokeRect(-19 * s, -13 * s, 38 * s, 26 * s);
+    ctx.beginPath();
+    ctx.moveTo(-19 * s, -13 * s);
+    ctx.lineTo(0, 3 * s);
+    ctx.lineTo(19 * s, -13 * s);
+    ctx.stroke();
+    ctx.fillStyle = '#ff3d9a';
+    ctx.save();
+    ctx.translate(0, 4 * s);
+    heartPath(7 * s);
+    ctx.fill();
+    ctx.restore();
+    ctx.restore();
+  }
+
+  function drawPlane(p) {
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(Math.atan2(p.vy, p.vx));
+    ctx.shadowColor = '#a855f7';
+    ctx.shadowBlur = 16 * dpr;
+    var s = dpr;
+    ctx.fillStyle = 'rgba(255,255,255,0.96)';
+    ctx.beginPath();
+    ctx.moveTo(19 * s, 0);
+    ctx.lineTo(-16 * s, -11 * s);
+    ctx.lineTo(-9 * s, 0);
+    ctx.lineTo(-16 * s, 11 * s);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(168,85,247,0.9)';
+    ctx.lineWidth = 1.4 * s;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(19 * s, 0);
+    ctx.lineTo(-9 * s, 0);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function tick(now) {
+    var dt = Math.min(46, now - last) / 16.67;
+    last = now;
+    ctx.clearRect(0, 0, W, H);
+
+    for (var i = parts.length - 1; i >= 0; i--) {
+      var p = parts[i];
+      p.life -= dt;
+      if (p.life <= 0) { parts.splice(i, 1); continue; }
+      var dr = Math.pow(p.drag, dt);
+      p.vx *= dr;
+      p.vy = p.vy * dr + p.g * dt;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.rot += p.spin * dt;
+      if (p.shape === 'ring') p.s += (p.grow || 0) * dt;
+
+      var t = p.life / p.max;
+      var a = Math.max(0, Math.min(1, t * 1.7));
+      ctx.save();
+      ctx.globalAlpha = a;
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      if (p.glow) { ctx.shadowColor = p.color; ctx.shadowBlur = 14 * dpr; }
+      ctx.fillStyle = p.color;
+      ctx.strokeStyle = p.color;
+      if (p.shape === 'rect') {
+        ctx.fillRect(-p.s, -p.s * 0.5, p.s * 2, p.s);
+      } else if (p.shape === 'star') {
+        star(0, 0, p.s * 1.5, p.s * 0.62, 5);
+        ctx.fill();
+      } else if (p.shape === 'ring') {
+        ctx.globalAlpha = a * 0.55;
+        ctx.lineWidth = 2.4 * dpr;
+        ctx.beginPath();
+        ctx.arc(0, 0, Math.max(1, p.s), 0, 7);
+        ctx.stroke();
+      } else if (p.shape === 'spark') {
+        ctx.lineWidth = p.s;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(-p.vx * 1.5, -p.vy * 1.5);
+        ctx.stroke();
+      } else if (p.shape === 'heart') {
+        heartPath(p.s * 1.7);
+        ctx.fill();
+      } else {
+        ctx.beginPath();
+        ctx.arc(0, 0, p.s, 0, 7);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    for (var j = planes.length - 1; j >= 0; j--) {
+      var pl = planes[j];
+      pl.life -= dt;
+      pl.vy += pl.ay * dt;
+      pl.vx += pl.ax * dt;
+      pl.x += pl.vx * dt;
+      pl.y += pl.vy * dt;
+      pl.emit -= dt;
+      if (pl.emit <= 0) {
+        if (pl.kind === 'envelope') {
+          pl.emit = 1.2;
+          add({
+            x: pl.x, y: pl.y + 8 * dpr,
+            vx: rnd(-0.3, 0.3) * dpr, vy: rnd(0.2, 0.9) * dpr,
+            drag: 0.92, life: rnd(26, 42), s: rnd(2.2, 3.8) * dpr,
+            rot: rnd(0, 6), spin: rnd(-0.1, 0.1),
+            color: pick(['#ff3d9a', '#ff7eb3', '#ffd9ea']),
+            shape: Math.random() < 0.55 ? 'heart' : 'circle', glow: true
+          });
+        } else {
+          pl.emit = 1.4;
+          add({
+            x: pl.x, y: pl.y,
+            vx: rnd(-0.5, 0.5) * dpr, vy: rnd(-0.3, 0.6) * dpr,
+            drag: 0.9, life: rnd(20, 34), s: rnd(1.6, 3.2) * dpr,
+            color: pick(PAL), glow: true
+          });
+        }
+      }
+      var off = pl.x < -70 * dpr || pl.x > W + 70 * dpr || pl.y > H + 70 * dpr;
+      if (pl.life <= 0 || off) { planes.splice(j, 1); continue; }
+      (pl.kind === 'envelope' ? drawEnvelope : drawPlane)(pl);
+    }
+
+    if (parts.length || planes.length) {
+      requestAnimationFrame(tick);
+    } else {
+      running = false;
+      ctx.clearRect(0, 0, W, H);
+    }
+  }
+
+  var D = RM ? 0.45 : 1;
+
+  /* ---- Funken direkt am Finger/Cursor (eigener Stil) ---- */
+  function sparks(cx, cy) {
+    var x = cx * dpr, y = cy * dpr;
+    var n = Math.round(20 * D) + 6;
+    var hot = ['#ffffff', '#fff3c4', '#ffd36b', '#ff9e3d', '#ff5da2'];
+    for (var i = 0; i < n; i++) {
+      var ang = rnd(0, Math.PI * 2);
+      var sp = rnd(3, 12) * dpr;
+      add({
+        x: x, y: y,
+        vx: Math.cos(ang) * sp,
+        vy: Math.sin(ang) * sp - rnd(0, 2.5) * dpr,
+        g: 0.26 * dpr, drag: 0.85,
+        life: rnd(14, 28), s: rnd(1.4, 3) * dpr,
+        color: pick(hot), shape: 'spark', glow: true
+      });
+    }
+    for (var k = 0; k < 5; k++) {
+      add({
+        x: x, y: y,
+        vx: rnd(-2, 2) * dpr, vy: rnd(-3, 0) * dpr,
+        g: 0.2 * dpr, drag: 0.9, life: rnd(16, 26),
+        s: rnd(1.5, 2.6) * dpr, color: pick(hot), glow: true
+      });
+    }
+  }
+
+  /* ---- gemeinsamer Partikel-Look für die Bestell-Animationen ---- */
+
+  function confetti() {
+    var cx = W * 0.5, cy = H * 0.66;
+    var n = Math.round(170 * D);
+    for (var i = 0; i < n; i++) {
+      var ang = -Math.PI / 2 + rnd(-1.05, 1.05);
+      var sp = rnd(9, 24) * dpr;
+      add({
+        x: cx + rnd(-40, 40) * dpr, y: cy,
+        vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp,
+        g: 0.34 * dpr, drag: 0.985,
+        life: rnd(70, 120), s: rnd(3, 6) * dpr,
+        rot: rnd(0, 6), spin: rnd(-0.3, 0.3),
+        color: pick(PAL),
+        shape: Math.random() < 0.6 ? 'rect' : 'circle',
+        glow: Math.random() < 0.4
+      });
+    }
+  }
+
+  function fireworks() {
+    var shots = RM ? 2 : 5;
+    for (var k = 0; k < shots; k++) {
+      (function (k) {
+        setTimeout(function () {
+          var bx = rnd(0.18, 0.82) * W;
+          var by = rnd(0.16, 0.5) * H;
+          var hue = pick(PAL);
+          var n = Math.round(48 * D);
+          for (var i = 0; i < n; i++) {
+            var ang = (i / n) * Math.PI * 2 + rnd(-0.12, 0.12);
+            var sp = rnd(3, 9.5) * dpr;
+            add({
+              x: bx, y: by,
+              vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp,
+              g: 0.055 * dpr, drag: 0.915,
+              life: rnd(45, 82), s: rnd(2, 3.6) * dpr,
+              color: Math.random() < 0.55 ? hue : pick(PAL),
+              glow: true
+            });
+          }
+          add({ x: bx, y: by, life: 24, s: 6 * dpr, grow: 3.4 * dpr, color: hue, shape: 'ring' });
+        }, k * 240);
+      })(k);
+    }
+  }
+
+  function starFountain() {
+    var cx = W * 0.5, cy = H * 0.99;
+    var n = Math.round(130 * D);
+    for (var i = 0; i < n; i++) {
+      var ang = -Math.PI / 2 + rnd(-0.55, 0.55);
+      var sp = rnd(12, 25) * dpr;
+      add({
+        x: cx + rnd(-30, 30) * dpr, y: cy,
+        vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp,
+        g: 0.4 * dpr, drag: 0.992,
+        life: rnd(55, 105), s: rnd(2.4, 5) * dpr,
+        rot: rnd(0, 6), spin: rnd(-0.25, 0.25),
+        color: pick(PAL),
+        shape: Math.random() < 0.5 ? 'star' : 'circle',
+        glow: true
+      });
+    }
+  }
+
+  function orbSwarm() {
+    var cx = W * 0.5, cy = H * 0.52;
+    var n = Math.round(100 * D);
+    var dir = Math.random() < 0.5 ? 1 : -1;
+    for (var i = 0; i < n; i++) {
+      var ang = rnd(0, Math.PI * 2);
+      var out = rnd(1.4, 5) * dpr;
+      var tang = rnd(3.5, 8) * dpr * dir;
+      var r0 = rnd(0, 20) * dpr;
+      add({
+        x: cx + Math.cos(ang) * r0, y: cy + Math.sin(ang) * r0,
+        vx: Math.cos(ang) * out - Math.sin(ang) * tang,
+        vy: Math.sin(ang) * out + Math.cos(ang) * tang - rnd(0.5, 2) * dpr,
+        g: -0.02 * dpr, drag: 0.975,
+        life: rnd(60, 115), s: rnd(3, 7) * dpr,
+        rot: rnd(0, 6), spin: rnd(-0.14, 0.14),
+        color: pick(PAL), glow: true
+      });
+    }
+    for (var k = 0; k < 3; k++) {
+      (function (k) {
+        setTimeout(function () {
+          add({ x: cx, y: cy, life: 30, s: 8 * dpr, grow: 5 * dpr, color: pick(PAL), shape: 'ring' });
+        }, k * 150);
+      })(k);
+    }
+  }
+
+  function paperPlane() {
+    var launches = RM ? 1 : 2;
+    for (var i = 0; i < launches; i++) {
+      (function (i) {
+        setTimeout(function () {
+          var fromLeft = Math.random() < 0.5;
+          planes.push({
+            x: fromLeft ? -40 * dpr : W + 40 * dpr,
+            y: rnd(0.24, 0.62) * H,
+            vx: (fromLeft ? 1 : -1) * rnd(9, 13) * dpr,
+            vy: -rnd(1, 3) * dpr,
+            ax: 0, ay: 0.11 * dpr,
+            emit: 0, life: 240
+          });
+          kick();
+        }, i * 420);
+      })(i);
+    }
+  }
+
+  function heartForm() {
+    var cx = W * 0.5, cy = H * 0.46;
+    var R = Math.min(W, H) * 0.021;
+    var n = Math.round(130 * D);
+    for (var i = 0; i < n; i++) {
+      var t = (i / n) * Math.PI * 2;
+      var hx = 16 * Math.pow(Math.sin(t), 3);
+      var hy = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+      var tx = cx + hx * R + rnd(-4, 4) * dpr;
+      var ty = cy - hy * R + rnd(-4, 4) * dpr;
+      var sx = cx + rnd(-24, 24) * dpr;
+      var sy = cy + rnd(-24, 24) * dpr;
+      add({
+        x: sx, y: sy,
+        vx: (tx - sx) / 15, vy: (ty - sy) / 15,
+        g: 0, drag: 0.85,
+        life: rnd(72, 116), s: rnd(2.4, 4.4) * dpr,
+        rot: rnd(0, 6), spin: rnd(-0.05, 0.05),
+        color: Math.random() < 0.72 ? pick(['#ff3d9a', '#ff7eb3', '#ff5da2', '#ffd9ea']) : pick(PAL),
+        shape: Math.random() < 0.28 ? 'heart' : 'circle',
+        glow: true
+      });
+    }
+    for (var k = 0; k < 3; k++) {
+      (function (k) {
+        setTimeout(function () {
+          add({ x: cx, y: cy - R * 4, life: 30, s: 6 * dpr, grow: 3.6 * dpr, color: '#ff3d9a', shape: 'ring' });
+        }, k * 130);
+      })(k);
+    }
+  }
+
+  function envelopeHeart() {
+    var launches = RM ? 1 : 2;
+    for (var i = 0; i < launches; i++) {
+      (function (i) {
+        setTimeout(function () {
+          var fromLeft = Math.random() < 0.5;
+          planes.push({
+            kind: 'envelope',
+            x: fromLeft ? -50 * dpr : W + 50 * dpr,
+            y: rnd(0.26, 0.5) * H,
+            vx: (fromLeft ? 1 : -1) * rnd(7, 10) * dpr,
+            vy: -rnd(0.4, 1.4) * dpr,
+            ax: 0, ay: 0.04 * dpr,
+            emit: 0, life: 280
+          });
+          kick();
+        }, i * 380);
+      })(i);
+    }
+  }
+
+  var ORDER_FX = [confetti, fireworks, paperPlane, starFountain, orbSwarm, heartForm, envelopeHeart];
+  function celebrate() {
+    ORDER_FX[(Math.random() * ORDER_FX.length) | 0]();
+  }
+
+  function trail(cx, cy) {
+    add({
+      x: cx * dpr, y: cy * dpr,
+      vx: rnd(-0.6, 0.6) * dpr, vy: rnd(-0.7, 0.2) * dpr,
+      drag: 0.9, life: rnd(12, 22),
+      s: rnd(1.4, 2.8) * dpr,
+      color: pick(['#ff3d9a', '#a855f7', '#22d3ee']),
+      glow: true
+    });
+  }
+
+  return { sparks: sparks, celebrate: celebrate, trail: trail, reduced: RM };
+})();
+
+
+/* ============================================================
+   Shop-Logik
+   ============================================================ */
 (function () {
   'use strict';
 
@@ -340,7 +1254,7 @@
     {
       id: 'sandwich', name: 'Sandwich', art: sandwichSVG(),
       note: 'Achtung: erhöhte Bearbeitungszeit',
-      options: ['Salami', 'Butter', 'Senf', 'Spezialsauce', 'Gouda', 'verschiedene Käsesorten']
+      options: ['Salami', 'Butter', 'Senf', 'Spezialsauce', 'Gouda', 'verschiedene Käsesorten', 'scharf', 'Ketchup', 'Gurken']
     }
   ];
 
@@ -349,8 +1263,8 @@
   try { cart = JSON.parse(localStorage.getItem(STORE_KEY)) || {}; } catch (e) { cart = {}; }
   function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(cart)); } catch (e) {} }
 
-  function baseId(key) { return key.split('::')[0]; }
-  function toppingsOf(key) { var t = key.split('::')[1]; return t ? t.split('|') : []; }
+  function baseId(key) { var i = key.indexOf('::'); return i < 0 ? key : key.slice(0, i); }
+  function toppingsOf(key) { var i = key.indexOf('::'); return i < 0 ? [] : key.slice(i + 2).split('|').filter(Boolean); }
   function keyFor(id, toppings) { return toppings.length ? id + '::' + toppings.join('|') : id; }
   function productOf(key) { var b = baseId(key); return PRODUCTS.find(function (x) { return x.id === b; }); }
   function lineText(key) {
@@ -366,21 +1280,29 @@
   var orderStatus = document.getElementById('order-status');
   var cartModal = document.getElementById('cart-modal');
 
-  PRODUCTS.forEach(function (p) {
+  PRODUCTS.forEach(function (p, i) {
     var card = document.createElement('div');
-    card.className = 'drink-card';
+    card.className = 'drink-card' + (p.note ? ' has-note' : '');
+    card.style.animationDelay = (i * 55) + 'ms';
     card.innerHTML =
       '<div class="drink-art">' + p.art + '</div>' +
       '<h3>' + p.name + '</h3>' +
       (p.note ? '<div class="drink-note">' + p.note + '</div>' : '') +
-      '<button class="btn btn-ghost btn-sm add-btn" data-add="' + p.id + '">In den Warenkorb</button>';
+      '<button class="btn add-btn" data-add="' + p.id + '">In den Warenkorb</button>';
     grid.appendChild(card);
   });
+
+  function bumpCount() {
+    cartCount.classList.remove('bump');
+    void cartCount.offsetWidth;
+    cartCount.classList.add('bump');
+  }
 
   function addToCart(key) {
     cart[key] = (cart[key] || 0) + 1;
     save();
     render();
+    bumpCount();
   }
 
   /* ---- topping modal ---- */
@@ -392,9 +1314,33 @@
   function openToppingModal(product) {
     pendingProduct = product;
     tModalTitle.textContent = product.name + ' belegen';
-    tModalOptions.innerHTML = product.options.map(function (o, i) {
+    var opts = product.options.map(function (o, i) {
       return '<label class="tm-opt"><input type="checkbox" value="' + o + '" id="tm-o' + i + '">' + o + '</label>';
     }).join('');
+    var special =
+      '<label class="tm-opt tm-special" id="tm-wish-label"><input type="checkbox" id="tm-wish"> Sonderwunsch</label>' +
+      '<div class="tm-wish-wrap" id="tm-wish-wrap" hidden>' +
+        '<textarea id="tm-wish-text" rows="2" autocapitalize="sentences" enterkeyhint="done" ' +
+        'placeholder="Was genau? (z. B. ohne Rinde, extra Butter …)"></textarea>' +
+      '</div>';
+    tModalOptions.innerHTML = opts + special;
+
+    var wish = document.getElementById('tm-wish');
+    var wrap = document.getElementById('tm-wish-wrap');
+    var label = document.getElementById('tm-wish-label');
+    var txt = document.getElementById('tm-wish-text');
+    wish.addEventListener('change', function () {
+      if (wish.checked) {
+        wrap.hidden = false;
+        label.classList.add('dim');
+        txt.focus();
+      } else {
+        wrap.hidden = true;
+        label.classList.remove('dim');
+        txt.value = '';
+      }
+    });
+
     tModal.classList.add('open');
   }
   function closeToppingModal() {
@@ -406,7 +1352,13 @@
   tModal.addEventListener('click', function (e) { if (e.target === tModal) closeToppingModal(); });
   document.getElementById('tm-add').addEventListener('click', function () {
     if (!pendingProduct) return;
-    var chosen = Array.from(tModalOptions.querySelectorAll('input:checked')).map(function (c) { return c.value; });
+    var chosen = Array.from(tModalOptions.querySelectorAll('.tm-opt:not(.tm-special) input:checked'))
+      .map(function (c) { return c.value; });
+    var wish = document.getElementById('tm-wish');
+    var txt = document.getElementById('tm-wish-text');
+    if (wish && wish.checked && txt && txt.value.trim()) {
+      chosen.push('Sonderwunsch: ' + txt.value.trim().replace(/\|/g, '/'));
+    }
     addToCart(keyFor(pendingProduct.id, chosen));
     closeToppingModal();
   });
@@ -421,13 +1373,8 @@
   });
 
   /* ---- cart modal ---- */
-  function openCart() {
-    render();
-    cartModal.classList.add('open');
-  }
-  function closeCart() {
-    cartModal.classList.remove('open');
-  }
+  function openCart() { render(); cartModal.classList.add('open'); }
+  function closeCart() { cartModal.classList.remove('open'); }
   document.getElementById('cart-fab').addEventListener('click', openCart);
   document.getElementById('cm-close').addEventListener('click', closeCart);
   cartModal.addEventListener('click', function (e) { if (e.target === cartModal) closeCart(); });
@@ -447,11 +1394,12 @@
       return;
     }
     cartLines.innerHTML = '';
-    keys.forEach(function (key) {
+    keys.forEach(function (key, i) {
       var p = productOf(key);
       var t = toppingsOf(key);
       var line = document.createElement('div');
       line.className = 'cart-line';
+      line.style.animationDelay = (i * 40) + 'ms';
       line.innerHTML =
         '<span class="cl-name">' + (p ? p.name : baseId(key)) +
           (t.length ? '<small>mit ' + t.join(', ') + '</small>' : '') +
@@ -489,6 +1437,9 @@
 
     var lines = keys.map(function (k) { return cart[k] + '× ' + lineText(k); });
 
+    /* zufällige Partikel-Animation zur Bestellung */
+    try { FX.celebrate(); } catch (e) {}
+
     btn.disabled = true;
     var original = btn.textContent;
     btn.textContent = 'Wird gesendet …';
@@ -522,6 +1473,61 @@
   });
 
   render();
+
+
+  /* ============================================================
+     Touch-/Zeiger-Feedback: Ripple, Aura, Wisch-Spur, Funken
+     ============================================================ */
+  var aura = document.getElementById('touch-aura');
+  var pressing = false;
+  var lastTrail = null;
+  var RIPPLE_SEL = '.btn, .drink-card, .tm-opt, .modal-close, .cart-fab, .qty button, .cl-remove';
+
+  function spawnRipple(el, x, y) {
+    var r = el.getBoundingClientRect();
+    var d = Math.hypot(r.width, r.height) * 1.1;
+    var s = document.createElement('span');
+    s.className = 'ripple';
+    s.style.width = s.style.height = d + 'px';
+    s.style.left = (x - r.left) + 'px';
+    s.style.top = (y - r.top) + 'px';
+    el.appendChild(s);
+    setTimeout(function () { if (s.parentNode) s.parentNode.removeChild(s); }, 680);
+  }
+
+  window.addEventListener('pointerdown', function (e) {
+    pressing = true;
+    lastTrail = { x: e.clientX, y: e.clientY };
+
+    aura.style.transform = 'translate3d(' + e.clientX + 'px,' + e.clientY + 'px,0)';
+    aura.classList.add('on');
+
+    var el = e.target.closest ? e.target.closest(RIPPLE_SEL) : null;
+    if (el) spawnRipple(el, e.clientX, e.clientY);
+
+    var addBtn = e.target.closest ? e.target.closest('.add-btn, #tm-add') : null;
+    if (addBtn) {
+      try { FX.sparks(e.clientX, e.clientY); } catch (err) {}
+    }
+  }, { passive: true });
+
+  window.addEventListener('pointermove', function (e) {
+    if (!pressing) return;
+    aura.style.transform = 'translate3d(' + e.clientX + 'px,' + e.clientY + 'px,0)';
+    if (FX.reduced) return;
+    var dx = e.clientX - lastTrail.x, dy = e.clientY - lastTrail.y;
+    if (dx * dx + dy * dy > 90) {
+      lastTrail = { x: e.clientX, y: e.clientY };
+      try { FX.trail(e.clientX, e.clientY); } catch (err) {}
+    }
+  }, { passive: true });
+
+  function endPress() {
+    pressing = false;
+    aura.classList.remove('on');
+  }
+  window.addEventListener('pointerup', endPress, { passive: true });
+  window.addEventListener('pointercancel', endPress, { passive: true });
 })();
 </script>
 </body>
