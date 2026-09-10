@@ -4,20 +4,330 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow, noarchive">
-<title>Intern</title>
+<title>Getränke</title>
 <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
 <link rel="stylesheet" href="/css/style.css">
+<style>
+  .shop-wrap { max-width: 1000px; margin: 0 auto; padding: 56px 24px 120px; }
+  .shop-head { margin-bottom: 40px; }
+  .shop-head h1 { font-size: clamp(28px, 5vw, 40px); }
+  .shop-head p { font-size: 15px; }
+
+  .shop-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+  }
+  .drink-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .drink-art {
+    aspect-ratio: 16 / 10;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-alt);
+    overflow: hidden;
+  }
+  .drink-art svg { width: 56%; height: 86%; }
+  .drink-card h3 { font-size: 16px; margin: 0; }
+  .drink-card .add-btn { margin-top: auto; }
+  .drink-card .in-cart {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--accent);
+  }
+
+  /* cart */
+  .cart {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    background: color-mix(in srgb, var(--bg) 92%, transparent);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-top: 1px solid var(--border-strong);
+    z-index: 50;
+    transform: translateY(calc(100% - 58px));
+    transition: transform 260ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .cart.open { transform: translateY(0); }
+  .cart-toggle {
+    width: 100%;
+    height: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--text);
+  }
+  .cart-toggle .count {
+    background: var(--accent);
+    color: #fff;
+    border-radius: 999px;
+    min-width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    padding: 0 7px;
+  }
+  .cart-body {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 6px 24px 28px;
+    max-height: 62vh;
+    overflow-y: auto;
+  }
+  .cart-empty { color: var(--text-faint); font-size: 14px; padding: 12px 0 20px; }
+  .cart-line {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .cart-line .cl-name { flex: 1; font-size: 14.5px; font-weight: 500; }
+  .qty {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .qty button {
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .qty .val { min-width: 26px; text-align: center; font-weight: 600; font-size: 14px; }
+  .cl-remove {
+    background: none;
+    border: 0;
+    color: var(--text-faint);
+    cursor: pointer;
+    font-size: 13px;
+    text-decoration: underline;
+  }
+  .cl-remove:hover { color: var(--accent); }
+  .cart-actions { padding-top: 18px; }
+  .order-status {
+    margin-top: 14px;
+    font-size: 14px;
+    padding: 12px 14px;
+    border-radius: var(--radius-sm);
+    display: none;
+  }
+  .order-status.show { display: block; }
+  .order-status.ok { background: rgba(34,197,94,0.12); color: #22c55e; }
+  .order-status.err { background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--accent); }
+
+  @media (max-width: 560px) {
+    .shop-grid { grid-template-columns: 1fr; }
+  }
+</style>
 </head>
 <body>
 
-<main class="legal-page">
-  <div class="container">
-    <h1>Interner Bereich</h1>
-    <p class="updated">Nicht öffentlich verlinkt · nur über die direkte URL erreichbar</p>
-
-    <p>Diese Seite ist bewusst leer. Inhalt wird später ergänzt.</p>
+<div class="shop-wrap">
+  <div class="shop-head">
+    <h1>Getränke</h1>
+    <p>Zum Hochholen aus dem Keller — anklicken, Menge einstellen, bestellen.</p>
   </div>
-</main>
 
+  <div class="shop-grid" id="shop-grid"></div>
+</div>
+
+<div class="cart" id="cart">
+  <button class="cart-toggle" id="cart-toggle" type="button">
+    <span>Warenkorb</span>
+    <span class="count" id="cart-count">0</span>
+  </button>
+  <div class="cart-body">
+    <div id="cart-lines"></div>
+    <div class="cart-actions">
+      <button class="btn btn-accent btn-block" id="order-btn" type="button">Bestellen</button>
+      <div class="order-status" id="order-status"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var ORDER_ENDPOINT = 'https://formsubmit.co/ajax/marlinw.media@gmail.com';
+
+  function bottleSVG(fill, bubbles) {
+    var b = bubbles
+      ? '<circle cx="50" cy="70" r="3" fill="#fff" opacity=".55"/><circle cx="60" cy="90" r="2.4" fill="#fff" opacity=".5"/><circle cx="45" cy="105" r="2" fill="#fff" opacity=".45"/>'
+      : '';
+    return '<svg viewBox="0 0 100 150" xmlns="http://www.w3.org/2000/svg">' +
+      '<rect x="42" y="6" width="16" height="12" rx="2" fill="#c9ccd2"/>' +
+      '<path d="M38 20h24c2 0 3 3 3 6l4 10c2 5 3 9 3 16v78c0 6-4 10-10 10H38c-6 0-10-4-10-10V52c0-7 1-11 3-16l4-10c0-3 1-6 3-6z" fill="' + fill + '"/>' +
+      '<rect x="30" y="70" width="40" height="34" rx="4" fill="#fff" opacity=".9"/>' +
+      b +
+      '</svg>';
+  }
+
+  function pouchSVG(fill, accent) {
+    return '<svg viewBox="0 0 120 150" xmlns="http://www.w3.org/2000/svg">' +
+      '<rect x="70" y="0" width="6" height="46" rx="3" fill="#f0b429"/>' +
+      '<path d="M18 26h84c4 0 7 3 7 7v96c0 4-3 7-7 7H18c-4 0-7-3-7-7V33c0-4 3-7 7-7z" fill="' + fill + '"/>' +
+      '<rect x="24" y="52" width="72" height="52" rx="6" fill="#fff" opacity=".92"/>' +
+      '<rect x="24" y="112" width="72" height="12" rx="4" fill="' + accent + '"/>' +
+      '</svg>';
+  }
+
+  var PRODUCTS = [
+    { id: 'wasser-still', name: 'Stilles Wasser', art: bottleSVG('#bfe3f5', false) },
+    { id: 'wasser-medium', name: 'Medium Wasser', art: bottleSVG('#6db8e0', true) },
+    { id: 'cs-multivitamin', name: 'Capri-Sun Multivitamin', art: pouchSVG('#f59e0b', '#c2410c') },
+    { id: 'cs-fairydrink', name: 'Capri-Sun Fairy Drink', art: pouchSVG('#ec4899', '#9d174d') },
+    { id: 'cs-safarifruits', name: 'Capri-Sun Safari Fruits', art: pouchSVG('#22c55e', '#15803d') }
+  ];
+
+  var STORE_KEY = 'mw-drinks-cart';
+  var cart = {};
+  try { cart = JSON.parse(localStorage.getItem(STORE_KEY)) || {}; } catch (e) { cart = {}; }
+
+  function save() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(cart)); } catch (e) {}
+  }
+
+  var grid = document.getElementById('shop-grid');
+  var cartEl = document.getElementById('cart');
+  var cartLines = document.getElementById('cart-lines');
+  var cartCount = document.getElementById('cart-count');
+  var orderStatus = document.getElementById('order-status');
+
+  PRODUCTS.forEach(function (p) {
+    var card = document.createElement('div');
+    card.className = 'drink-card';
+    card.innerHTML =
+      '<div class="drink-art">' + p.art + '</div>' +
+      '<h3>' + p.name + '</h3>' +
+      '<button class="btn btn-ghost btn-sm add-btn" data-add="' + p.id + '">In den Warenkorb</button>';
+    grid.appendChild(card);
+  });
+
+  grid.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-add]');
+    if (!btn) return;
+    var id = btn.dataset.add;
+    cart[id] = (cart[id] || 0) + 1;
+    save();
+    render();
+    cartEl.classList.add('open');
+  });
+
+  function totalItems() {
+    return Object.keys(cart).reduce(function (s, k) { return s + cart[k]; }, 0);
+  }
+
+  function render() {
+    cartCount.textContent = totalItems();
+    var ids = Object.keys(cart).filter(function (k) { return cart[k] > 0; });
+    if (!ids.length) {
+      cartLines.innerHTML = '<div class="cart-empty">Noch nichts im Warenkorb.</div>';
+      return;
+    }
+    cartLines.innerHTML = '';
+    ids.forEach(function (id) {
+      var p = PRODUCTS.find(function (x) { return x.id === id; });
+      if (!p) return;
+      var line = document.createElement('div');
+      line.className = 'cart-line';
+      line.innerHTML =
+        '<span class="cl-name">' + p.name + '</span>' +
+        '<span class="qty">' +
+          '<button data-dec="' + id + '" aria-label="weniger">–</button>' +
+          '<span class="val">' + cart[id] + '</span>' +
+          '<button data-inc="' + id + '" aria-label="mehr">+</button>' +
+        '</span>' +
+        '<button class="cl-remove" data-del="' + id + '">entfernen</button>';
+      cartLines.appendChild(line);
+    });
+  }
+
+  cartLines.addEventListener('click', function (e) {
+    var t = e.target;
+    if (t.dataset.inc) { cart[t.dataset.inc]++; }
+    else if (t.dataset.dec) { cart[t.dataset.dec] = Math.max(0, cart[t.dataset.dec] - 1); if (!cart[t.dataset.dec]) delete cart[t.dataset.dec]; }
+    else if (t.dataset.del) { delete cart[t.dataset.del]; }
+    else return;
+    save();
+    render();
+  });
+
+  document.getElementById('cart-toggle').addEventListener('click', function () {
+    cartEl.classList.toggle('open');
+  });
+
+  document.getElementById('order-btn').addEventListener('click', async function () {
+    var btn = this;
+    var ids = Object.keys(cart).filter(function (k) { return cart[k] > 0; });
+    orderStatus.className = 'order-status';
+    if (!ids.length) {
+      orderStatus.textContent = 'Der Warenkorb ist leer.';
+      orderStatus.classList.add('show', 'err');
+      return;
+    }
+
+    var lines = ids.map(function (id) {
+      var p = PRODUCTS.find(function (x) { return x.id === id; });
+      return cart[id] + '× ' + (p ? p.name : id);
+    });
+
+    btn.disabled = true;
+    var original = btn.textContent;
+    btn.textContent = 'Wird gesendet …';
+
+    var payload = {
+      _subject: 'Bestellung Getränke',
+      _template: 'table',
+      Bestellung: lines.join('\n'),
+      'Positionen gesamt': String(totalItems())
+    };
+
+    try {
+      var res = await fetch(ORDER_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error('failed');
+      orderStatus.textContent = 'Bestellung gesendet: ' + lines.join(', ') + '.';
+      orderStatus.classList.add('show', 'ok');
+      cart = {};
+      save();
+      render();
+    } catch (err) {
+      orderStatus.textContent = 'Konnte nicht gesendet werden. Nochmal versuchen.';
+      orderStatus.classList.add('show', 'err');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = original;
+    }
+  });
+
+  render();
+})();
+</script>
 </body>
 </html>
