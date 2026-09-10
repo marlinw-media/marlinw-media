@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
 <link rel="stylesheet" href="/css/style.css">
 <style>
-  .shop-wrap { max-width: 960px; margin: 0 auto; padding: 48px 24px 96px; transition: padding-bottom 200ms ease; }
+  .shop-wrap { max-width: 960px; margin: 0 auto; padding: 48px 24px 110px; }
   .shop-head { margin-bottom: 28px; }
   .shop-head h1 { font-size: clamp(26px, 5vw, 38px); }
   .shop-head p { font-size: 14.5px; }
@@ -60,8 +60,8 @@
     text-align: center;
   }
 
-  /* topping modal */
-  .topping-modal {
+  /* modals (topping + cart share this look) */
+  .modal {
     position: fixed;
     inset: 0;
     z-index: 80;
@@ -74,16 +74,36 @@
     pointer-events: none;
     transition: opacity 180ms ease;
   }
-  .topping-modal.open { opacity: 1; pointer-events: auto; }
-  .tm-panel {
+  .modal.open { opacity: 1; pointer-events: auto; }
+  .modal-panel {
     background: var(--surface);
     border: 1px solid var(--border-strong);
     border-radius: var(--radius-lg);
-    padding: 26px;
+    padding: 24px;
     width: 100%;
-    max-width: 360px;
+    max-width: 380px;
+    max-height: 82vh;
+    display: flex;
+    flex-direction: column;
   }
-  .tm-panel h3 { margin: 0 0 16px; font-size: 18px; }
+  .modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .modal-head h3 { margin: 0; font-size: 18px; }
+  .modal-close {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    border: 1px solid var(--border-strong);
+    background: var(--bg-alt);
+    color: var(--text);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+  }
+
   .tm-opt {
     display: flex;
     align-items: center;
@@ -97,54 +117,46 @@
   .tm-actions { display: flex; gap: 10px; margin-top: 20px; }
   .tm-actions .btn { flex: 1; }
 
-  /* cart */
-  .cart {
+  /* floating cart button */
+  .cart-fab {
     position: fixed;
-    left: 0; right: 0; bottom: 0;
-    background: color-mix(in srgb, var(--bg) 92%, transparent);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border-top: 1px solid var(--border-strong);
-    z-index: 50;
-    transform: translateY(calc(100% - 58px));
-    transition: transform 260ms cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  .cart.open { transform: translateY(0); }
-  .cart-toggle {
-    width: 100%;
-    height: 58px;
-    display: flex;
+    left: 50%;
+    bottom: 20px;
+    transform: translateX(-50%);
+    z-index: 60;
+    display: inline-flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 0 24px;
-    background: none;
+    gap: 10px;
+    padding: 13px 22px;
     border: 0;
-    cursor: pointer;
-    font-weight: 700;
-    font-size: 15px;
-    color: var(--text);
-  }
-  .cart-toggle .count {
+    border-radius: 999px;
     background: var(--accent);
     color: #fff;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    box-shadow: 0 12px 30px -8px rgba(0,0,0,0.45);
+  }
+  .cart-fab .count {
+    background: #fff;
+    color: var(--accent);
     border-radius: 999px;
-    min-width: 24px;
-    height: 24px;
+    min-width: 22px;
+    height: 22px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 13px;
-    padding: 0 7px;
+    font-size: 12.5px;
+    padding: 0 6px;
   }
-  .cart-body {
-    max-width: 960px;
-    margin: 0 auto;
-    padding: 6px 24px 24px;
-  }
+
+  /* cart contents */
   #cart-lines {
-    max-height: 168px;
+    flex: 1;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    margin: 0 -4px;
+    padding: 0 4px;
   }
   .cart-empty { color: var(--text-faint); font-size: 14px; padding: 12px 0 20px; }
   .cart-line {
@@ -176,9 +188,9 @@
     text-decoration: underline;
   }
   .cl-remove:hover { color: var(--accent); }
-  .cart-actions { padding-top: 18px; }
+  .cart-foot { padding-top: 16px; }
   .order-status {
-    margin-top: 14px;
+    margin-top: 12px;
     font-size: 14px;
     padding: 12px 14px;
     border-radius: var(--radius-sm);
@@ -204,9 +216,17 @@
   <div class="shop-grid" id="shop-grid"></div>
 </div>
 
-<div class="topping-modal" id="topping-modal">
-  <div class="tm-panel">
-    <h3 id="tm-title">Belegen</h3>
+<button class="cart-fab" id="cart-fab" type="button">
+  Warenkorb <span class="count" id="cart-count">0</span>
+</button>
+
+<!-- topping modal -->
+<div class="modal" id="topping-modal">
+  <div class="modal-panel">
+    <div class="modal-head">
+      <h3 id="tm-title">Belegen</h3>
+      <button class="modal-close" id="tm-close" type="button" aria-label="Schließen">&times;</button>
+    </div>
     <div id="tm-options"></div>
     <div class="tm-actions">
       <button class="btn btn-ghost btn-sm" id="tm-cancel" type="button">Abbrechen</button>
@@ -215,14 +235,15 @@
   </div>
 </div>
 
-<div class="cart" id="cart">
-  <button class="cart-toggle" id="cart-toggle" type="button">
-    <span>Warenkorb</span>
-    <span class="count" id="cart-count">0</span>
-  </button>
-  <div class="cart-body">
+<!-- cart modal -->
+<div class="modal" id="cart-modal">
+  <div class="modal-panel">
+    <div class="modal-head">
+      <h3>Warenkorb</h3>
+      <button class="modal-close" id="cm-close" type="button" aria-label="Schließen">&times;</button>
+    </div>
     <div id="cart-lines"></div>
-    <div class="cart-actions">
+    <div class="cart-foot">
       <button class="btn btn-accent btn-block" id="order-btn" type="button">Bestellen</button>
       <div class="order-status" id="order-status"></div>
     </div>
@@ -340,19 +361,10 @@
   }
 
   var grid = document.getElementById('shop-grid');
-  var cartEl = document.getElementById('cart');
   var cartLines = document.getElementById('cart-lines');
   var cartCount = document.getElementById('cart-count');
   var orderStatus = document.getElementById('order-status');
-  var shopWrap = document.querySelector('.shop-wrap');
-
-  // keep enough space below the list so the last product is always
-  // scrollable above the cart, whether the cart is open or collapsed
-  function syncBottomSpace() {
-    var h = cartEl.classList.contains('open') ? cartEl.offsetHeight : 58;
-    shopWrap.style.paddingBottom = (h + 32) + 'px';
-  }
-  window.addEventListener('resize', syncBottomSpace);
+  var cartModal = document.getElementById('cart-modal');
 
   PRODUCTS.forEach(function (p) {
     var card = document.createElement('div');
@@ -369,34 +381,32 @@
     cart[key] = (cart[key] || 0) + 1;
     save();
     render();
-    cartEl.classList.add('open');
-    syncBottomSpace();
   }
 
   /* ---- topping modal ---- */
-  var modal = document.getElementById('topping-modal');
-  var modalTitle = document.getElementById('tm-title');
-  var modalOptions = document.getElementById('tm-options');
+  var tModal = document.getElementById('topping-modal');
+  var tModalTitle = document.getElementById('tm-title');
+  var tModalOptions = document.getElementById('tm-options');
   var pendingProduct = null;
 
   function openToppingModal(product) {
     pendingProduct = product;
-    modalTitle.textContent = product.name + ' belegen';
-    modalOptions.innerHTML = product.options.map(function (o, i) {
+    tModalTitle.textContent = product.name + ' belegen';
+    tModalOptions.innerHTML = product.options.map(function (o, i) {
       return '<label class="tm-opt"><input type="checkbox" value="' + o + '" id="tm-o' + i + '">' + o + '</label>';
     }).join('');
-    modal.classList.add('open');
+    tModal.classList.add('open');
   }
   function closeToppingModal() {
-    modal.classList.remove('open');
+    tModal.classList.remove('open');
     pendingProduct = null;
   }
-
   document.getElementById('tm-cancel').addEventListener('click', closeToppingModal);
-  modal.addEventListener('click', function (e) { if (e.target === modal) closeToppingModal(); });
+  document.getElementById('tm-close').addEventListener('click', closeToppingModal);
+  tModal.addEventListener('click', function (e) { if (e.target === tModal) closeToppingModal(); });
   document.getElementById('tm-add').addEventListener('click', function () {
     if (!pendingProduct) return;
-    var chosen = Array.from(modalOptions.querySelectorAll('input:checked')).map(function (c) { return c.value; });
+    var chosen = Array.from(tModalOptions.querySelectorAll('input:checked')).map(function (c) { return c.value; });
     addToCart(keyFor(pendingProduct.id, chosen));
     closeToppingModal();
   });
@@ -408,6 +418,21 @@
     if (!product) return;
     if (product.options) { openToppingModal(product); return; }
     addToCart(product.id);
+  });
+
+  /* ---- cart modal ---- */
+  function openCart() {
+    render();
+    cartModal.classList.add('open');
+  }
+  function closeCart() {
+    cartModal.classList.remove('open');
+  }
+  document.getElementById('cart-fab').addEventListener('click', openCart);
+  document.getElementById('cm-close').addEventListener('click', closeCart);
+  cartModal.addEventListener('click', function (e) { if (e.target === cartModal) closeCart(); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') { closeCart(); closeToppingModal(); }
   });
 
   function totalItems() {
@@ -450,12 +475,6 @@
     else { delete cart[k]; }
     save();
     render();
-    syncBottomSpace();
-  });
-
-  document.getElementById('cart-toggle').addEventListener('click', function () {
-    cartEl.classList.toggle('open');
-    syncBottomSpace();
   });
 
   document.getElementById('order-btn').addEventListener('click', async function () {
@@ -465,7 +484,6 @@
     if (!keys.length) {
       orderStatus.textContent = 'Der Warenkorb ist leer.';
       orderStatus.classList.add('show', 'err');
-      syncBottomSpace();
       return;
     }
 
@@ -500,12 +518,10 @@
     } finally {
       btn.disabled = false;
       btn.textContent = original;
-      syncBottomSpace();
     }
   });
 
   render();
-  syncBottomSpace();
 })();
 </script>
 </body>
