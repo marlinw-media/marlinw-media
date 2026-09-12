@@ -6,6 +6,13 @@
 <meta name="robots" content="noindex, nofollow, noarchive">
 <title>Getränke</title>
 <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<!-- eigenes Homescreen-Icon nur für diese Seite -->
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Bestellliste">
+<meta name="theme-color" content="#0a0612">
 <style>
   /* ============ self-contained — beeinflusst nichts am Rest der Website ============ */
   @font-face {
@@ -682,6 +689,363 @@
   @media (max-width: 640px) {
     .shop-grid { grid-template-columns: 1fr; }
   }
+
+  /* ---------- Glücksrad-Knopf im Header ---------- */
+  .shop-head-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .luck-btn {
+    position: relative;
+    isolation: isolate;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    border-radius: 14px;
+    border: 0;
+    background: rgba(255,255,255,.07);
+    color: var(--ink);
+    cursor: pointer;
+    flex-shrink: 0;
+    margin-top: 6px;
+    transition: transform .15s ease;
+  }
+  .luck-btn:active { transform: scale(.96); }
+  @property --luck-ang { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+  .luck-btn::before {
+    content: "";
+    position: absolute;
+    inset: -3px;
+    border-radius: 17px;
+    padding: 3px;
+    background: conic-gradient(from var(--luck-ang), #ff3d9a, #a855f7, #22d3ee, #fbbf24, #ff7eb3, #ff3d9a);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: spinBorder 5s linear infinite;
+    z-index: -2;
+  }
+  /* Winkel der Gradient-Quelle wird animiert statt eines transform:rotate() auf dem
+     maskierten Element — vermeidet Render-Artefakte bei mask-composite + transform. */
+  @keyframes spinBorder { to { --luck-ang: 360deg; } }
+  .luck-icon { font-size: 20px; position: relative; z-index: 1; }
+  .luck-stars { position: absolute; inset: 0; pointer-events: none; z-index: -1; }
+  .luck-stars i {
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 6px; height: 6px;
+    background: linear-gradient(135deg, #fff, #fbbf24);
+    clip-path: polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);
+    opacity: 0;
+    animation: starPop var(--t) ease-out infinite;
+    animation-delay: var(--dl);
+  }
+  @keyframes starPop {
+    0%   { transform: translate(-50%,-50%) rotate(var(--a)) translateY(0) scale(.3); opacity: 0; }
+    18%  { opacity: 1; }
+    100% { transform: translate(-50%,-50%) rotate(var(--a)) translateY(calc(-1 * var(--d))) scale(1); opacity: 0; }
+  }
+
+  /* ---------- Glücksspielmodus-Modal (feste Größe) ---------- */
+  .luck-panel {
+    position: relative;
+    width: min(400px, 92vw);
+    height: min(620px, 85vh);
+    display: flex;
+    flex-direction: column;
+    padding: 22px;
+    border-radius: 26px;
+    background: linear-gradient(165deg, #1a1026, #120a1c);
+    border: 1px solid var(--glass-line);
+    box-shadow: 0 40px 90px -30px rgba(0,0,0,.8);
+    transform: translateY(24px) scale(.94);
+    opacity: 0;
+    transition: transform .32s cubic-bezier(.2,.8,.2,1), opacity .28s;
+    overflow: hidden;
+  }
+  .modal.open .luck-panel { transform: translateY(0) scale(1); opacity: 1; }
+  .luck-panel::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: var(--grad);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: .55;
+    pointer-events: none;
+  }
+  .luck-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    flex-shrink: 0;
+  }
+  .luck-head h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 19px;
+    font-weight: 700;
+    background: linear-gradient(100deg, #ff3d9a, #c98cf0, #a855f7, #52d0ec, #22d3ee);
+    background-size: 260% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: flow 12s ease-in-out infinite;
+  }
+  .luck-body { position: relative; flex: 1; min-height: 0; }
+  .luck-screen {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 14px;
+    padding: 4px 6px;
+  }
+  .luck-screen.active { display: flex; animation: rise .35s ease both; }
+
+  .luck-flash-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: clamp(28px, 8vw, 36px);
+  }
+  .luck-rules p { font-size: 17px; line-height: 1.55; color: var(--ink); margin-bottom: 12px; }
+  .luck-rules .lang-md { color: var(--ink-dim); font-style: italic; font-size: 15px; }
+
+  /* Buchstabe-für-Buchstabe-Einblendung mit Großwerden-Effekt */
+  .lchar {
+    display: inline-block;
+    opacity: 0;
+    transform: scale(.35) translateY(6px);
+    animation: letterPop .5s cubic-bezier(.2,.9,.3,1.4) forwards;
+  }
+  @keyframes letterPop {
+    0%   { opacity: 0; transform: scale(.35) translateY(6px); }
+    60%  { opacity: 1; transform: scale(1.25) translateY(0); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .flash-out { animation: flashOut .55s ease forwards; }
+  @keyframes flashOut { to { opacity: 0; transform: scale(1.04); } }
+
+  .luck-pick-head { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 20px; }
+  .luck-pick-grid { display: flex; gap: 14px; width: 100%; }
+  .luck-pick-btn {
+    position: relative;
+    overflow: hidden;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 28px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--glass-line);
+    background: rgba(255,255,255,.05);
+    color: var(--ink);
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    transition: transform .15s, background .2s, color .2s;
+  }
+  .luck-pick-btn:active { transform: scale(.95); background: var(--grad); background-size: 200% 100%; color: #fff; }
+  .luck-pick-btn .emoji { font-size: 38px; }
+
+  .luck-reel-hint { color: var(--ink-dim); font-size: 13px; }
+  .luck-reel-display {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    max-width: 240px;
+    aspect-ratio: 1 / 1;
+    border-radius: 24px;
+    border: 1px solid var(--glass-line);
+    background: rgba(255,255,255,.05);
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: transform .15s;
+  }
+  .luck-reel-display::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 2px;
+    background: var(--grad);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: .6;
+  }
+  .luck-reel-display:active { transform: scale(.97); }
+  .lrd-art { width: 92px; height: 92px; position: relative; z-index: 1; }
+  .lrd-art svg { width: 100%; height: 100%; display: block; }
+  .lrd-name { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 16px; padding: 0 10px; position: relative; z-index: 1; }
+
+  .luck-game-label {
+    text-align: center;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: clamp(22px, 6vw, 28px);
+    letter-spacing: .01em;
+    background: linear-gradient(100deg, #ff3d9a, #c98cf0, #a855f7, #52d0ec, #22d3ee);
+    background-size: 260% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: flow 12s ease-in-out infinite;
+  }
+
+  .luck-slots-cabinet {
+    padding: 16px 16px 20px;
+    border-radius: 22px;
+    background: linear-gradient(160deg, #3a2b1a, #1c140c);
+    border: 2px solid #caa14d;
+    box-shadow: inset 0 0 0 2px rgba(0,0,0,.4), 0 20px 40px -18px rgba(0,0,0,.6);
+  }
+  .luck-slots-lights { display: flex; justify-content: space-between; padding: 0 2px 12px; }
+  .luck-slots-lights i {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #fbbf24;
+    display: block;
+    box-shadow: 0 0 6px 1px rgba(251,191,36,.7);
+    animation: lightsChase 1.2s steps(1) infinite;
+    animation-delay: calc(var(--i, 0) * 150ms);
+  }
+  .luck-slots-lights i:nth-child(1) { --i: 0; } .luck-slots-lights i:nth-child(2) { --i: 1; }
+  .luck-slots-lights i:nth-child(3) { --i: 2; } .luck-slots-lights i:nth-child(4) { --i: 3; }
+  .luck-slots-lights i:nth-child(5) { --i: 4; } .luck-slots-lights i:nth-child(6) { --i: 5; }
+  .luck-slots-lights i:nth-child(7) { --i: 6; } .luck-slots-lights i:nth-child(8) { --i: 7; }
+  @keyframes lightsChase { 0%, 49% { opacity: .25; } 50%, 100% { opacity: 1; } }
+
+  .luck-slots-reels { display: flex; gap: 10px; }
+  .slot-col {
+    width: 72px; height: 84px;
+    border-radius: 12px;
+    border: 2px solid rgba(255,255,255,.15);
+    background: #0c0710;
+    box-shadow: inset 0 4px 10px rgba(0,0,0,.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .slot-face svg { width: 54px; height: 54px; display: block; }
+  .slot-col.spin .slot-face { filter: blur(2px); }
+  .slot-col.land .slot-face { animation: slotLand .35s ease; }
+  @keyframes slotLand { 0% { transform: scale(1.25); } 100% { transform: scale(1); } }
+
+  .luck-lever {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    color: var(--ink);
+  }
+  .luck-lever .lever-arrow {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--pink);
+    animation: bounceHint 1.4s ease-in-out infinite;
+  }
+  @keyframes bounceHint { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(6px); } }
+  .lever-stick {
+    display: block;
+    width: 12px; height: 46px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #f1f2f4, #9ca3af);
+    box-shadow: inset -2px 0 3px rgba(0,0,0,.25);
+    position: relative;
+  }
+  .lever-stick::before {
+    content: "";
+    position: absolute;
+    left: 50%; bottom: -8px;
+    transform: translateX(-50%);
+    width: 34px; height: 10px;
+    border-radius: 999px;
+    background: #2a2030;
+  }
+  .lever-stick::after {
+    content: "";
+    position: absolute;
+    left: 50%; top: -6px;
+    transform: translateX(-50%);
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 32% 28%, #ff8fc4, var(--pink) 60%, #b3125a);
+    box-shadow: 0 6px 14px -4px rgba(255,61,154,.7);
+  }
+  .luck-lever.pulled .lever-stick { animation: leverPull .3s ease; }
+  @keyframes leverPull { 0% { transform: translateY(0); } 45% { transform: translateY(20px); } 100% { transform: translateY(0); } }
+  .luck-lever:disabled { opacity: .55; pointer-events: none; }
+
+  .luck-wheel-wrap { position: relative; width: 208px; height: 208px; }
+  .luck-wheel-pointer {
+    position: absolute;
+    left: 50%; top: -6px;
+    transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 18px solid #fff;
+    filter: drop-shadow(0 2px 3px rgba(0,0,0,.5));
+    z-index: 2;
+  }
+  .luck-wheel-disc {
+    width: 100%; height: 100%;
+    border-radius: 50%;
+    position: relative;
+    border: 4px solid rgba(255,255,255,.25);
+    box-shadow: 0 20px 40px -16px rgba(0,0,0,.6), inset 0 0 0 2px rgba(0,0,0,.3);
+    transition: transform 3.4s cubic-bezier(.12,.87,.25,1);
+  }
+  .wheel-icon {
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 32px; height: 32px;
+    margin: -16px 0 0 -16px;
+  }
+  .wheel-icon svg { width: 100%; height: 100%; display: block; filter: drop-shadow(0 1px 2px rgba(0,0,0,.5)); }
+  .luck-wheel-hub {
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--grad);
+    box-shadow: 0 4px 10px rgba(0,0,0,.4);
+    border: 2px solid #fff;
+  }
+
+  .luck-result-art { width: 104px; height: 104px; }
+  .luck-result-art svg { width: 100%; height: 100%; display: block; }
+  .luck-result-title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 22px; }
+  .luck-result-name { font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 16px; color: var(--ink-dim); }
+  .luck-result-name small { display: block; font-weight: 400; font-size: 13px; color: var(--ink-faint); margin-top: 4px; }
+  .luck-result-quip { font-size: 14px; color: var(--pink); font-weight: 600; }
+  .luck-result-sub { font-size: 13px; color: var(--ink-faint); }
 </style>
 </head>
 <body>
@@ -691,8 +1055,25 @@
 
 <div class="shop-wrap">
   <div class="shop-head">
-    <h1>Bestellliste</h1>
-    <div class="rule"></div>
+    <div class="shop-head-row">
+      <div>
+        <h1>Bestellliste</h1>
+        <div class="rule"></div>
+      </div>
+      <button class="luck-btn" id="luck-btn" type="button" aria-label="Glücksspielmodus">
+        <span class="luck-stars" aria-hidden="true">
+          <i style="--a:0deg;--d:30px;--t:1.9s;--dl:0s"></i>
+          <i style="--a:45deg;--d:26px;--t:2.3s;--dl:.25s"></i>
+          <i style="--a:90deg;--d:32px;--t:2.1s;--dl:.5s"></i>
+          <i style="--a:135deg;--d:24px;--t:2.5s;--dl:.15s"></i>
+          <i style="--a:180deg;--d:30px;--t:2s;--dl:.4s"></i>
+          <i style="--a:225deg;--d:26px;--t:2.4s;--dl:.6s"></i>
+          <i style="--a:270deg;--d:34px;--t:1.8s;--dl:.35s"></i>
+          <i style="--a:315deg;--d:28px;--t:2.2s;--dl:.55s"></i>
+        </span>
+        <span class="luck-icon">🎰</span>
+      </button>
+    </div>
     <p>Antippen, Menge einstellen, bestellen — kommt dann aus dem Keller hoch.</p>
   </div>
 
@@ -733,6 +1114,81 @@
     <div class="cart-foot">
       <button class="btn btn-accent btn-block" id="order-btn" type="button">Bestellen</button>
       <div class="order-status" id="order-status"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Glücksspielmodus -->
+<div class="modal" id="luck-modal">
+  <div class="luck-panel">
+    <div class="luck-head">
+      <h3>🎰 Glücksspielmodus</h3>
+      <button class="modal-close" id="luck-close" type="button" aria-label="Schließen">&times;</button>
+    </div>
+    <div class="luck-body">
+
+      <div class="luck-screen" id="luck-scr-intro">
+        <div class="luck-flash-title" id="luck-title-flash">Glücksspielmodus</div>
+        <div class="luck-rules" id="luck-rules-flash" hidden>
+          <p>Was du bekommst, musst du nehmen –<br>Essen oder Trinken, ganz nach dem Zufall.</p>
+          <p class="lang-md">Ce primești trebuie să iei –<br>mâncare sau băutură, totul e la voia întâmplării.</p>
+        </div>
+      </div>
+
+      <div class="luck-screen" id="luck-scr-pick">
+        <div class="luck-pick-head">Worauf hast du Lust?</div>
+        <div class="luck-pick-grid">
+          <button class="luck-pick-btn" data-cat="trinken" type="button"><span class="emoji">🥤</span>Trinken</button>
+          <button class="luck-pick-btn" data-cat="essen" type="button"><span class="emoji">🍽️</span>Essen</button>
+        </div>
+      </div>
+
+      <div class="luck-screen" id="luck-scr-reel">
+        <div class="luck-game-label">Tipp-Stopp</div>
+        <div class="luck-reel-hint">Antippen zum Stoppen!</div>
+        <button class="luck-reel-display" id="luck-reel-display" type="button">
+          <div class="lrd-art" id="lrd-art"></div>
+          <div class="lrd-name" id="lrd-name"></div>
+        </button>
+      </div>
+
+      <div class="luck-screen" id="luck-scr-slots">
+        <div class="luck-game-label">Slots</div>
+        <div class="luck-slots-cabinet">
+          <div class="luck-slots-lights" aria-hidden="true">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </div>
+          <div class="luck-slots-reels">
+            <div class="slot-col" id="slot-0"><div class="slot-face"></div></div>
+            <div class="slot-col" id="slot-1"><div class="slot-face"></div></div>
+            <div class="slot-col" id="slot-2"><div class="slot-face"></div></div>
+          </div>
+        </div>
+        <button class="luck-lever" id="luck-lever" type="button">
+          <span class="lever-arrow">Hebel drücken ↓</span>
+          <span class="lever-stick"></span>
+        </button>
+      </div>
+
+      <div class="luck-screen" id="luck-scr-wheel">
+        <div class="luck-game-label">Glücksrad</div>
+        <div class="luck-wheel-wrap">
+          <div class="luck-wheel-pointer"></div>
+          <div class="luck-wheel-disc" id="luck-wheel-disc"></div>
+          <div class="luck-wheel-hub"></div>
+        </div>
+        <button class="btn btn-accent btn-block" id="luck-wheel-spin" type="button">Drehen!</button>
+      </div>
+
+      <div class="luck-screen" id="luck-scr-result">
+        <div class="luck-result-art" id="luck-result-art"></div>
+        <div class="luck-result-title">Gewonnen! 🎉</div>
+        <div class="luck-result-name" id="luck-result-name"></div>
+        <div class="luck-result-quip" id="luck-result-quip" hidden></div>
+        <div class="luck-result-sub">Bestellung ist unterwegs …</div>
+        <button class="btn btn-accent btn-block" id="luck-again" type="button">Nochmal spielen</button>
+      </div>
+
     </div>
   </div>
 </div>
@@ -898,6 +1354,8 @@ var FX = (function () {
       } else if (p.shape === 'heart') {
         heartPath(p.s * 1.7);
         ctx.fill();
+      } else if (p.shape === 'icon' && p.img) {
+        ctx.drawImage(p.img, -p.s / 2, -p.s / 2, p.s, p.s);
       } else {
         ctx.beginPath();
         ctx.arc(0, 0, p.s, 0, 7);
@@ -1161,7 +1619,199 @@ var FX = (function () {
     });
   }
 
-  return { sparks: sparks, celebrate: celebrate, trail: trail, reduced: RM };
+  /* ---- Glücksrad-Gewinn: dezentes Konfetti + Funken + Produkt-Regen von oben ---- */
+  function confettiLite() {
+    var n = Math.round(64 * D);
+    for (var i = 0; i < n; i++) {
+      add({
+        x: rnd(0, 1) * W, y: -20 * dpr,
+        vx: rnd(-1, 1) * dpr, vy: rnd(2, 5) * dpr,
+        g: 0.05 * dpr, drag: 0.995,
+        life: rnd(75, 125), s: rnd(4, 7) * dpr,
+        rot: rnd(0, 6), spin: rnd(-0.25, 0.25),
+        color: pick(PAL),
+        shape: Math.random() < 0.6 ? 'rect' : 'circle',
+        glow: Math.random() < 0.3
+      });
+    }
+  }
+  function rainOfProduct(svgMarkup) {
+    var img = new Image();
+    img.onload = function () {
+      var n = Math.round(20 * D);
+      for (var i = 0; i < n; i++) {
+        (function (delay) {
+          var t = setTimeout(function () {
+            add({
+              x: rnd(0.06, 0.94) * W, y: -60 * dpr,
+              vx: rnd(-0.3, 0.3) * dpr, vy: rnd(3.2, 5) * dpr,
+              g: 0.015 * dpr, drag: 1,
+              life: 160, s: rnd(24, 36) * dpr,
+              rot: rnd(0, 6), spin: rnd(-0.03, 0.03),
+              shape: 'icon', img: img, glow: false, color: '#fff'
+            });
+          }, delay);
+        })(rnd(0, 1000));
+      }
+    };
+    img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgMarkup)));
+  }
+  function luckWin(svgMarkup) {
+    confettiLite();
+    sparks(innerWidth * 0.5, innerHeight * 0.16);
+    sparks(innerWidth * 0.5, innerHeight * 0.16);
+    rainOfProduct(svgMarkup);
+  }
+
+  return { sparks: sparks, celebrate: celebrate, trail: trail, luckWin: luckWin, reduced: RM };
+})();
+
+/* ============================================================
+   Sound-Effekte (Web Audio API, komplett selbst synthetisiert —
+   keine externen Dateien, keine Lizenzfragen)
+   ============================================================ */
+var SND = (function () {
+  'use strict';
+  var ctx = null, master = null, enabled = true;
+
+  function ensure() {
+    if (ctx) return ctx;
+    try {
+      ctx = new (window.AudioContext || window.webkitAudioContext)();
+      master = ctx.createGain();
+      master.gain.value = 0.5;
+      /* Kompressor verhindert Übersteuerung/Knacken, wenn mehrere Töne gleichzeitig klingen */
+      var comp = ctx.createDynamicsCompressor();
+      comp.threshold.value = -18;
+      comp.knee.value = 24;
+      comp.ratio.value = 8;
+      comp.attack.value = 0.003;
+      comp.release.value = 0.25;
+      master.connect(comp);
+      comp.connect(ctx.destination);
+    } catch (e) { enabled = false; }
+    return ctx;
+  }
+  function resume() { if (ctx && ctx.state === 'suspended') ctx.resume(); }
+
+  function tone(freq, start, dur, type, peak, dest) {
+    var o = ctx.createOscillator();
+    var g = ctx.createGain();
+    o.type = type || 'sine';
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(0, start);
+    g.gain.linearRampToValueAtTime(peak, start + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+    o.connect(g);
+    g.connect(dest || master);
+    o.start(start);
+    o.stop(start + dur + 0.05);
+  }
+
+  function click() {
+    if (!ensure() || !enabled) return;
+    resume();
+    var t = ctx.currentTime;
+    tone(720, t, 0.09, 'sine', 0.13);
+    tone(1080, t + 0.01, 0.07, 'sine', 0.05);
+  }
+
+  function kaching() {
+    if (!ensure() || !enabled) return;
+    resume();
+    var t = ctx.currentTime;
+    [880, 1320, 1760].forEach(function (f, i) { tone(f, t + i * 0.045, 0.28, 'triangle', 0.16); });
+    tone(2200, t + 0.05, 0.4, 'sine', 0.08);
+  }
+
+  function win() {
+    if (!ensure() || !enabled) return;
+    resume();
+    var t = ctx.currentTime;
+    [523.25, 659.25, 783.99, 1046.5].forEach(function (f, i) { tone(f, t + i * 0.09, 0.5, 'triangle', 0.15); });
+    tone(1046.5, t + 0.42, 0.9, 'sine', 0.12);
+    for (var i = 0; i < 5; i++) tone(1800 + i * 260, t + 0.5 + i * 0.05, 0.25, 'sine', 0.05);
+    try {
+      var bufSize = Math.floor(ctx.sampleRate * 1.1);
+      var buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+      var data = buf.getChannelData(0);
+      for (var k = 0; k < bufSize; k++) data[k] = Math.random() * 2 - 1;
+      var noise = ctx.createBufferSource();
+      noise.buffer = buf;
+      var ng = ctx.createGain(), filt = ctx.createBiquadFilter();
+      filt.type = 'bandpass'; filt.frequency.value = 2200;
+      ng.gain.setValueAtTime(0, t);
+      ng.gain.linearRampToValueAtTime(0.05, t + 0.3);
+      ng.gain.exponentialRampToValueAtTime(0.0001, t + 1.1);
+      noise.connect(filt); filt.connect(ng); ng.connect(master);
+      noise.start(t); noise.stop(t + 1.15);
+    } catch (e) {}
+  }
+
+  /* kleine, fröhliche Glücksspiel-Melodie als Loop — zwei abwechselnde Phrasen + leichtes Ticken für Rhythmus */
+  var NOTE_FREQ = {
+    C3: 130.81, D3: 146.83, E3: 164.81, F3: 174.61, G3: 196.00, A3: 220.00,
+    C4: 261.63, D4: 293.66, E4: 329.63, G4: 392.00, A4: 440.00,
+    C5: 523.25, D5: 587.33, E5: 659.25, G5: 783.99, A5: 880.00, C6: 1046.50
+  };
+  var AMBIENT_MELODY_A = ['C5', 'E5', 'G5', 'E5', 'C5', 'D5', 'E5', 'G5', 'A5', 'G5', 'E5', 'C5', 'D5', 'E5', 'D5', 'C5'];
+  var AMBIENT_MELODY_B = ['E5', 'G5', 'A5', 'G5', 'E5', 'D5', 'C5', 'D5', 'G5', 'A5', 'C6', 'A5', 'G5', 'E5', 'D5', 'C5'];
+  var AMBIENT_BASS_A = ['C4', 'C4', 'G3', 'G3', 'A3', 'A3', 'G3', 'G3'];
+  var AMBIENT_BASS_B = ['A3', 'A3', 'E3', 'E3', 'F3', 'F3', 'G3', 'G3'];
+  var NOTE_DUR = 0.27, BASS_DUR = 0.54;
+  var ambientGainNode = null, ambientRunning = false, ambientLoopTimer = null, ambientPhase = 0;
+
+  function scheduleAmbientLoop() {
+    if (!ambientRunning) return;
+    var t = ctx.currentTime + 0.05;
+    var melody = ambientPhase === 0 ? AMBIENT_MELODY_A : AMBIENT_MELODY_B;
+    var bass = ambientPhase === 0 ? AMBIENT_BASS_A : AMBIENT_BASS_B;
+    melody.forEach(function (n, i) {
+      tone(NOTE_FREQ[n], t + i * NOTE_DUR, NOTE_DUR * 0.88, 'triangle', 0.05, ambientGainNode);
+    });
+    bass.forEach(function (n, i) {
+      tone(NOTE_FREQ[n], t + i * BASS_DUR, BASS_DUR * 0.8, 'sine', 0.045, ambientGainNode);
+    });
+    ambientPhase = 1 - ambientPhase;
+    ambientLoopTimer = setTimeout(scheduleAmbientLoop, AMBIENT_MELODY_A.length * NOTE_DUR * 1000);
+  }
+  function ambientStart() {
+    if (!ensure() || !enabled) return;
+    resume();
+    ambientStop();
+    ambientRunning = true;
+    ambientPhase = 0;
+    var t = ctx.currentTime;
+    ambientGainNode = ctx.createGain();
+    ambientGainNode.gain.setValueAtTime(0, t);
+    ambientGainNode.gain.linearRampToValueAtTime(1, t + 1.6);
+    ambientGainNode.connect(master);
+    scheduleAmbientLoop();
+  }
+  /* Musik nach der Regel-Erklärung deutlich leiser drehen, damit die Soundeffekte dominieren */
+  function ambientDuck() {
+    if (!ctx || !ambientGainNode) return;
+    var t = ctx.currentTime;
+    try {
+      ambientGainNode.gain.cancelScheduledValues(t);
+      ambientGainNode.gain.setValueAtTime(ambientGainNode.gain.value, t);
+      ambientGainNode.gain.linearRampToValueAtTime(0.2, t + 1.2);
+    } catch (e) {}
+  }
+  function ambientStop() {
+    ambientRunning = false;
+    if (ambientLoopTimer) { clearTimeout(ambientLoopTimer); ambientLoopTimer = null; }
+    if (!ctx || !ambientGainNode) return;
+    var t = ctx.currentTime;
+    try {
+      ambientGainNode.gain.cancelScheduledValues(t);
+      ambientGainNode.gain.setValueAtTime(ambientGainNode.gain.value, t);
+      ambientGainNode.gain.linearRampToValueAtTime(0, t + 0.6);
+    } catch (e) {}
+    ambientGainNode = null;
+  }
+
+  return { click: click, kaching: kaching, win: win, ambientStart: ambientStart, ambientStop: ambientStop, ambientDuck: ambientDuck };
 })();
 
 
@@ -1244,6 +1894,20 @@ var FX = (function () {
       '</svg>';
   }
 
+  function cocoaSVG() {
+    return '<svg viewBox="0 0 140 150" xmlns="http://www.w3.org/2000/svg">' +
+      '<path d="M28 58h72v34a30 30 0 0 1-30 30H58a30 30 0 0 1-30-30z" fill="#6b4226"/>' +
+      '<path d="M100 66h10a14 14 0 0 1 0 28h-10z" fill="none" stroke="#6b4226" stroke-width="8"/>' +
+      '<rect x="28" y="58" width="72" height="10" fill="#f2e6c9"/>' +
+      '<g fill="#fff">' +
+      '<circle cx="46" cy="56" r="9"/><circle cx="64" cy="52" r="10"/><circle cx="82" cy="56" r="8.5"/>' +
+      '</g>' +
+      '<g fill="#c9a35b" opacity=".8">' +
+      '<circle cx="46" cy="56" r="2"/><circle cx="64" cy="52" r="2.2"/><circle cx="82" cy="56" r="1.8"/>' +
+      '</g>' +
+      '</svg>';
+  }
+
   var PRODUCTS = [
     { id: 'wasser-still', name: 'Stilles Wasser', art: bottleSVG('#bfe3f5', false) },
     { id: 'wasser-medium', name: 'Medium Wasser', art: bottleSVG('#6db8e0', true) },
@@ -1251,6 +1915,7 @@ var FX = (function () {
     { id: 'cs-fairydrink', name: 'Capri-Sun Fairy Drink', art: pouchSVG('#ec4899', '#9d174d') },
     { id: 'cs-safarifruits', name: 'Capri-Sun Safari Fruits', art: pouchSVG('#22c55e', '#15803d') },
     { id: 'kaffee', name: 'Kaffee', art: coffeeSVG() },
+    { id: 'kakao', name: 'Kakao', art: cocoaSVG() },
     { id: 'muesli', name: 'Müsli', art: muesliSVG() },
     { id: 'chips', name: 'Chips (Zufallssorte)', art: chipsSVG() },
     { id: 'popcorn', name: 'Popcorn', art: popcornSVG() },
@@ -1382,7 +2047,338 @@ var FX = (function () {
   document.getElementById('cm-close').addEventListener('click', closeCart);
   cartModal.addEventListener('click', function (e) { if (e.target === cartModal) closeCart(); });
   document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape') { closeCart(); closeToppingModal(); }
+    if (e.key === 'Escape') { closeCart(); closeToppingModal(); luckClose(); }
+  });
+
+  /* ============================================================
+     Glücksspielmodus
+     ============================================================ */
+  var DRINK_IDS = ['wasser-still', 'wasser-medium', 'cs-multivitamin', 'cs-fairydrink', 'cs-safarifruits', 'kaffee', 'kakao'];
+  var FOOD_IDS = ['muesli', 'chips', 'popcorn', 'sandwich'];
+  function catList(cat) {
+    var ids = cat === 'trinken' ? DRINK_IDS : FOOD_IDS;
+    return ids.map(function (id) { return PRODUCTS.find(function (p) { return p.id === id; }); }).filter(Boolean);
+  }
+  function pickRandom(arr) { return arr[(Math.random() * arr.length) | 0]; }
+
+  var luckModal = document.getElementById('luck-modal');
+  var luckScreens = {
+    intro: document.getElementById('luck-scr-intro'),
+    pick: document.getElementById('luck-scr-pick'),
+    reel: document.getElementById('luck-scr-reel'),
+    slots: document.getElementById('luck-scr-slots'),
+    wheel: document.getElementById('luck-scr-wheel'),
+    result: document.getElementById('luck-scr-result')
+  };
+  var luckTimers = [];
+  function luckClearTimers() {
+    luckTimers.forEach(function (t) { clearTimeout(t); clearInterval(t); });
+    luckTimers = [];
+  }
+  function luckShow(name) {
+    Object.keys(luckScreens).forEach(function (k) {
+      luckScreens[k].classList.toggle('active', k === name);
+    });
+  }
+
+  /* Buchstabe-für-Buchstabe-Einblendung (Zeilenumbrüche bleiben erhalten) */
+  var LETTER_COLORS = ['#ff3d9a', '#a855f7', '#22d3ee', '#fbbf24', '#ff7eb3', '#8aa2ff'];
+  function wrapLetters(root, stepMs, colorful, baseDelay) {
+    baseDelay = baseDelay || 0;
+    var i = 0;
+    function makeWordSpan(word) {
+      var wordSpan = document.createElement('span');
+      wordSpan.style.display = 'inline-block';
+      wordSpan.style.whiteSpace = 'nowrap';
+      for (var k = 0; k < word.length; k++) {
+        var span = document.createElement('span');
+        span.className = 'lchar';
+        span.textContent = word[k];
+        span.style.animationDelay = (baseDelay + i * stepMs) + 'ms';
+        if (colorful) span.style.color = LETTER_COLORS[i % LETTER_COLORS.length];
+        wordSpan.appendChild(span);
+        i++;
+      }
+      return wordSpan;
+    }
+    function walk(node) {
+      if (node.nodeType === 3) {
+        var frag = document.createDocumentFragment();
+        var words = node.textContent.split(' ');
+        words.forEach(function (w, idx) {
+          if (w.length) frag.appendChild(makeWordSpan(w));
+          if (idx < words.length - 1) frag.appendChild(document.createTextNode(' '));
+        });
+        node.parentNode.replaceChild(frag, node);
+      } else if (node.nodeType === 1 && node.tagName !== 'BR') {
+        Array.prototype.slice.call(node.childNodes).forEach(walk);
+      }
+    }
+    Array.prototype.slice.call(root.childNodes).forEach(walk);
+    return i;
+  }
+
+  var LETTER_ANIM = 500, FADE = 550;
+  function playIntro() {
+    var title = document.getElementById('luck-title-flash');
+    var rules = document.getElementById('luck-rules-flash');
+    luckShow('intro');
+
+    rules.hidden = true;
+    rules.classList.remove('flash-out');
+    title.hidden = false;
+    title.classList.remove('flash-out');
+    title.innerHTML = 'Glücksspielmodus';
+    var n1 = wrapLetters(title, 38, true);
+    var titleReveal = (n1 - 1) * 38 + LETTER_ANIM;
+    var TITLE_HOLD = 900;
+
+    luckTimers.push(setTimeout(function () { title.classList.add('flash-out'); }, titleReveal + TITLE_HOLD));
+
+    luckTimers.push(setTimeout(function () {
+      title.hidden = true;
+      rules.hidden = false;
+      rules.innerHTML =
+        '<p>Was du bekommst, musst du nehmen –<br>Essen oder Trinken, ganz nach dem Zufall.</p>' +
+        '<p class="lang-md">Ce primești trebuie să iei –<br>mâncare sau băutură, totul e la voia întâmplării.</p>';
+      /* beide Sprachen erscheinen fast gleichzeitig — die zweite mit einem
+         kleinen Ticken Verzögerung statt komplett nacheinander */
+      var pDe = rules.querySelector('p:not(.lang-md)');
+      var pMd = rules.querySelector('p.lang-md');
+      var MD_OFFSET = 420;
+      var nDe = wrapLetters(pDe, 12, false, 0);
+      var nMd = wrapLetters(pMd, 12, false, MD_OFFSET);
+      var rulesReveal = Math.max((nDe - 1) * 12 + LETTER_ANIM, MD_OFFSET + (nMd - 1) * 12 + LETTER_ANIM);
+      var RULES_HOLD = 1500;
+      luckTimers.push(setTimeout(function () { rules.classList.add('flash-out'); }, rulesReveal + RULES_HOLD));
+      luckTimers.push(setTimeout(function () {
+        luckShow('pick');
+        try { SND.ambientDuck(); } catch (e) {}
+      }, rulesReveal + RULES_HOLD + FADE));
+    }, titleReveal + TITLE_HOLD + FADE));
+  }
+
+  function luckOpen() {
+    try { SND.click(); SND.ambientStart(); } catch (e) {}
+    luckModal.classList.add('open');
+    playIntro();
+  }
+  function luckClose() {
+    if (!luckModal.classList.contains('open')) return;
+    luckModal.classList.remove('open');
+    luckClearTimers();
+    stopReel();
+    stopWheel();
+    try { SND.ambientStop(); } catch (e) {}
+  }
+  document.getElementById('luck-btn').addEventListener('click', luckOpen);
+  document.getElementById('luck-close').addEventListener('click', function () { try { SND.click(); } catch (e) {} luckClose(); });
+  luckModal.addEventListener('click', function (e) { if (e.target === luckModal) luckClose(); });
+
+  var LUCK_GAMES = ['reel', 'slots', 'wheel'];
+  document.querySelectorAll('.luck-pick-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      try { SND.click(); } catch (e) {}
+      var list = catList(btn.dataset.cat);
+      var g = LUCK_GAMES[(Math.random() * LUCK_GAMES.length) | 0];
+      if (g === 'reel') startReelGame(list);
+      else if (g === 'slots') startSlotGame(list);
+      else startWheelGame(list);
+    });
+  });
+
+  /* ---- Spiel 1: Tipp-Stopp ---- */
+  var reelTimer = null, reelIdx = 0, reelList = [];
+  function stopReel() { if (reelTimer) { clearInterval(reelTimer); reelTimer = null; } }
+  function renderReel() {
+    var p = reelList[reelIdx];
+    document.getElementById('lrd-art').innerHTML = p.art;
+    document.getElementById('lrd-name').textContent = p.name;
+  }
+  function startReelGame(list) {
+    reelList = list;
+    reelIdx = 0;
+    luckShow('reel');
+    renderReel();
+    stopReel();
+    reelTimer = setInterval(function () {
+      reelIdx = (reelIdx + 1) % reelList.length;
+      renderReel();
+    }, 110);
+    luckTimers.push(reelTimer);
+  }
+  /* pointerdown statt click: reagiert ohne jede Verzögerung auf den ersten Tipp */
+  document.getElementById('luck-reel-display').addEventListener('pointerdown', function (e) {
+    if (!reelTimer) return;
+    e.preventDefault();
+    try { SND.click(); } catch (err) {}
+    stopReel();
+    onLuckWin(reelList[reelIdx]);
+  });
+
+  /* ---- Spiel 2: Spielautomat ---- */
+  var slotPulls = 0, slotSpinning = false, luckSlotList = [];
+  function startSlotGame(list) {
+    luckSlotList = list;
+    slotPulls = 0;
+    slotSpinning = false;
+    luckShow('slots');
+    [0, 1, 2].forEach(function (i) {
+      document.querySelector('#slot-' + i + ' .slot-face').innerHTML = list[0].art;
+      document.getElementById('slot-' + i).classList.remove('spin', 'land');
+    });
+    document.getElementById('luck-lever').disabled = false;
+  }
+  function spinColumn(i, finalProduct, duration) {
+    var col = document.getElementById('slot-' + i);
+    var face = col.querySelector('.slot-face');
+    col.classList.add('spin');
+    col.classList.remove('land');
+    var iv = setInterval(function () {
+      face.innerHTML = pickRandom(luckSlotList).art;
+    }, 60);
+    luckTimers.push(iv);
+    luckTimers.push(setTimeout(function () {
+      clearInterval(iv);
+      face.innerHTML = finalProduct.art;
+      col.classList.remove('spin');
+      col.classList.add('land');
+    }, duration));
+  }
+  /* Trefferchance pro Zug: symmetrisch gestaffelt, Höhepunkt bei Zug 3 (1.=5. am unwahrscheinlichsten,
+     2.=4. zweitwahrscheinlichsten) — spätestens beim 5. Zug wird trotzdem erzwungen (Schluss). */
+  var SLOT_WIN_CHANCE = [0.16, 0.38, 0.6, 0.38, 0.16];
+  document.getElementById('luck-lever').addEventListener('click', function () {
+    if (slotSpinning) return;
+    slotSpinning = true;
+    slotPulls++;
+    var lever = this;
+    lever.classList.remove('pulled'); void lever.offsetWidth; lever.classList.add('pulled');
+    lever.disabled = true;
+    try { SND.kaching(); } catch (e) {}
+
+    var chance = SLOT_WIN_CHANCE[Math.min(slotPulls, SLOT_WIN_CHANCE.length) - 1];
+    var win = slotPulls >= SLOT_WIN_CHANCE.length ? true : Math.random() < chance;
+    var finals;
+    if (win) {
+      var p = pickRandom(luckSlotList);
+      finals = [p, p, p];
+    } else if (Math.random() < 0.5) {
+      /* knapp daneben: genau zwei gleiche, eins anders */
+      var same = pickRandom(luckSlotList), diff;
+      do { diff = pickRandom(luckSlotList); } while (diff.id === same.id);
+      var slot = (Math.random() * 3) | 0;
+      finals = [same, same, same];
+      finals[slot] = diff;
+    } else {
+      /* komplett unterschiedlich: drei verschiedene Produkte, keine Dopplung */
+      var pool = luckSlotList.slice();
+      finals = [];
+      for (var k = 0; k < 3; k++) {
+        var idx = (Math.random() * pool.length) | 0;
+        finals.push(pool[idx]);
+        pool.splice(idx, 1);
+        if (!pool.length) pool = luckSlotList.slice();
+      }
+    }
+    spinColumn(0, finals[0], 700);
+    spinColumn(1, finals[1], 1200);
+    spinColumn(2, finals[2], 1800);
+
+    luckTimers.push(setTimeout(function () {
+      slotSpinning = false;
+      if (win) { onLuckWin(finals[0]); } else { lever.disabled = false; }
+    }, 1850));
+  });
+
+  /* ---- Spiel 3: Glücksrad ---- */
+  var WHEEL_COLORS = ['#ff3d9a', '#a855f7', '#22d3ee', '#fbbf24', '#22c55e', '#ec4899', '#8b5cf6', '#38bdf8'];
+  var wheelList = [], wheelRot = 0, wheelSpinning = false;
+  function buildWheel(list) {
+    var disc = document.getElementById('luck-wheel-disc');
+    var n = list.length, seg = 360 / n;
+    disc.style.background = 'conic-gradient(' + list.map(function (p, i) {
+      return WHEEL_COLORS[i % WHEEL_COLORS.length] + ' ' + (i * seg) + 'deg ' + ((i + 1) * seg) + 'deg';
+    }).join(', ') + ')';
+    disc.innerHTML = '';
+    list.forEach(function (p, i) {
+      var mid = i * seg + seg / 2;
+      var icon = document.createElement('div');
+      icon.className = 'wheel-icon';
+      icon.style.transform = 'rotate(' + mid + 'deg) translate(0,-78px) rotate(' + (-mid) + 'deg)';
+      icon.innerHTML = p.art;
+      disc.appendChild(icon);
+    });
+  }
+  function startWheelGame(list) {
+    wheelList = list;
+    wheelRot = 0;
+    wheelSpinning = false;
+    buildWheel(list);
+    var disc = document.getElementById('luck-wheel-disc');
+    disc.style.transition = 'none';
+    disc.style.transform = 'rotate(0deg)';
+    void disc.offsetWidth;
+    disc.style.transition = '';
+    luckShow('wheel');
+    document.getElementById('luck-wheel-spin').disabled = false;
+  }
+  function stopWheel() { wheelSpinning = false; }
+  document.getElementById('luck-wheel-spin').addEventListener('click', function () {
+    if (wheelSpinning) return;
+    wheelSpinning = true;
+    this.disabled = true;
+    try { SND.click(); } catch (e) {}
+    var n = wheelList.length, seg = 360 / n;
+    var winIdx = (Math.random() * n) | 0;
+    wheelRot += 360 * 5 + (360 - (winIdx * seg + seg / 2));
+    document.getElementById('luck-wheel-disc').style.transform = 'rotate(' + wheelRot + 'deg)';
+    luckTimers.push(setTimeout(function () {
+      wheelSpinning = false;
+      onLuckWin(wheelList[winIdx]);
+    }, 3500));
+  });
+
+  /* ---- Gewinn: Bestellung + Regen aus dem gewonnenen Produkt ---- */
+  var LUCK_QUIPS = ['Mmh, lecker! 😋', 'Guten Appetit!', 'Der Glücksteller ruft!', 'Mahlzeit, Champion!', 'Diese Wahl ist gesegnet.', 'Frisch aus dem Zufallsofen!'];
+  function sendLuckOrder(product, toppings) {
+    var label = toppings && toppings.length ? product.name + ' mit ' + toppings.join(', ') : product.name;
+    var payload = {
+      _subject: 'Bestellung Glücksspiel 🎰',
+      _template: 'table',
+      Gewonnen: label,
+      Quelle: 'Glücksrad-Modus'
+    };
+    fetch(ORDER_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(payload)
+    }).catch(function () {});
+  }
+  function onLuckWin(product) {
+    var toppings = [];
+    var quipEl = document.getElementById('luck-result-quip');
+    if (product.id === 'sandwich' && product.options) {
+      toppings = product.options.filter(function () { return Math.random() < 0.45; });
+      quipEl.textContent = LUCK_QUIPS[(Math.random() * LUCK_QUIPS.length) | 0];
+      quipEl.hidden = false;
+    } else {
+      quipEl.hidden = true;
+    }
+    try { FX.luckWin(product.art); } catch (e) {}
+    try { SND.win(); } catch (e) {}
+    sendLuckOrder(product, toppings);
+    document.getElementById('luck-result-art').innerHTML = product.art;
+    document.getElementById('luck-result-name').innerHTML =
+      product.name + (toppings.length ? '<small>mit ' + toppings.join(', ') + '</small>' : '');
+    luckShow('result');
+  }
+  document.getElementById('luck-again').addEventListener('click', function () {
+    try { SND.click(); } catch (e) {}
+    luckClearTimers();
+    stopReel();
+    stopWheel();
+    luckShow('pick');
   });
 
   function totalItems() {
@@ -1484,7 +2480,7 @@ var FX = (function () {
   var aura = document.getElementById('touch-aura');
   var pressing = false;
   var lastTrail = null;
-  var RIPPLE_SEL = '.btn, .drink-card, .tm-opt, .modal-close, .cart-fab, .qty button, .cl-remove';
+  var RIPPLE_SEL = '.btn, .drink-card, .tm-opt, .modal-close, .cart-fab, .qty button, .cl-remove, .luck-pick-btn, .luck-reel-display';
 
   function spawnRipple(el, x, y) {
     var r = el.getBoundingClientRect();
