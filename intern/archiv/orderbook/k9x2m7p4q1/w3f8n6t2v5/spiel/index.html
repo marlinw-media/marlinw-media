@@ -7,14 +7,6 @@
 <title>Hauptspiel</title>
 <style>
   :root {
-    --grass: #6fbf6a;
-    --grass-dark: #5aa856;
-    --path: #dcc48a;
-    --water: #5ec8e0;
-    --water-dark: #3fa8c2;
-    --fence: #8a5a3a;
-    --house-wall: #f2dcae;
-    --house-roof: #c85a4a;
     --sky: #bfe8f5;
     --wood: #8a5a3a;
     --room: #f6e6c8;
@@ -27,222 +19,186 @@
   }
   #app { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
 
-  /* ---------- Portrait-Sperre: schwarzer Bildschirm + Dreh-Hinweis ---------- */
   .rotate-overlay {
-    position: fixed; inset: 0;
-    background: #000;
-    color: #fff;
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 14px;
-    z-index: 999;
-    text-align: center;
-    padding: 24px;
+    position: fixed; inset: 0; background: #000; color: #fff;
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    gap: 14px; z-index: 999; text-align: center; padding: 24px;
   }
-  @media (orientation: portrait) {
-    .rotate-overlay { display: flex; }
-    #app { display: none; }
-  }
+  @media (orientation: portrait) { .rotate-overlay { display: flex; } #app { display: none; } }
   .rotate-icon { font-size: 54px; animation: rotHint 1.6s ease-in-out infinite; }
   @keyframes rotHint { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(90deg); } }
   .rotate-overlay p { font-size: 15px; color: #cbd5e1; max-width: 32ch; margin: 0; }
 
-  /* ---------- Szenen ---------- */
+  .fs-btn {
+    position: fixed; top: 10px; right: 10px; z-index: 60;
+    border: none; border-radius: 10px;
+    background: rgba(0,0,0,.35); color: #fff;
+    font-size: 13px; padding: 8px 12px;
+  }
+
   .scene { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; }
   .scene.active { display: flex; }
 
   /* ---------- Außenwelt ---------- */
   #outdoor-stage { position: relative; }
-  .map {
-    display: grid;
-    position: relative;
-    border-radius: 10px;
-    overflow: hidden;
-    box-shadow: 0 20px 60px rgba(0,0,0,.5);
-  }
+  .map { display: grid; position: relative; overflow: hidden; }
   .tile { position: relative; }
-  .tile.grass { background: var(--grass); }
+  .tile.grass {
+    background:
+      radial-gradient(circle at 30% 30%, rgba(255,255,255,.12), transparent 55%),
+      linear-gradient(160deg, #7bc96f, #5fae55 60%, #4d9a44);
+  }
   .tile.grass::after {
     content: "";
     position: absolute; inset: 0;
-    background-image: radial-gradient(var(--grass-dark) 10%, transparent 11%);
-    background-size: 50% 50%;
-    opacity: .5;
-  }
-  .tile.fence {
-    background: #3f6b3d;
     background-image:
-      repeating-linear-gradient(0deg, var(--fence) 0 15%, transparent 15% 100%);
+      radial-gradient(rgba(60,120,50,.35) 8%, transparent 9%),
+      radial-gradient(rgba(90,160,70,.3) 6%, transparent 7%);
+    background-size: 60% 60%, 40% 40%;
+    background-position: 15% 70%, 70% 20%;
   }
-  .tile.water { background: linear-gradient(180deg, var(--water), var(--water-dark)); }
-  .tile.water::after {
-    content: "";
-    position: absolute; inset: 0;
-    background: repeating-linear-gradient(90deg, rgba(255,255,255,.25) 0 6%, transparent 6% 20%);
-    animation: waterFlow 2.4s linear infinite;
-  }
-  @keyframes waterFlow { to { transform: translateX(20%); } }
-  .tile.tree { background: var(--grass); }
-  .tile.house { background: var(--grass); }
-  .tile.door { background: var(--grass); }
-
-  .tree-sprite, .house-sprite {
-    position: absolute;
-    pointer-events: none;
+  .tile.fence { background: linear-gradient(160deg, #4a7a3f, #3c6534); }
+  .tile.puddle {
+    background: radial-gradient(ellipse at center, #8fd8ea 0%, #6fc0d8 60%, transparent 75%),
+      linear-gradient(160deg, #7bc96f, #5fae55 60%, #4d9a44);
   }
 
-  .leash-svg { position: absolute; inset: 0; pointer-events: none; }
-
-  .sprite {
-    position: absolute;
-    transition: left .16s linear, top .16s linear;
-    pointer-events: none;
+  .fence-post {
+    position: absolute; pointer-events: none;
   }
+  .tree-sprite, .house-sprite, .river-svg, .flower-sprite { position: absolute; pointer-events: none; }
+
+  .leash-svg { position: absolute; inset: 0; pointer-events: none; z-index: 3; overflow: visible; }
+
+  .sprite { position: absolute; transition: left .17s ease-out, top .17s ease-out; }
   .sprite svg { width: 100%; height: 100%; display: block; overflow: visible; }
   .player-sprite { z-index: 5; }
-  .dog-sprite { z-index: 4; }
-  .bob { animation: bob .5s ease-in-out infinite; }
-  @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+  .dog-sprite { z-index: 4; transition: left .17s ease-out, top .17s ease-out, transform .3s ease; }
+  .dog-sprite.shake { animation: shakeDog .5s ease; }
+  @keyframes shakeDog { 0%,100% { transform: rotate(0); } 20% { transform: rotate(-12deg); } 40% { transform: rotate(10deg); } 60% { transform: rotate(-8deg); } 80% { transform: rotate(6deg); } }
+  .dog-sprite.digging { animation: digBob .35s ease-in-out infinite; }
+  @keyframes digBob { 0%,100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(4px) rotate(-6deg); } }
 
-  .dpad {
-    position: absolute;
-    right: 18px; bottom: 18px;
-    display: grid;
-    grid-template-columns: repeat(3, 44px);
-    grid-template-rows: repeat(3, 44px);
-    gap: 4px;
-    z-index: 20;
+  .stick-sprite {
+    position: absolute; z-index: 6; pointer-events: none;
+    width: 20px; height: 20px;
+    transition: left .5s cubic-bezier(.3,.6,.4,1), top .5s cubic-bezier(.3,.6,.4,1);
   }
-  .dpad button {
-    grid-column: 2; grid-row: 2;
-    border: none;
-    border-radius: 12px;
+
+  .toast {
+    position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+    background: rgba(255,255,255,.94); color: #3f6b3d; font-weight: 700; font-size: 13px;
+    padding: 7px 16px; border-radius: 999px; z-index: 30;
+    opacity: 0; transition: opacity .25s, transform .25s;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(4px); }
+
+  .joystick { position: fixed; left: 22px; bottom: 22px; z-index: 40; }
+  .joy-base {
+    width: 108px; height: 108px; border-radius: 50%;
+    background: rgba(255,255,255,.25);
+    border: 3px solid rgba(255,255,255,.5);
+    position: relative;
+    touch-action: none;
+  }
+  .joy-knob {
+    position: absolute; left: 50%; top: 50%;
+    width: 46px; height: 46px; margin: -23px 0 0 -23px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.9);
+    box-shadow: 0 4px 8px rgba(0,0,0,.3);
+  }
+
+  .action-buttons {
+    position: fixed; right: 18px; bottom: 22px; z-index: 40;
+    display: flex; flex-direction: column; gap: 10px; align-items: flex-end;
+  }
+  .action-btn {
+    border: none; border-radius: 999px;
     background: rgba(255,255,255,.85);
-    color: #3f6b3d;
-    font-size: 18px;
-    box-shadow: 0 4px 0 rgba(0,0,0,.25);
+    color: #3f6b3d; font-weight: 700; font-size: 13px;
+    padding: 12px 18px;
+    box-shadow: 0 4px 0 rgba(0,0,0,.2);
+    display: flex; align-items: center; gap: 6px;
   }
-  .dpad button:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,.25); }
-  .dpad button[data-dir="up"] { grid-column: 2; grid-row: 1; }
-  .dpad button[data-dir="left"] { grid-column: 1; grid-row: 2; }
-  .dpad button[data-dir="right"] { grid-column: 3; grid-row: 2; }
-  .dpad button[data-dir="down"] { grid-column: 2; grid-row: 3; }
-
-  .hint-bubble {
-    position: absolute;
-    top: 14px; left: 50%;
-    transform: translateX(-50%);
-    background: rgba(255,255,255,.92);
-    color: #3f6b3d;
-    font-size: 13px;
-    font-weight: 700;
-    padding: 7px 16px;
-    border-radius: 999px;
-    z-index: 20;
-    box-shadow: 0 4px 14px rgba(0,0,0,.25);
-  }
+  .action-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,.2); }
+  .action-btn:disabled { opacity: .45; }
 
   /* ---------- Haus-Innenraum ---------- */
   #scene-house { flex-direction: column; background: var(--room); }
-  .room-bg {
-    position: absolute; inset: 0;
-    background:
-      linear-gradient(var(--room), var(--room)) bottom / 100% 62% no-repeat,
-      linear-gradient(#d9c39b, #d9c39b) top / 100% 40% no-repeat;
+  .room-bg { position: absolute; inset: 0; overflow: hidden; }
+  .room-floor {
+    position: absolute; left: 0; right: 0; bottom: 0; top: 42%;
+    background: repeating-linear-gradient(90deg, #d9b273 0 40px, #cfa565 40px 42px);
   }
-  .room-bg::after {
-    content: "";
-    position: absolute; left: 0; right: 0; top: 40%;
-    height: 6px;
-    background: var(--wood);
+  .room-wall {
+    position: absolute; left: 0; right: 0; top: 0; height: 42%;
+    background: linear-gradient(180deg, #f3e0bd, #e8cf9e);
   }
   .window {
-    position: absolute; top: 8%; left: 8%;
-    width: 70px; height: 50px;
-    background: var(--sky);
-    border: 6px solid #fff;
-    border-radius: 6px;
+    position: absolute; top: 8%; left: 6%;
+    width: 90px; height: 62px;
+    background: linear-gradient(180deg, var(--sky), #8fd0e8);
+    border: 7px solid #fff; border-radius: 8px;
   }
-  .rug {
-    position: absolute; bottom: 22%; left: 50%; transform: translateX(-50%);
-    width: 160px; height: 60px;
-    background: #e0a05a;
-    border-radius: 50%;
-    opacity: .8;
+  .window::after { content: "☁️"; position: absolute; font-size: 18px; top: 8px; left: 10px; }
+  .picture-frame {
+    position: absolute; top: 10%; right: 8%;
+    width: 60px; height: 46px; background: #fff; border: 5px solid #a9744a; border-radius: 4px;
   }
+  .picture-frame::after { content:"🐾"; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:20px; }
 
-  .dog-big { position: absolute; left: 50%; bottom: 30%; transform: translateX(-50%); width: 160px; height: 160px; z-index: 3; }
+  .couch {
+    position: absolute; left: 5%; bottom: 8%;
+    width: 190px; height: 90px;
+  }
+  .basket {
+    position: absolute; right: 8%; bottom: 7%;
+    width: 130px; height: 90px;
+  }
+  .drop-target.hover .basket-svg, .drop-target.hover .couch-svg { filter: brightness(1.15) drop-shadow(0 0 8px gold); }
+
+  .dog-big { position: absolute; left: 50%; bottom: 26%; transform: translateX(-50%); width: 170px; height: 130px; z-index: 3; touch-action: none; }
   .dog-big svg { width: 100%; height: 100%; overflow: visible; }
   .dog-big.happy { animation: happyBounce .5s ease; }
+  .dog-big.resting { width: 110px; height: 84px; }
   @keyframes happyBounce { 0%,100% { transform: translateX(-50%) scale(1); } 40% { transform: translateX(-50%) scale(1.12) rotate(-4deg); } 70% { transform: translateX(-50%) scale(1.05) rotate(3deg); } }
+  .zzz { position: absolute; font-size: 20px; animation: zzzFloat 2s ease-in-out infinite; pointer-events: none; }
+  @keyframes zzzFloat { 0% { opacity: 0; transform: translateY(0); } 30% { opacity: 1; } 100% { opacity: 0; transform: translateY(-24px); } }
 
-  .hearts-layer { position: absolute; inset: 0; pointer-events: none; z-index: 6; overflow: hidden; }
-  .heart-fx {
-    position: absolute;
-    font-size: 22px;
-    animation: heartUp 1s ease-out forwards;
-  }
+  .hearts-layer { position: absolute; inset: 0; pointer-events: none; z-index: 8; overflow: hidden; }
+  .heart-fx { position: absolute; font-size: 22px; animation: heartUp 1s ease-out forwards; }
   @keyframes heartUp { 0% { opacity: 0; transform: translateY(0) scale(.6); } 20% { opacity: 1; } 100% { opacity: 0; transform: translateY(-90px) scale(1.2); } }
+  .dust-fx { position: absolute; font-size: 16px; animation: dustPop .6s ease-out forwards; }
+  @keyframes dustPop { 0% { opacity: 0; transform: translate(0,0) scale(.5); } 30% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--dx,10px),-20px) scale(1); } }
 
   .stat-bars {
     position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
-    display: flex; gap: 14px;
-    background: rgba(255,255,255,.7);
-    padding: 8px 16px;
-    border-radius: 999px;
-    z-index: 10;
+    display: flex; gap: 12px; background: rgba(255,255,255,.75); padding: 8px 14px; border-radius: 999px; z-index: 10;
   }
-  .stat { display: flex; align-items: center; gap: 6px; font-size: 14px; }
-  .stat-track { width: 60px; height: 9px; border-radius: 999px; background: rgba(0,0,0,.15); overflow: hidden; }
+  .stat { display: flex; align-items: center; gap: 5px; font-size: 13px; }
+  .stat-track { width: 52px; height: 9px; border-radius: 999px; background: rgba(0,0,0,.15); overflow: hidden; }
   .stat-fill { height: 100%; background: linear-gradient(90deg,#4ade80,#22c55e); transition: width .3s ease; }
 
-  .items-tray {
-    position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
-    display: flex; gap: 16px;
-    z-index: 15;
-  }
+  .items-tray { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); display: flex; gap: 16px; z-index: 15; }
   .item {
-    width: 56px; height: 56px;
-    border-radius: 16px;
-    background: #fff;
+    width: 56px; height: 56px; border-radius: 16px; background: #fff;
     box-shadow: 0 6px 0 rgba(0,0,0,.15);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 28px;
-    cursor: grab;
-    touch-action: none;
+    display: flex; align-items: center; justify-content: center; font-size: 26px;
+    cursor: grab; touch-action: none;
   }
   .item.dragging { position: fixed; z-index: 999; pointer-events: none; box-shadow: 0 10px 20px rgba(0,0,0,.3); transform: scale(1.15); }
 
   .exit-btn {
-    position: absolute; top: 14px; left: 14px;
-    border: none; border-radius: 999px;
-    background: rgba(255,255,255,.85);
-    color: #6b4226;
-    font-weight: 700;
-    font-size: 14px;
-    padding: 9px 16px;
-    z-index: 15;
+    position: absolute; top: 14px; left: 14px; border: none; border-radius: 999px;
+    background: rgba(255,255,255,.85); color: #6b4226; font-weight: 700; font-size: 14px; padding: 9px 16px; z-index: 15;
   }
   .exit-btn:active { transform: scale(.95); }
 
-  /* ---------- dünner Sammel-Fortschrittsbalken (Bestellungen) ---------- */
-  .wait-bar-thin {
-    position: fixed;
-    left: 0; right: 0; bottom: 0;
-    height: 6px;
-    background: rgba(255,255,255,.12);
-    z-index: 50;
-    display: none;
-  }
+  .wait-bar-thin { position: fixed; left: 0; right: 0; bottom: 0; height: 6px; background: rgba(255,255,255,.12); z-index: 50; display: none; }
   .wait-bar-thin.show { display: block; }
-  .wait-bar-thin-fill {
-    height: 100%;
-    width: 0%;
-    background: linear-gradient(90deg, #22d3ee, #a855f7, #ff3d9a);
-    transition: width .5s linear;
-  }
+  .wait-bar-thin-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #22d3ee, #a855f7, #ff3d9a); transition: width .5s linear; }
   .wait-bar-thin-fill.gold { background: linear-gradient(90deg, #ffd700, #fff3b0, #ffb703); }
 </style>
 </head>
@@ -253,31 +209,41 @@
   <p>Bitte drehe dein Gerät ins Querformat, um zu spielen.</p>
 </div>
 
+<button class="fs-btn" id="fs-btn" type="button">⛶ Vollbild</button>
+
 <div id="app">
   <div class="scene active" id="scene-outdoor">
     <div id="outdoor-stage">
       <div class="map" id="map"></div>
-      <svg class="leash-svg" id="leash-svg"><line id="leash-line" x1="0" y1="0" x2="0" y2="0" stroke="#8a5a3a" stroke-width="2" stroke-linecap="round" stroke-dasharray="4 3"/></svg>
+      <svg class="leash-svg" id="leash-svg"><path id="leash-path" fill="none" stroke="#8a5a3a" stroke-width="3" stroke-linecap="round"/></svg>
+      <div class="stick-sprite" id="stick" hidden>🥢</div>
       <div class="sprite player-sprite" id="player"></div>
       <div class="sprite dog-sprite" id="dog-outdoor"></div>
-      <div class="hint-bubble" id="hint-bubble" hidden>Zur Tür gehen, um reinzugehen 🏠</div>
-      <div class="dpad">
-        <button data-dir="up" type="button">▲</button>
-        <button data-dir="left" type="button">◀</button>
-        <button data-dir="right" type="button">▶</button>
-        <button data-dir="down" type="button">▼</button>
-      </div>
+      <div class="toast" id="toast"></div>
+    </div>
+    <div class="joystick" id="joystick">
+      <div class="joy-base" id="joy-base"><div class="joy-knob" id="joy-knob"></div></div>
+    </div>
+    <div class="action-buttons">
+      <button class="action-btn" id="btn-pet" type="button">✋ Streicheln</button>
+      <button class="action-btn" id="btn-fetch" type="button">🥢 Stöckchen</button>
     </div>
   </div>
 
   <div class="scene" id="scene-house">
-    <div class="room-bg"></div>
-    <div class="window"></div>
-    <div class="rug"></div>
+    <div class="room-bg">
+      <div class="room-wall"></div>
+      <div class="room-floor"></div>
+      <div class="window"></div>
+      <div class="picture-frame"></div>
+      <div class="couch drop-target" id="drop-couch"></div>
+      <div class="basket drop-target" id="drop-basket"></div>
+    </div>
     <button class="exit-btn" id="exit-house" type="button">🚪 Raus</button>
     <div class="stat-bars">
       <div class="stat">💧<div class="stat-track"><div class="stat-fill" id="stat-water"></div></div></div>
       <div class="stat">✨<div class="stat-track"><div class="stat-fill" id="stat-fur"></div></div></div>
+      <div class="stat">🍖<div class="stat-track"><div class="stat-fill" id="stat-hunger"></div></div></div>
       <div class="stat">❤️<div class="stat-track"><div class="stat-fill" id="stat-love"></div></div></div>
     </div>
     <div class="dog-big" id="dog-house"></div>
@@ -285,7 +251,7 @@
     <div class="items-tray">
       <div class="item" data-item="water" id="item-water">💧</div>
       <div class="item" data-item="brush" id="item-brush">🪮</div>
-      <div class="item" data-item="pet" id="item-pet">✋</div>
+      <div class="item" data-item="snack" id="item-snack">🍖</div>
     </div>
   </div>
 </div>
@@ -296,7 +262,7 @@
 (function () {
   'use strict';
 
-  /* ================= Bestell-Sammelbalken (Daten von der Hauptseite) ================= */
+  /* ================= Bestell-Sammelbalken ================= */
   (function () {
     var KEY = 'mw-wait-order';
     var bar = document.getElementById('wait-bar-thin');
@@ -306,32 +272,86 @@
       try { q = JSON.parse(localStorage.getItem(KEY)); } catch (e) { q = null; }
       if (!q || !q.length) { bar.classList.remove('show'); return; }
       bar.classList.add('show');
-      var start = q[0].start, end = q[q.length - 1].end;
-      var now = Date.now();
+      var start = q[0].start, end = q[q.length - 1].end, now = Date.now();
       var pct = Math.max(0, Math.min(100, ((now - start) / (end - start)) * 100));
       fill.style.width = pct + '%';
       fill.classList.toggle('gold', now >= end);
     }
-    tick();
-    setInterval(tick, 1000);
+    tick(); setInterval(tick, 1000);
   })();
 
-  /* ================= Orientierung: Best-effort Landscape-Lock ================= */
-  document.addEventListener('click', function once() {
-    document.removeEventListener('click', once);
+  /* ================= Vollbild + Orientierung ================= */
+  function goFullscreen() {
+    var el = document.documentElement;
     try {
-      if (screen.orientation && screen.orientation.lock) {
-        screen.orientation.lock('landscape').catch(function () {});
-      }
+      var req = el.requestFullscreen || el.webkitRequestFullscreen;
+      if (req) req.call(el).catch(function () {});
     } catch (e) {}
-  }, { once: true });
+    try { if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(function () {}); } catch (e) {}
+  }
+  document.getElementById('fs-btn').addEventListener('click', goFullscreen);
+  document.addEventListener('click', function once() { document.removeEventListener('click', once); goFullscreen(); }, { once: true });
+
+  /* ================= Sound (Web Audio, dezent & einheitlich) ================= */
+  var SFX = (function () {
+    var ctx = null, master = null;
+    function ensure() {
+      if (ctx) return ctx;
+      try {
+        ctx = new (window.AudioContext || window.webkitAudioContext)();
+        master = ctx.createGain(); master.gain.value = 0.35;
+        master.connect(ctx.destination);
+      } catch (e) {}
+      return ctx;
+    }
+    function resume() { if (ctx && ctx.state === 'suspended') ctx.resume(); }
+    function tone(freq, start, dur, type, peak) {
+      var o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = type; o.frequency.value = freq;
+      g.gain.setValueAtTime(0, start);
+      g.gain.linearRampToValueAtTime(peak, start + 0.015);
+      g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+      o.connect(g); g.connect(master);
+      o.start(start); o.stop(start + dur + 0.05);
+    }
+    function noise(start, dur, peak, freq) {
+      var bufSize = Math.floor(ctx.sampleRate * dur);
+      var buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+      var data = buf.getChannelData(0);
+      for (var i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
+      var src = ctx.createBufferSource(); src.buffer = buf;
+      var g = ctx.createGain(), filt = ctx.createBiquadFilter();
+      filt.type = 'bandpass'; filt.frequency.value = freq || 1200;
+      g.gain.setValueAtTime(0, start);
+      g.gain.linearRampToValueAtTime(peak, start + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+      src.connect(filt); filt.connect(g); g.connect(master);
+      src.start(start); src.stop(start + dur + 0.02);
+    }
+    function play(name) {
+      if (!ensure()) return;
+      resume();
+      var t = ctx.currentTime;
+      if (name === 'step') tone(220 + Math.random() * 30, t, 0.06, 'sine', 0.05);
+      else if (name === 'splash') noise(t, 0.18, 0.12, 900);
+      else if (name === 'pet') { tone(660, t, 0.18, 'sine', 0.12); tone(880, t + 0.08, 0.2, 'sine', 0.1); }
+      else if (name === 'dig') noise(t, 0.3, 0.08, 400);
+      else if (name === 'bone') { tone(880, t, 0.12, 'triangle', 0.12); tone(1320, t + 0.09, 0.18, 'triangle', 0.12); }
+      else if (name === 'throw') noise(t, 0.22, 0.1, 2200);
+      else if (name === 'grab') tone(500, t, 0.1, 'square', 0.08);
+      else if (name === 'happy') { tone(523, t, 0.15, 'triangle', 0.12); tone(659, t + 0.1, 0.15, 'triangle', 0.12); tone(784, t + 0.2, 0.22, 'triangle', 0.12); }
+      else if (name === 'drop') tone(200, t, 0.15, 'sine', 0.1);
+      else if (name === 'wake') tone(440, t, 0.12, 'sine', 0.1);
+    }
+    return { play: play };
+  })();
 
   /* ================= Kartendaten ================= */
   var MAP = [
     'FFFFFFFFFF',
     'FGGGTGGGGF',
     'FGGGGGWWGF',
-    'FGHHGGWGGF',
+    'FGHHGGWPGF',
     'FGDHGGGTGF',
     'FFFFFFFFFF'
   ];
@@ -343,46 +363,116 @@
   var stage = document.getElementById('outdoor-stage');
   var playerEl = document.getElementById('player');
   var dogOutEl = document.getElementById('dog-outdoor');
-  var leashLine = document.getElementById('leash-line');
-  var hintBubble = document.getElementById('hint-bubble');
-
+  var leashPath = document.getElementById('leash-path');
+  var toastEl = document.getElementById('toast');
   var TILE = 48;
 
+  function toast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(function () { toastEl.classList.remove('show'); }, 1600);
+  }
+
+  /* ---- Detailliertere SVG-Illustrationen (Gradients für mehr Tiefe) ---- */
+  var DEFS =
+    '<defs>' +
+    '<radialGradient id="gCanopy" cx="35%" cy="30%" r="70%"><stop offset="0%" stop-color="#8fd47f"/><stop offset="100%" stop-color="#3f8f3a"/></radialGradient>' +
+    '<linearGradient id="gTrunk" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#8a5a3a"/><stop offset="100%" stop-color="#6b4226"/></linearGradient>' +
+    '<linearGradient id="gRoof" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#e07360"/><stop offset="100%" stop-color="#b4453a"/></linearGradient>' +
+    '<linearGradient id="gWall" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fbe8c2"/><stop offset="100%" stop-color="#eccb95"/></linearGradient>' +
+    '<radialGradient id="gHair" cx="35%" cy="25%" r="75%"><stop offset="0%" stop-color="#7a4a2b"/><stop offset="100%" stop-color="#5a3319"/></radialGradient>' +
+    '<radialGradient id="gDress" cx="35%" cy="20%" r="80%"><stop offset="0%" stop-color="#ff9ec4"/><stop offset="100%" stop-color="#e8639c"/></radialGradient>' +
+    '<radialGradient id="gSkin" cx="35%" cy="30%" r="75%"><stop offset="0%" stop-color="#ffe3c2"/><stop offset="100%" stop-color="#f0c398"/></radialGradient>' +
+    '<radialGradient id="gFur" cx="35%" cy="25%" r="80%"><stop offset="0%" stop-color="#f0c58a"/><stop offset="100%" stop-color="#c9924f"/></radialGradient>' +
+    '<radialGradient id="gRiver" cx="40%" cy="30%" r="80%"><stop offset="0%" stop-color="#9fe6f5"/><stop offset="100%" stop-color="#3f9fbf"/></radialGradient>' +
+    '</defs>';
+
   function svgTree() {
-    return '<svg viewBox="0 0 48 48"><circle cx="24" cy="18" r="14" fill="#3f9142"/><circle cx="15" cy="24" r="10" fill="#4caf50"/><circle cx="33" cy="24" r="10" fill="#4caf50"/><rect x="20" y="28" width="8" height="14" rx="2" fill="#6b4226"/></svg>';
-  }
-  function svgHouse() {
-    return '<svg viewBox="0 0 96 96"><polygon points="48,4 92,40 4,40" fill="#c85a4a"/><rect x="14" y="38" width="68" height="52" fill="#f2dcae"/><rect x="40" y="60" width="18" height="30" fill="#8a5a3a" rx="2"/><rect x="22" y="52" width="16" height="16" fill="#bfe8f5" stroke="#fff" stroke-width="3"/><rect x="60" y="52" width="16" height="16" fill="#bfe8f5" stroke="#fff" stroke-width="3"/></svg>';
-  }
-  function svgPlayer() {
-    return '<svg viewBox="0 0 40 48">' +
-      '<ellipse cx="20" cy="44" rx="10" ry="3" fill="rgba(0,0,0,.2)"/>' +
-      '<rect x="10" y="20" width="20" height="20" rx="7" fill="#4f7cff"/>' +
-      '<circle cx="20" cy="12" r="11" fill="#ffd9b3"/>' +
-      '<path d="M9 10a11 11 0 0 1 22 0c-4-3-18-3-22 0z" fill="#6b4226"/>' +
-      '<circle cx="16" cy="13" r="1.6" fill="#3a2a20"/><circle cx="24" cy="13" r="1.6" fill="#3a2a20"/>' +
-      '<path d="M16 17c2 2 6 2 8 0" stroke="#3a2a20" stroke-width="1.4" fill="none" stroke-linecap="round"/>' +
+    var oc = '#2e5a2a';
+    return '<svg viewBox="0 0 48 56">' + DEFS +
+      '<ellipse cx="24" cy="50" rx="10" ry="3" fill="rgba(0,0,0,.18)"/>' +
+      '<rect x="20" y="30" width="8" height="18" rx="3" fill="url(#gTrunk)" stroke="#4a2f1a" stroke-width="1"/>' +
+      '<circle cx="24" cy="20" r="16" fill="url(#gCanopy)" stroke="' + oc + '" stroke-width="1.4"/>' +
+      '<circle cx="14" cy="26" r="10" fill="url(#gCanopy)" stroke="' + oc + '" stroke-width="1.2"/>' +
+      '<circle cx="34" cy="26" r="10" fill="url(#gCanopy)" stroke="' + oc + '" stroke-width="1.2"/>' +
+      '<circle cx="18" cy="14" r="4" fill="#fff" opacity=".25"/>' +
       '</svg>';
   }
-  function svgDog(big) {
-    return '<svg viewBox="0 0 60 44">' +
+  function svgHouse() {
+    return '<svg viewBox="0 0 100 100">' + DEFS +
+      '<polygon points="50,4 96,42 4,42" fill="url(#gRoof)"/>' +
+      '<rect x="4" y="40" width="92" height="2" fill="#8a3a2f"/>' +
+      '<rect x="16" y="40" width="68" height="54" fill="url(#gWall)"/>' +
+      '<rect x="42" y="62" width="18" height="32" fill="#8a5a3a" rx="3"/>' +
+      '<circle cx="55" cy="78" r="1.6" fill="#f2dcae"/>' +
+      '<rect x="22" y="52" width="16" height="16" fill="#bfe8f5" stroke="#fff" stroke-width="3"/>' +
+      '<rect x="62" y="52" width="16" height="16" fill="#bfe8f5" stroke="#fff" stroke-width="3"/>' +
+      '<rect x="76" y="10" width="8" height="16" fill="#8a5a3a"/>' +
+      '<circle cx="24" cy="96" r="4" fill="#e07360" opacity=".8"/><circle cx="30" cy="96" r="4" fill="#e8639c" opacity=".8"/>' +
+      '</svg>';
+  }
+  function svgPlayer() {
+    /* Frau: Zopf, Kleid */
+    var oc = '#5a3a1f', ow = 1.2;
+    return '<svg viewBox="0 0 40 50">' + DEFS +
+      '<ellipse cx="20" cy="46" rx="10" ry="3" fill="rgba(0,0,0,.2)"/>' +
+      '<path d="M11 22c0 10 3 20 9 20s9-10 9-20z" fill="url(#gDress)" stroke="' + oc + '" stroke-width="' + ow + '"/>' +
+      '<circle cx="20" cy="13" r="10.5" fill="url(#gSkin)" stroke="' + oc + '" stroke-width="' + ow + '"/>' +
+      '<path d="M9.5 12a10.5 10.5 0 0 1 21 0c-1-1-3-4-10.5-4s-9.5 3-10.5 4z" fill="url(#gHair)" stroke="' + oc + '" stroke-width="1"/>' +
+      '<path d="M28 14c3 1 4 6 2 9-1-3-1-6-2-9z" fill="url(#gHair)" stroke="' + oc + '" stroke-width="1"/>' +
+      '<circle cx="16.5" cy="14" r="1.5" fill="#3a2a20"/><circle cx="23.5" cy="14" r="1.5" fill="#3a2a20"/>' +
+      '<circle cx="14.5" cy="17" r="1.6" fill="#f4a6b0" opacity=".7"/><circle cx="25.5" cy="17" r="1.6" fill="#f4a6b0" opacity=".7"/>' +
+      '<path d="M16.5 18.5c1.5 1.5 5.5 1.5 7 0" stroke="#a8583f" stroke-width="1.3" fill="none" stroke-linecap="round"/>' +
+      '</svg>';
+  }
+  function svgCouch() {
+    return '<svg viewBox="0 0 190 90">' +
+      '<ellipse cx="95" cy="82" rx="80" ry="6" fill="rgba(0,0,0,.15)"/>' +
+      '<rect x="10" y="30" width="170" height="45" rx="16" fill="#c0596b" stroke="#7a2f3c" stroke-width="1.5"/>' +
+      '<rect x="10" y="16" width="170" height="30" rx="14" fill="#d97088" stroke="#7a2f3c" stroke-width="1.5"/>' +
+      '<circle cx="28" cy="34" r="16" fill="#e88298" stroke="#7a2f3c" stroke-width="1.5"/>' +
+      '<circle cx="162" cy="34" r="16" fill="#e88298" stroke="#7a2f3c" stroke-width="1.5"/>' +
+      '<rect x="4" y="40" width="14" height="40" rx="6" fill="#a84457" stroke="#7a2f3c" stroke-width="1.5"/>' +
+      '<rect x="172" y="40" width="14" height="40" rx="6" fill="#a84457" stroke="#7a2f3c" stroke-width="1.5"/>' +
+      '<rect x="14" y="76" width="10" height="10" fill="#6b4226"/><rect x="166" y="76" width="10" height="10" fill="#6b4226"/>' +
+      '</svg>';
+  }
+  function svgBasket() {
+    return '<svg viewBox="0 0 130 90">' +
+      '<ellipse cx="65" cy="82" rx="55" ry="6" fill="rgba(0,0,0,.15)"/>' +
+      '<path d="M15 45h100l-10 35a8 8 0 0 1-8 6H33a8 8 0 0 1-8-6z" fill="#c9924f" stroke="#7a5a34" stroke-width="1.5"/>' +
+      '<path d="M15 45c0-10 22-18 50-18s50 8 50 18" fill="none" stroke="#7a5a34" stroke-width="2"/>' +
+      '<path d="M22 45c6-4 12-6 20-7M45 45c6-4 12-6 20-7M68 45c6-4 12-6 20-7M91 45c6-4 12-6 15-7" stroke="#7a5a34" stroke-width="1.2" fill="none" opacity=".6"/>' +
+      '<ellipse cx="65" cy="52" rx="36" ry="9" fill="#e8c9a0"/>' +
+      '<ellipse cx="65" cy="52" rx="36" ry="9" fill="none" stroke="#7a5a34" stroke-width="1.2"/>' +
+      '</svg>';
+  }
+  function svgDog(dirty) {
+    var speck = dirty ? '<circle cx="18" cy="30" r="2.4" fill="#7a5a34" opacity=".55"/><circle cx="34" cy="20" r="2" fill="#7a5a34" opacity=".5"/><circle cx="12" cy="22" r="1.8" fill="#7a5a34" opacity=".5"/>' : '';
+    var oc = '#5a3a1f', ow = 1.4;
+    return '<svg viewBox="0 0 60 44">' + DEFS +
       '<ellipse cx="30" cy="40" rx="16" ry="3" fill="rgba(0,0,0,.18)"/>' +
-      '<ellipse cx="26" cy="26" rx="17" ry="13" fill="#d9a066"/>' +
-      '<circle cx="46" cy="18" r="11" fill="#e0ab72"/>' +
-      '<path d="M38 10c-2-5 2-8 5-6-1 3-1 6-2 8z" fill="#c07f45"/>' +
-      '<path d="M52 10c3-4 8-3 8 1-3 1-6 3-7 5z" fill="#c07f45"/>' +
+      '<ellipse cx="26" cy="26" rx="17" ry="13" fill="url(#gFur)" stroke="' + oc + '" stroke-width="' + ow + '"/>' +
+      '<circle cx="46" cy="18" r="11" fill="url(#gFur)" stroke="' + oc + '" stroke-width="' + ow + '"/>' +
+      '<path d="M38 10c-2-5 2-8 5-6-1 3-1 6-2 8z" fill="#a8703c" stroke="' + oc + '" stroke-width="1"/>' +
+      '<path d="M52 10c3-4 8-3 8 1-3 1-6 3-7 5z" fill="#a8703c" stroke="' + oc + '" stroke-width="1"/>' +
       '<circle cx="42" cy="17" r="1.6" fill="#3a2a20"/><circle cx="50" cy="16" r="1.6" fill="#3a2a20"/>' +
       '<ellipse cx="55" cy="21" rx="3" ry="2.2" fill="#3a2a20"/>' +
-      '<path d="M10 22c-6 1-8 6-4 9 3-2 6-4 8-6z" fill="#d9a066" class="tailwag"/>' +
+      '<path class="tail" d="M10 22c-6 1-8 6-4 9 3-2 6-4 8-6z" fill="url(#gFur)" stroke="' + oc + '" stroke-width="1"/>' +
+      speck +
+      '</svg>';
+  }
+  function svgRiver(w, h) {
+    return '<svg viewBox="0 0 ' + w + ' ' + h + '" width="' + w + '" height="' + h + '">' + DEFS +
+      '<path d="M6 4 Q ' + (w * 0.5) + ' -6 ' + (w - 6) + ' 8 L ' + (w - 4) + ' ' + (h - 8) + ' Q ' + (w * 0.5) + ' ' + (h + 6) + ' 4 ' + (h - 4) + ' Z" fill="url(#gRiver)"/>' +
+      '<path d="M10 ' + (h * 0.3) + ' Q ' + (w * 0.5) + ' ' + (h * 0.2) + ' ' + (w - 10) + ' ' + (h * 0.35) + '" stroke="#fff" stroke-opacity=".4" stroke-width="3" fill="none"/>' +
+      '<path d="M10 ' + (h * 0.6) + ' Q ' + (w * 0.5) + ' ' + (h * 0.72) + ' ' + (w - 10) + ' ' + (h * 0.6) + '" stroke="#fff" stroke-opacity=".3" stroke-width="3" fill="none"/>' +
       '</svg>';
   }
 
   var grid = [];
-  for (var y = 0; y < ROWS; y++) {
-    var row = [];
-    for (var x = 0; x < COLS; x++) row.push(MAP[y][x]);
-    grid.push(row);
-  }
+  for (var y = 0; y < ROWS; y++) { var row = []; for (var x = 0; x < COLS; x++) row.push(MAP[y][x]); grid.push(row); }
 
   function buildMap() {
     mapEl.style.gridTemplateColumns = 'repeat(' + COLS + ', ' + TILE + 'px)';
@@ -390,70 +480,103 @@
     mapEl.style.width = (COLS * TILE) + 'px';
     mapEl.style.height = (ROWS * TILE) + 'px';
     mapEl.innerHTML = '';
+    var flowerSpots = {};
     for (var y = 0; y < ROWS; y++) {
       for (var x = 0; x < COLS; x++) {
         var ch = grid[y][x];
         var t = document.createElement('div');
-        var cls = ch === 'F' ? 'fence' : ch === 'W' ? 'water' : ch === 'D' ? 'door' : 'grass';
+        var cls = ch === 'F' ? 'fence' : (ch === 'W' ? 'grass' : (ch === 'P' ? 'puddle' : 'grass'));
         t.className = 'tile ' + cls;
+        if (ch === 'F') {
+          t.innerHTML = '<div style="position:absolute;inset:4px 40% 0 40%;background:linear-gradient(180deg,#a8703c,#6b4226);border-radius:2px"></div>';
+        }
         mapEl.appendChild(t);
         if (ch === 'T') {
           var tr = document.createElement('div');
           tr.className = 'tree-sprite';
-          tr.style.left = (x * TILE - 2) + 'px';
-          tr.style.top = (y * TILE - 20) + 'px';
-          tr.style.width = (TILE + 4) + 'px';
-          tr.style.height = (TILE + 20) + 'px';
+          tr.style.left = (x * TILE - TILE * 0.15) + 'px';
+          tr.style.top = (y * TILE - TILE * 0.35) + 'px';
+          tr.style.width = (TILE * 1.3) + 'px';
+          tr.style.height = (TILE * 1.5) + 'px';
           tr.innerHTML = svgTree();
           mapEl.appendChild(tr);
         }
+        if (ch === 'G' && Math.random() < 0.12) {
+          var fl = document.createElement('div');
+          fl.className = 'flower-sprite';
+          fl.style.left = (x * TILE + TILE * 0.6) + 'px';
+          fl.style.top = (y * TILE + TILE * 0.6) + 'px';
+          fl.style.fontSize = (TILE * 0.22) + 'px';
+          fl.textContent = ['🌼', '🌸', '🍀'][(Math.random() * 3) | 0];
+          mapEl.appendChild(fl);
+        }
       }
     }
-    /* Haus als ein großes Sprite über die 2x2-Fläche */
+    /* Fluss als ein organisches Gesamt-Shape über die W-Kacheln */
+    var wCells = [];
+    for (var yy = 0; yy < ROWS; yy++) for (var xx = 0; xx < COLS; xx++) if (grid[yy][xx] === 'W') wCells.push([xx, yy]);
+    if (wCells.length) {
+      var minX = Math.min.apply(null, wCells.map(function (c) { return c[0]; }));
+      var maxX = Math.max.apply(null, wCells.map(function (c) { return c[0]; }));
+      var minY = Math.min.apply(null, wCells.map(function (c) { return c[1]; }));
+      var maxY = Math.max.apply(null, wCells.map(function (c) { return c[1]; }));
+      var rv = document.createElement('div');
+      rv.className = 'river-svg';
+      var pad = TILE * 0.25;
+      rv.style.left = (minX * TILE - pad) + 'px';
+      rv.style.top = (minY * TILE - pad) + 'px';
+      var rw = (maxX - minX + 1) * TILE + pad * 2, rh = (maxY - minY + 1) * TILE + pad * 2;
+      rv.innerHTML = svgRiver(rw, rh);
+      mapEl.appendChild(rv);
+    }
+    /* Haus als ein großes Sprite */
     var hs = document.createElement('div');
     hs.className = 'house-sprite';
     hs.style.left = (2 * TILE) + 'px';
-    hs.style.top = (3 * TILE - TILE * 0.7) + 'px';
+    hs.style.top = (3 * TILE - TILE * 0.75) + 'px';
     hs.style.width = (2 * TILE) + 'px';
-    hs.style.height = (2 * TILE + TILE * 0.7) + 'px';
+    hs.style.height = (2 * TILE + TILE * 0.75) + 'px';
     hs.innerHTML = svgHouse();
     mapEl.appendChild(hs);
 
     stage.style.width = (COLS * TILE) + 'px';
     stage.style.height = (ROWS * TILE) + 'px';
-    document.getElementById('leash-svg').setAttribute('width', COLS * TILE);
-    document.getElementById('leash-svg').setAttribute('height', ROWS * TILE);
-    document.getElementById('leash-svg').style.width = (COLS * TILE) + 'px';
-    document.getElementById('leash-svg').style.height = (ROWS * TILE) + 'px';
+    var lsvg = document.getElementById('leash-svg');
+    lsvg.style.width = (COLS * TILE) + 'px';
+    lsvg.style.height = (ROWS * TILE) + 'px';
   }
 
   playerEl.innerHTML = svgPlayer();
-  dogOutEl.innerHTML = svgDog();
-  document.getElementById('dog-house').innerHTML = svgDog(true);
 
   var player = { x: 5, y: 1 };
   var trail = [];
   var dogPos = { x: 5, y: 2 };
   var moving = false;
+  var fetching = false;
 
   function placeSprite(el, x, y, w, h) {
     el.style.left = (x * TILE + (TILE - w) / 2) + 'px';
     el.style.top = (y * TILE + (TILE - h) / 2 - h * 0.15) + 'px';
-    el.style.width = w + 'px';
-    el.style.height = h + 'px';
+    el.style.width = w + 'px'; el.style.height = h + 'px';
   }
+  function centerPx(x, y) { return { x: x * TILE + TILE / 2, y: y * TILE + TILE / 2 }; }
 
   function updateLeash() {
-    var px = player.x * TILE + TILE / 2, py = player.y * TILE + TILE / 2;
-    var dx = dogPos.x * TILE + TILE / 2, dy = dogPos.y * TILE + TILE / 2;
-    leashLine.setAttribute('x1', px); leashLine.setAttribute('y1', py);
-    leashLine.setAttribute('x2', dx); leashLine.setAttribute('y2', dy);
+    var p = centerPx(player.x, player.y);
+    var d = centerPx(dogPos.x, dogPos.y);
+    var mx = (p.x + d.x) / 2, my = (p.y + d.y) / 2 + 10;
+    leashPath.setAttribute('d', 'M ' + p.x + ' ' + p.y + ' Q ' + mx + ' ' + my + ' ' + d.x + ' ' + d.y);
+  }
+  var leashRaf;
+  function leashLoop() { updateLeash(); leashRaf = requestAnimationFrame(leashLoop); }
+
+  function renderDog() {
+    dogOutEl.innerHTML = svgDog(stats.fur < 45);
   }
 
   function render() {
     placeSprite(playerEl, player.x, player.y, 34, 42);
     placeSprite(dogOutEl, dogPos.x, dogPos.y, 46, 34);
-    updateLeash();
   }
 
   function walkable(x, y) {
@@ -461,22 +584,37 @@
     return !BLOCKED[grid[y][x]];
   }
 
+  function maybeDig() {
+    if (fetching || Math.random() > 0.05) return;
+    dogOutEl.classList.add('digging');
+    SFX.play('dig');
+    setTimeout(function () {
+      dogOutEl.classList.remove('digging');
+      SFX.play('bone');
+      bones = (bones || 0) + 1;
+      try { localStorage.setItem('mw-pet-bones', String(bones)); } catch (e) {}
+      toast('🦴 Der Hund hat einen Knochen gefunden!');
+    }, 650);
+  }
+
   function tryMove(dx, dy) {
-    if (moving) return;
+    if (moving || fetching) return;
     var nx = player.x + dx, ny = player.y + dy;
     if (!walkable(nx, ny)) return;
     moving = true;
     trail.unshift({ x: player.x, y: player.y });
     if (trail.length > 6) trail.pop();
     player.x = nx; player.y = ny;
-    var dogTarget = trail[Math.min(2, trail.length - 1)] || { x: player.x, y: player.y };
-    dogPos = dogTarget;
+    dogPos = trail[Math.min(2, trail.length - 1)] || { x: player.x, y: player.y };
     render();
-    hintBubble.hidden = !(nx === DOOR.x && ny === DOOR.y);
+    SFX.play(grid[ny][nx] === 'P' ? 'splash' : 'step');
+    stats.fur = Math.max(0, stats.fur - 0.6);
+    renderDog();
     setTimeout(function () {
       moving = false;
       if (nx === DOOR.x && ny === DOOR.y) enterHouse();
-    }, 170);
+      else maybeDig();
+    }, 160);
   }
 
   document.addEventListener('keydown', function (e) {
@@ -486,13 +624,93 @@
     e.preventDefault();
     tryMove(m[0], m[1]);
   });
-  document.querySelectorAll('.dpad button').forEach(function (btn) {
-    var map = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
-    btn.addEventListener('pointerdown', function (e) {
-      e.preventDefault();
-      var m = map[btn.dataset.dir];
-      tryMove(m[0], m[1]);
+
+  /* ---- virtueller Joystick ---- */
+  (function () {
+    var base = document.getElementById('joy-base');
+    var knob = document.getElementById('joy-knob');
+    var active = false, dir = null, timer = null;
+    function doStep() {
+      var m = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[dir];
+      if (m) tryMove(m[0], m[1]);
+    }
+    function setDir(d) {
+      if (d === dir) return;
+      dir = d;
+      clearInterval(timer);
+      if (d) { doStep(); timer = setInterval(doStep, 230); }
+    }
+    function update(e) {
+      var r = base.getBoundingClientRect();
+      var cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+      var dx = e.clientX - cx, dy = e.clientY - cy;
+      var dist = Math.min(Math.hypot(dx, dy), r.width / 2 - 8);
+      var ang = Math.atan2(dy, dx);
+      knob.style.transform = 'translate(' + (Math.cos(ang) * dist) + 'px,' + (Math.sin(ang) * dist) + 'px)';
+      if (Math.hypot(dx, dy) < r.width * 0.18) { setDir(null); return; }
+      var deg = ang * 180 / Math.PI;
+      setDir(deg > -45 && deg <= 45 ? 'right' : deg > 45 && deg <= 135 ? 'down' : (deg > 135 || deg <= -135) ? 'left' : 'up');
+    }
+    base.addEventListener('pointerdown', function (e) { active = true; try { base.setPointerCapture(e.pointerId); } catch (err) {} update(e); });
+    base.addEventListener('pointermove', function (e) { if (active) update(e); });
+    function end() { active = false; setDir(null); knob.style.transform = 'translate(0,0)'; }
+    base.addEventListener('pointerup', end);
+    base.addEventListener('pointercancel', end);
+  })();
+
+  /* ---- Streicheln (Außen) ---- */
+  document.getElementById('btn-pet').addEventListener('click', function () {
+    var near = Math.abs(player.x - dogPos.x) <= 1 && Math.abs(player.y - dogPos.y) <= 1;
+    if (!near) { toast('Der Hund ist zu weit weg!'); return; }
+    stats.love = Math.min(100, stats.love + 15); saveStats();
+    SFX.play('pet');
+    dogOutEl.classList.remove('shake'); void dogOutEl.offsetWidth; dogOutEl.classList.add('shake');
+    var d = centerPx(dogPos.x, dogPos.y);
+    var stageRect = stage.getBoundingClientRect();
+    popHeart(stageRect.left + d.x, stageRect.top + d.y - 20);
+  });
+
+  /* ---- Stöckchen werfen ---- */
+  var stickEl = document.getElementById('stick');
+  document.getElementById('btn-fetch').addEventListener('click', function () {
+    if (fetching) return;
+    fetching = true;
+    document.getElementById('btn-fetch').disabled = true;
+    SFX.play('throw');
+    var candidates = [];
+    for (var yy = Math.max(0, player.y - 2); yy <= Math.min(ROWS - 1, player.y + 2); yy++) {
+      for (var xx = Math.max(0, player.x - 2); xx <= Math.min(COLS - 1, player.x + 2); xx++) {
+        if (walkable(xx, yy) && !(xx === player.x && yy === player.y)) candidates.push({ x: xx, y: yy });
+      }
+    }
+    var target = candidates.length ? candidates[(Math.random() * candidates.length) | 0] : player;
+    var p0 = centerPx(player.x, player.y), p1 = centerPx(target.x, target.y);
+    stickEl.hidden = false;
+    stickEl.style.left = (p0.x - 10) + 'px'; stickEl.style.top = (p0.y - 10) + 'px';
+    requestAnimationFrame(function () {
+      stickEl.style.left = (p1.x - 10) + 'px'; stickEl.style.top = (p1.y - 10) + 'px';
     });
+    setTimeout(function () {
+      dogPos = { x: target.x, y: target.y };
+      render();
+      setTimeout(function () {
+        SFX.play('grab');
+        stickEl.hidden = true;
+        setTimeout(function () {
+          dogPos = { x: player.x, y: player.y };
+          render();
+          setTimeout(function () {
+            SFX.play('happy');
+            fetching = false;
+            document.getElementById('btn-fetch').disabled = false;
+            stats.love = Math.min(100, stats.love + 8); saveStats();
+            var d = centerPx(player.x, player.y);
+            var stageRect = stage.getBoundingClientRect();
+            popHeart(stageRect.left + d.x, stageRect.top + d.y - 20);
+          }, 350);
+        }, 350);
+      }, 400);
+    }, 500);
   });
 
   /* ================= Szenenwechsel ================= */
@@ -501,27 +719,33 @@
   function enterHouse() {
     sceneOutdoor.classList.remove('active');
     sceneHouse.classList.add('active');
+    cancelAnimationFrame(leashRaf);
     refreshStats();
+    renderDogHouse();
   }
   document.getElementById('exit-house').addEventListener('click', function () {
     sceneHouse.classList.remove('active');
     sceneOutdoor.classList.add('active');
     player.x = DOOR.x; player.y = DOOR.y;
+    dogPos = { x: DOOR.x, y: DOOR.y };
+    trail = [];
     render();
+    renderDog();
+    leashLoop();
   });
 
   /* ================= Haustier-Pflege ================= */
   var STAT_KEY = 'mw-pet-stats';
-  var stats = { water: 70, fur: 70, love: 70, t: Date.now() };
-  try {
-    var saved = JSON.parse(localStorage.getItem(STAT_KEY));
-    if (saved) stats = saved;
-  } catch (e) {}
+  var bones = 0;
+  try { bones = parseInt(localStorage.getItem('mw-pet-bones'), 10) || 0; } catch (e) {}
+  var stats = { water: 70, fur: 70, hunger: 70, love: 70, resting: false, t: Date.now() };
+  try { var saved = JSON.parse(localStorage.getItem(STAT_KEY)); if (saved) stats = Object.assign(stats, saved); } catch (e) {}
+
   function decay() {
     var now = Date.now();
     var minutes = (now - stats.t) / 60000;
     stats.water = Math.max(0, stats.water - minutes * 1.5);
-    stats.fur = Math.max(0, stats.fur - minutes * 1);
+    stats.hunger = Math.max(0, stats.hunger - minutes * 1.3);
     stats.love = Math.max(0, stats.love - minutes * 1.2);
     stats.t = now;
   }
@@ -530,62 +754,126 @@
     decay();
     document.getElementById('stat-water').style.width = stats.water + '%';
     document.getElementById('stat-fur').style.width = stats.fur + '%';
+    document.getElementById('stat-hunger').style.width = stats.hunger + '%';
     document.getElementById('stat-love').style.width = stats.love + '%';
     saveStats();
   }
   setInterval(function () { if (sceneHouse.classList.contains('active')) refreshStats(); }, 4000);
 
   function popHeart(x, y) {
-    var layer = document.getElementById('hearts-layer');
+    var layer = document.getElementById('hearts-layer') || document.body;
     var h = document.createElement('div');
     h.className = 'heart-fx';
     h.textContent = ['💖', '✨', '💕'][(Math.random() * 3) | 0];
-    h.style.left = (x - 10) + 'px';
-    h.style.top = (y - 10) + 'px';
-    layer.appendChild(h);
+    h.style.position = 'fixed'; h.style.left = (x - 10) + 'px'; h.style.top = (y - 10) + 'px'; h.style.zIndex = 40;
+    document.body.appendChild(h);
     setTimeout(function () { h.remove(); }, 1000);
+  }
+
+  var dogHouseEl = document.getElementById('dog-house');
+  function renderDogHouse() {
+    dogHouseEl.innerHTML = svgDog(stats.fur < 45) + (stats.resting ? '<div class="zzz" style="right:-6px;top:-10px">💤</div>' : '');
+    dogHouseEl.classList.toggle('resting', !!stats.resting);
+    if (stats.resting && stats.restingSpot) {
+      dogHouseEl.style.left = stats.restingSpot.left; dogHouseEl.style.top = stats.restingSpot.top;
+      dogHouseEl.style.bottom = 'auto'; dogHouseEl.style.transform = 'none';
+    } else {
+      dogHouseEl.style.left = '50%'; dogHouseEl.style.bottom = '26%'; dogHouseEl.style.top = 'auto';
+      dogHouseEl.style.transform = 'translateX(-50%)';
+    }
   }
 
   function careAction(kind) {
     if (kind === 'water') stats.water = Math.min(100, stats.water + 35);
     else if (kind === 'brush') stats.fur = Math.min(100, stats.fur + 35);
-    else if (kind === 'pet') stats.love = Math.min(100, stats.love + 35);
+    else if (kind === 'snack') stats.hunger = Math.min(100, stats.hunger + 35);
     refreshStats();
-    var dog = document.getElementById('dog-house');
-    dog.classList.remove('happy'); void dog.offsetWidth; dog.classList.add('happy');
-    var rect = dog.getBoundingClientRect();
-    for (var i = 0; i < 4; i++) {
-      (function (i) {
-        setTimeout(function () {
-          popHeart(rect.left + rect.width / 2 + (Math.random() * 60 - 30), rect.top + Math.random() * 30);
-        }, i * 90);
-      })(i);
-    }
+    renderDogHouse();
+    SFX.play(kind === 'water' ? 'splash' : kind === 'snack' ? 'grab' : 'pet');
+    dogHouseEl.classList.remove('happy'); void dogHouseEl.offsetWidth; dogHouseEl.classList.add('happy');
+    var rect = dogHouseEl.getBoundingClientRect();
+    for (var i = 0; i < 4; i++) (function (i) { setTimeout(function () { popHeart(rect.left + rect.width / 2 + (Math.random() * 60 - 30), rect.top + Math.random() * 30); }, i * 90); })(i);
   }
 
-  /* Drag & Drop der Pflege-Items auf den Hund (Maus + Touch), plus einfacher Tap-Fallback */
+  /* Tippen auf den Hund = streicheln (nur wenn er nicht gerade gezogen wird) */
+  var dogPointerMoved = false;
+  dogHouseEl.addEventListener('pointerdown', function () { dogPointerMoved = false; });
+  dogHouseEl.addEventListener('pointermove', function () { dogPointerMoved = true; });
+  dogHouseEl.addEventListener('click', function () {
+    if (dogPointerMoved) return;
+    if (stats.resting) { stats.resting = false; SFX.play('wake'); renderDogHouse(); return; }
+    stats.love = Math.min(100, stats.love + 15);
+    refreshStats();
+    SFX.play('pet');
+    dogHouseEl.classList.remove('happy'); void dogHouseEl.offsetWidth; dogHouseEl.classList.add('happy');
+    var rect = dogHouseEl.getBoundingClientRect();
+    popHeart(rect.left + rect.width / 2, rect.top);
+  });
+
+  /* Hund per Drag ins Körbchen / aufs Sofa setzen */
+  (function () {
+    var dragging = false, sx = 0, sy = 0;
+    dogHouseEl.addEventListener('pointerdown', function (e) {
+      dragging = true; sx = e.clientX; sy = e.clientY;
+      try { dogHouseEl.setPointerCapture(e.pointerId); } catch (err) {}
+    });
+    dogHouseEl.addEventListener('pointermove', function (e) {
+      if (!dragging) return;
+      var rect = dogHouseEl.getBoundingClientRect();
+      var parentRect = dogHouseEl.parentElement.getBoundingClientRect();
+      dogHouseEl.style.left = (rect.left - parentRect.left + (e.clientX - sx)) + 'px';
+      dogHouseEl.style.top = (rect.top - parentRect.top + (e.clientY - sy)) + 'px';
+      dogHouseEl.style.bottom = 'auto'; dogHouseEl.style.transform = 'none';
+      sx = e.clientX; sy = e.clientY;
+      ['drop-basket', 'drop-couch'].forEach(function (id) {
+        var el = document.getElementById(id);
+        var r = el.getBoundingClientRect(), dr = dogHouseEl.getBoundingClientRect();
+        var over = dr.left < r.right && dr.right > r.left && dr.top < r.bottom && dr.bottom > r.top;
+        el.classList.toggle('hover', over);
+      });
+    });
+    function finish() {
+      if (!dragging) return;
+      dragging = false;
+      var dr = dogHouseEl.getBoundingClientRect();
+      var landed = null;
+      ['drop-basket', 'drop-couch'].forEach(function (id) {
+        var el = document.getElementById(id);
+        el.classList.remove('hover');
+        var r = el.getBoundingClientRect();
+        var over = dr.left < r.right && dr.right > r.left && dr.top < r.bottom && dr.bottom > r.top;
+        if (over) landed = el;
+      });
+      if (landed) {
+        var parentRect = dogHouseEl.parentElement.getBoundingClientRect();
+        var lr = landed.getBoundingClientRect();
+        var left = (lr.left - parentRect.left + lr.width / 2 - 55) + 'px';
+        var top = (lr.top - parentRect.top + lr.height / 2 - 42) + 'px';
+        dogHouseEl.style.left = left; dogHouseEl.style.top = top;
+        stats.resting = true; stats.restingSpot = { left: left, top: top };
+        saveStats();
+        SFX.play('drop');
+        renderDogHouse();
+      }
+    }
+    dogHouseEl.addEventListener('pointerup', finish);
+    dogHouseEl.addEventListener('pointercancel', finish);
+  })();
+
+  /* Pflege-Items per Drag (oder Tap) auf den Hund */
   document.querySelectorAll('.item').forEach(function (item) {
     var dragging = false, moved = false, clone = null;
-    item.addEventListener('pointerdown', function (e) {
-      dragging = true; moved = false;
-      try { item.setPointerCapture(e.pointerId); } catch (err) {}
-    });
+    item.addEventListener('pointerdown', function (e) { dragging = true; moved = false; try { item.setPointerCapture(e.pointerId); } catch (err) {} });
     item.addEventListener('pointermove', function (e) {
       if (!dragging) return;
       moved = true;
-      if (!clone) {
-        clone = item.cloneNode(true);
-        clone.classList.add('dragging');
-        document.body.appendChild(clone);
-      }
-      clone.style.left = (e.clientX - 28) + 'px';
-      clone.style.top = (e.clientY - 28) + 'px';
+      if (!clone) { clone = item.cloneNode(true); clone.classList.add('dragging'); document.body.appendChild(clone); }
+      clone.style.left = (e.clientX - 28) + 'px'; clone.style.top = (e.clientY - 28) + 'px';
     });
     function finish(e) {
       if (!dragging) return;
       dragging = false;
-      var dog = document.getElementById('dog-house');
-      var r = dog.getBoundingClientRect();
+      var r = dogHouseEl.getBoundingClientRect();
       var hit = moved && e.clientX >= r.left - 20 && e.clientX <= r.right + 20 && e.clientY >= r.top - 20 && e.clientY <= r.bottom + 20;
       if (clone) { clone.remove(); clone = null; }
       if (hit || !moved) careAction(item.dataset.item);
@@ -596,13 +884,17 @@
 
   /* ================= Größe anpassen ================= */
   function fitStage() {
-    var vw = window.innerWidth, vh = window.innerHeight - 8;
+    var vw = window.innerWidth, vh = window.innerHeight - 4;
     TILE = Math.max(24, Math.floor(Math.min(vw / COLS, vh / ROWS)));
     buildMap();
+    renderDog();
     render();
   }
   window.addEventListener('resize', fitStage);
+  document.getElementById('drop-couch').innerHTML = svgCouch();
+  document.getElementById('drop-basket').innerHTML = svgBasket();
   fitStage();
+  leashLoop();
 })();
 </script>
 </body>
