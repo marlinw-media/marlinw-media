@@ -29,12 +29,14 @@
   @keyframes rotHint { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(90deg); } }
   .rotate-overlay p { font-size: 15px; color: #cbd5e1; max-width: 32ch; margin: 0; }
 
-  .fs-btn {
+  .back-btn {
     position: fixed; top: 10px; right: 10px; z-index: 60;
-    border: none; border-radius: 10px;
-    background: rgba(0,0,0,.35); color: #fff;
-    font-size: 13px; padding: 8px 12px;
+    border: none; border-radius: 999px;
+    background: rgba(255,255,255,.85); color: #3f6b3d;
+    font-weight: 700; font-size: 13px; padding: 10px 16px;
+    box-shadow: 0 4px 0 rgba(0,0,0,.2);
   }
+  .back-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,.2); }
 
   .scene { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; }
   .scene.active { display: flex; }
@@ -59,18 +61,25 @@
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='280' height='280'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.32  0 0 0 0 0.55  0 0 0 0 0.27  0 0 0 0.4 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     background-size: 260px 260px;
   }
-  .fence-edge { position: absolute; pointer-events: none; background-repeat: repeat; }
-  .obstacle, .tree-sprite, .house-sprite, .pond-svg, .flower-sprite { position: absolute; pointer-events: none; }
+  .fence-edge { position: absolute; pointer-events: none; background-repeat: repeat; z-index: 3; }
+  .obstacle, .tree-sprite, .house-sprite, .pond-svg, .flower-sprite, .creek-svg, .bridge-sprite, .gravel-svg, .gate-sprite, .poop-sprite, .rock-sprite, .puddle-svg { position: absolute; pointer-events: none; }
+  .creek-svg, .gravel-svg, .puddle-svg { z-index: 1; }
+  .pond-svg, .bridge-sprite { z-index: 2; }
+  .gate-sprite { z-index: 4; }
+  .poop-sprite { font-size: 26px; z-index: 2; }
 
   .leash-svg { position: absolute; top: 0; left: 0; pointer-events: none; z-index: 3; overflow: visible; }
 
   .sprite { position: absolute; transition: none; }
   .sprite svg { width: 100%; height: 100%; display: block; overflow: visible; }
   .player-sprite { z-index: 5; }
-  .dog-sprite { z-index: 4; transition: transform .3s ease; }
-  .dog-sprite.shake { animation: shakeDog .5s ease; }
+  .dog-sprite { z-index: 4; }
+  .dog-visual { width: 100%; height: 100%; transition: transform .25s ease; }
+  .dog-visual svg { width: 100%; height: 100%; display: block; overflow: visible; }
+  .dog-visual.face-left { transform: scaleX(-1); }
+  .dog-visual.shake { animation: shakeDog .5s ease; }
   @keyframes shakeDog { 0%,100% { transform: rotate(0); } 20% { transform: rotate(-12deg); } 40% { transform: rotate(10deg); } 60% { transform: rotate(-8deg); } 80% { transform: rotate(6deg); } }
-  .dog-sprite.digging { animation: digBob .35s ease-in-out infinite; }
+  .dog-visual.digging { animation: digBob .35s ease-in-out infinite; }
   @keyframes digBob { 0%,100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(4px) rotate(-6deg); } }
 
   .stick-sprite {
@@ -118,6 +127,7 @@
   }
   .action-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,.2); }
   .action-btn:disabled { opacity: .45; }
+  .action-btn[hidden] { display: none; }
 
   /* ---------- Haus-Innenraum ---------- */
   #scene-house { flex-direction: column; background: var(--room); }
@@ -203,7 +213,7 @@
   <p>Bitte drehe dein Gerät ins Querformat, um zu spielen.</p>
 </div>
 
-<button class="fs-btn" id="fs-btn" type="button">⛶ Vollbild</button>
+<button class="back-btn" id="back-btn" type="button">↩ Bestellliste</button>
 
 <div id="app">
   <div class="scene active" id="scene-outdoor">
@@ -214,7 +224,7 @@
         <svg class="leash-svg" id="leash-svg"><path id="leash-path" fill="none" stroke="#8a5a3a" stroke-width="3" stroke-linecap="round"/></svg>
         <div class="stick-sprite" id="stick" hidden>🥢</div>
         <div class="sprite player-sprite" id="player"></div>
-        <div class="sprite dog-sprite" id="dog-outdoor"></div>
+        <div class="sprite dog-sprite" id="dog-outdoor"><div class="dog-visual" id="dog-visual"></div></div>
       </div>
       <div class="toast" id="toast"></div>
     </div>
@@ -223,7 +233,9 @@
     </div>
     <div class="action-buttons">
       <button class="action-btn" id="btn-pet" type="button">✋ Streicheln</button>
+      <button class="action-btn" id="btn-call" type="button">📣 Herrufen</button>
       <button class="action-btn" id="btn-fetch" type="button">🥢 Stöckchen</button>
+      <button class="action-btn" id="btn-clean" type="button" hidden>🧹 Aufsammeln</button>
     </div>
   </div>
 
@@ -277,17 +289,12 @@
     tick(); setInterval(tick, 1000);
   })();
 
-  /* ================= Vollbild + Orientierung ================= */
-  function goFullscreen() {
-    var el = document.documentElement;
-    try {
-      var req = el.requestFullscreen || el.webkitRequestFullscreen;
-      if (req) req.call(el).catch(function () {});
-    } catch (e) {}
+  /* ================= Orientierung + Zurück ================= */
+  document.addEventListener('click', function once() {
+    document.removeEventListener('click', once);
     try { if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(function () {}); } catch (e) {}
-  }
-  document.getElementById('fs-btn').addEventListener('click', goFullscreen);
-  document.addEventListener('click', function once() { document.removeEventListener('click', once); goFullscreen(); }, { once: true });
+  }, { once: true });
+  document.getElementById('back-btn').addEventListener('click', function () { location.href = '../index.html'; });
 
   /* ================= Sound (Web Audio, dezent & einheitlich) ================= */
   var SFX = (function () {
@@ -339,6 +346,7 @@
       else if (name === 'happy') { tone(523, t, 0.15, 'triangle', 0.12); tone(659, t + 0.1, 0.15, 'triangle', 0.12); tone(784, t + 0.2, 0.22, 'triangle', 0.12); }
       else if (name === 'drop') tone(200, t, 0.15, 'sine', 0.1);
       else if (name === 'wake') tone(440, t, 0.12, 'sine', 0.1);
+      else if (name === 'call') { tone(1500, t, 0.14, 'sine', 0.11); tone(1100, t + 0.11, 0.16, 'sine', 0.1); }
     }
     return { play: play };
   })();
@@ -349,10 +357,51 @@
   var HOUSE = { x: 220, y: 430, w: 300, h: 190 };
   var TREES = [
     { x: 520, y: 260, r: 26 }, { x: 900, y: 180, r: 24 }, { x: 1450, y: 340, r: 28 },
-    { x: 1780, y: 760, r: 24 }, { x: 640, y: 900, r: 26 }, { x: 1150, y: 1020, r: 22 }
+    { x: 1780, y: 760, r: 24 }, { x: 640, y: 900, r: 26 }, { x: 1150, y: 1020, r: 22 },
+    /* dichteres Wäldchen oben rechts */
+    { x: 1900, y: 160, r: 24 }, { x: 1980, y: 240, r: 20 }, { x: 1860, y: 280, r: 22 },
+    { x: 2000, y: 340, r: 18 }, { x: 1930, y: 90, r: 20 }
+  ];
+  var ROCKS = [
+    { x: 150, y: 150, r: 22 }, { x: 235, y: 210, r: 17 }, { x: 110, y: 260, r: 19 },
+    { x: 320, y: 120, r: 15 }, { x: 380, y: 230, r: 23 }, { x: 190, y: 320, r: 16 },
+    { x: 2080, y: 900, r: 20 }, { x: 2000, y: 1000, r: 16 }
+  ];
+  var MUD_PUDDLES = [
+    { x: 700, y: 500, r: 46 }, { x: 1050, y: 720, r: 40 }, { x: 1650, y: 950, r: 52 },
+    { x: 900, y: 1080, r: 42 }, { x: 1900, y: 320, r: 38 }, { x: 160, y: 900, r: 44 }
   ];
   var POND = { x: 1400, y: 620, rx: 150, ry: 100 };
+  var CREEK_HALF = 17;
+  var CREEK_PTS = [
+    { x: 1400, y: -20 }, { x: 1400, y: 50 }, { x: 1335, y: 105 }, { x: 1410, y: 165 },
+    { x: 1460, y: 225 }, { x: 1400, y: 285 }, { x: 1400, y: 345 }, { x: 1400, y: 425 }, { x: 1400, y: 522 }
+  ];
+  var BRIDGE_W = 92, BRIDGE_H = 40;
+  var BRIDGE_POS = { x: 1400 - BRIDGE_W / 2, y: 385 - BRIDGE_H / 2 };
+  var BRIDGE_CENTER = { x: 1400, y: 385 };
+  var GRAVEL_PTS = [
+    { x: 330, y: 700 }, { x: 330, y: 860 }, { x: 420, y: 910 }, { x: 420, y: 1100 }, { x: 420, y: 1264 }
+  ];
+  var GATE_POS = { x: 420, y: 1264 };
   var PLAYER_R = 15, DOG_R = 13;
+
+  function distToSeg(px, py, ax, ay, bx, by) {
+    var dx = bx - ax, dy = by - ay;
+    var len2 = dx * dx + dy * dy;
+    var t = len2 ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / len2)) : 0;
+    var cx = ax + dx * t, cy = ay + dy * t;
+    return Math.hypot(px - cx, py - cy);
+  }
+  function inCreek(x, y, pad) {
+    pad = pad || 0;
+    if (Math.hypot(x - BRIDGE_CENTER.x, y - BRIDGE_CENTER.y) < 55) return false;
+    for (var i = 0; i < CREEK_PTS.length - 1; i++) {
+      var p = CREEK_PTS[i], q = CREEK_PTS[i + 1];
+      if (distToSeg(x, y, p.x, p.y, q.x, q.y) < CREEK_HALF + pad) return true;
+    }
+    return false;
+  }
 
   var worldEl = document.getElementById('world');
   var groundEl = document.getElementById('ground');
@@ -360,6 +409,8 @@
   var stage = document.getElementById('outdoor-stage');
   var playerEl = document.getElementById('player');
   var dogOutEl = document.getElementById('dog-outdoor');
+  var dogVisualEl = document.getElementById('dog-visual');
+  var dogFacing = 1;
   var leashPath = document.getElementById('leash-path');
   var toastEl = document.getElementById('toast');
 
@@ -382,6 +433,8 @@
     '<radialGradient id="gSkin" cx="35%" cy="30%" r="75%"><stop offset="0%" stop-color="#ffe3c2"/><stop offset="100%" stop-color="#f0c398"/></radialGradient>' +
     '<radialGradient id="gFur" cx="35%" cy="25%" r="80%"><stop offset="0%" stop-color="#f0c58a"/><stop offset="100%" stop-color="#c9924f"/></radialGradient>' +
     '<radialGradient id="gRiver" cx="40%" cy="30%" r="80%"><stop offset="0%" stop-color="#9fe6f5"/><stop offset="100%" stop-color="#3f9fbf"/></radialGradient>' +
+    '<radialGradient id="gMud" cx="40%" cy="30%" r="80%"><stop offset="0%" stop-color="#8a6a45"/><stop offset="100%" stop-color="#5c4326"/></radialGradient>' +
+    '<radialGradient id="gRock" cx="35%" cy="25%" r="80%"><stop offset="0%" stop-color="#b8b0a4"/><stop offset="100%" stop-color="#7c7468"/></radialGradient>' +
     '</defs>';
 
   function svgTree() {
@@ -474,6 +527,92 @@
       '<path d="' + path + '" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="4" filter="url(#pn)" transform="scale(.82) translate(' + w * 0.09 + ',' + h * 0.08 + ')"/>' +
       '</svg>';
   }
+  function ptsToPath(pts, ox, oy) {
+    var d = 'M ' + (pts[0].x - ox) + ' ' + (pts[0].y - oy);
+    for (var i = 1; i < pts.length; i++) d += ' L ' + (pts[i].x - ox) + ' ' + (pts[i].y - oy);
+    return d;
+  }
+  function boundsOf(pts, margin) {
+    var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    pts.forEach(function (p) {
+      minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x);
+      minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y);
+    });
+    return { x: minX - margin, y: minY - margin, w: (maxX - minX) + margin * 2, h: (maxY - minY) + margin * 2 };
+  }
+  function svgCreek() {
+    var b = boundsOf(CREEK_PTS, 40);
+    var path = ptsToPath(CREEK_PTS, b.x, b.y);
+    return '<svg viewBox="0 0 ' + b.w + ' ' + b.h + '" width="' + b.w + '" height="' + b.h + '" style="overflow:visible">' + DEFS +
+      '<filter id="cn" x="-40%" y="-10%" width="180%" height="120%"><feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" result="t"/><feDisplacementMap in="SourceGraphic" in2="t" scale="10"/></filter>' +
+      '<path d="' + path + '" fill="none" stroke="url(#gRiver)" stroke-width="' + (CREEK_HALF * 2) + '" stroke-linecap="round" stroke-linejoin="round" filter="url(#cn)"/>' +
+      '<path d="' + path + '" fill="none" stroke="#2f7a91" stroke-width="' + (CREEK_HALF * 2) + '" stroke-opacity=".25" stroke-linecap="round" stroke-linejoin="round" filter="url(#cn)"/>' +
+      '<path d="' + path + '" fill="none" stroke="#fff" stroke-opacity=".4" stroke-width="6" stroke-linejoin="round" filter="url(#cn)"/>' +
+      '</svg>';
+  }
+  function svgBridge() {
+    var w = BRIDGE_W, h = BRIDGE_H;
+    return '<svg viewBox="0 0 ' + w + ' ' + h + '">' +
+      '<ellipse cx="' + (w / 2) + '" cy="' + (h - 4) + '" rx="' + (w / 2 - 4) + '" ry="4" fill="rgba(0,0,0,.15)"/>' +
+      '<rect x="3" y="' + (h * 0.34) + '" width="' + (w - 6) + '" height="' + (h * 0.38) + '" rx="3" fill="url(#gTrunk)" stroke="#4a2f1a" stroke-width="1.5"/>' +
+      [10, 24, 38, 52, 66, 80].filter(function (x) { return x < w - 6; }).map(function (x) {
+        return '<line x1="' + x + '" y1="' + (h * 0.34) + '" x2="' + x + '" y2="' + (h * 0.72) + '" stroke="#4a2f1a" stroke-width="1.2"/>';
+      }).join('') +
+      '<rect x="3" y="' + (h * 0.18) + '" width="' + (w - 6) + '" height="4" rx="2" fill="#8a5a3a"/>' +
+      '<rect x="3" y="' + (h * 0.72) + '" width="' + (w - 6) + '" height="4" rx="2" fill="#8a5a3a"/>' +
+      '</svg>';
+  }
+  function svgGravelPath() {
+    var b = boundsOf(GRAVEL_PTS, 30);
+    var path = ptsToPath(GRAVEL_PTS, b.x, b.y);
+    var specks = '';
+    for (var i = 1; i < GRAVEL_PTS.length; i++) {
+      var a = GRAVEL_PTS[i - 1], c = GRAVEL_PTS[i];
+      for (var k = 0; k < 4; k++) {
+        var f = (k + 0.5) / 4;
+        var sx = (a.x + (c.x - a.x) * f - b.x) + (Math.random() * 16 - 8);
+        var sy = (a.y + (c.y - a.y) * f - b.y) + (Math.random() * 16 - 8);
+        specks += '<circle cx="' + sx.toFixed(1) + '" cy="' + sy.toFixed(1) + '" r="' + (2 + (k % 3)) + '" fill="#a8927a" opacity=".55"/>';
+      }
+    }
+    return '<svg viewBox="0 0 ' + b.w + ' ' + b.h + '" width="' + b.w + '" height="' + b.h + '" style="overflow:visible">' +
+      '<filter id="gr" x="-40%" y="-10%" width="180%" height="120%"><feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="1" result="t"/><feDisplacementMap in="SourceGraphic" in2="t" scale="5"/></filter>' +
+      '<path d="' + path + '" fill="none" stroke="#cdb896" stroke-width="30" stroke-linecap="round" stroke-linejoin="round" filter="url(#gr)"/>' +
+      '<path d="' + path + '" fill="none" stroke="#b8a17c" stroke-width="30" stroke-opacity=".3" stroke-linecap="round" stroke-linejoin="round" filter="url(#gr)"/>' +
+      specks +
+      '</svg>';
+  }
+  function svgGate() {
+    return '<svg viewBox="0 0 40 40">' +
+      '<rect x="2" y="4" width="6" height="34" fill="url(#gTrunk)" stroke="#4a2f1a" stroke-width="1"/>' +
+      '<rect x="32" y="4" width="6" height="34" fill="url(#gTrunk)" stroke="#4a2f1a" stroke-width="1"/>' +
+      '<rect x="7" y="10" width="26" height="5" fill="#8a5a3a" stroke="#4a2f1a" stroke-width="1"/>' +
+      '<rect x="7" y="24" width="26" height="5" fill="#8a5a3a" stroke="#4a2f1a" stroke-width="1"/>' +
+      '<line x1="10" y1="10" x2="30" y2="29" stroke="#6b4226" stroke-width="3"/>' +
+      '<line x1="30" y1="10" x2="10" y2="29" stroke="#6b4226" stroke-width="3"/>' +
+      '</svg>';
+  }
+  function svgPuddle(r) {
+    var w = r * 2, h = r * 1.3;
+    var path = 'M ' + w * 0.03 + ' ' + h * 0.5 +
+      ' C ' + w * -0.02 + ' ' + h * 0.2 + ', ' + w * 0.3 + ' ' + h * -0.05 + ', ' + w * 0.55 + ' ' + h * 0.04 +
+      ' C ' + w * 0.8 + ' ' + h * 0.12 + ', ' + w * 1.03 + ' ' + h * 0.32 + ', ' + w * 0.97 + ' ' + h * 0.58 +
+      ' C ' + w * 0.92 + ' ' + h * 0.85 + ', ' + w * 0.6 + ' ' + h * 1.05 + ', ' + w * 0.32 + ' ' + h * 0.94 +
+      ' C ' + w * 0.1 + ' ' + h * 0.85 + ', ' + w * 0.06 + ' ' + h * 0.7 + ', ' + w * 0.03 + ' ' + h * 0.5 + ' Z';
+    return '<svg viewBox="' + (-w * 0.1) + ' ' + (-h * 0.15) + ' ' + (w * 1.2) + ' ' + (h * 1.3) + '" width="' + w + '" height="' + h + '" style="overflow:visible">' + DEFS +
+      '<filter id="mn" x="-30%" y="-30%" width="160%" height="160%"><feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="2" result="t"/><feDisplacementMap in="SourceGraphic" in2="t" scale="8"/></filter>' +
+      '<ellipse cx="' + (w * 0.5) + '" cy="' + (h * 0.95) + '" rx="' + (w * 0.5) + '" ry="' + (h * 0.12) + '" fill="rgba(0,0,0,.15)"/>' +
+      '<path d="' + path + '" fill="url(#gMud)" stroke="#3f2e18" stroke-width="1.5" opacity=".88" filter="url(#mn)"/>' +
+      '<ellipse cx="' + (w * 0.4) + '" cy="' + (h * 0.35) + '" rx="' + (w * 0.14) + '" ry="' + (h * 0.08) + '" fill="#fff" opacity=".18"/>' +
+      '</svg>';
+  }
+  function svgRock() {
+    return '<svg viewBox="0 0 40 32">' + DEFS +
+      '<ellipse cx="20" cy="29" rx="17" ry="3" fill="rgba(0,0,0,.2)"/>' +
+      '<path d="M4 26c-2-8 3-16 12-18 7-2 14 2 18 8 3 5 1 12-4 14-8 4-22 3-26-4z" fill="url(#gRock)" stroke="#5a544a" stroke-width="1.3"/>' +
+      '<path d="M12 12c3-3 8-4 12-2" stroke="#fff" stroke-opacity=".3" stroke-width="2" fill="none" stroke-linecap="round"/>' +
+      '</svg>';
+  }
 
   function buildWorld() {
     groundEl.style.width = WORLD.w + 'px';
@@ -501,11 +640,39 @@
       obstaclesEl.appendChild(el);
     });
 
+    var gravelB = boundsOf(GRAVEL_PTS, 30);
+    var gravel = document.createElement('div');
+    gravel.className = 'gravel-svg';
+    gravel.style.left = gravelB.x + 'px'; gravel.style.top = gravelB.y + 'px';
+    gravel.innerHTML = svgGravelPath();
+    obstaclesEl.appendChild(gravel);
+
+    var gate = document.createElement('div');
+    gate.className = 'gate-sprite';
+    gate.style.left = (GATE_POS.x - 20) + 'px'; gate.style.top = (GATE_POS.y - 20) + 'px';
+    gate.style.width = '40px'; gate.style.height = '40px';
+    gate.innerHTML = svgGate();
+    obstaclesEl.appendChild(gate);
+
+    var creekB = boundsOf(CREEK_PTS, 40);
+    var creek = document.createElement('div');
+    creek.className = 'creek-svg';
+    creek.style.left = creekB.x + 'px'; creek.style.top = creekB.y + 'px';
+    creek.innerHTML = svgCreek();
+    obstaclesEl.appendChild(creek);
+
     var pond = document.createElement('div');
     pond.className = 'pond-svg';
     pond.style.left = (POND.x - POND.rx) + 'px'; pond.style.top = (POND.y - POND.ry) + 'px';
     pond.innerHTML = svgPond();
     obstaclesEl.appendChild(pond);
+
+    var bridge = document.createElement('div');
+    bridge.className = 'bridge-sprite';
+    bridge.style.left = BRIDGE_POS.x + 'px'; bridge.style.top = BRIDGE_POS.y + 'px';
+    bridge.style.width = BRIDGE_W + 'px'; bridge.style.height = BRIDGE_H + 'px';
+    bridge.innerHTML = svgBridge();
+    obstaclesEl.appendChild(bridge);
 
     var hs = document.createElement('div');
     hs.className = 'house-sprite';
@@ -524,6 +691,24 @@
       obstaclesEl.appendChild(el);
     });
 
+    ROCKS.forEach(function (rk) {
+      var el = document.createElement('div');
+      el.className = 'rock-sprite';
+      var s = rk.r * 2.4;
+      el.style.left = (rk.x - s / 2) + 'px'; el.style.top = (rk.y - s * 0.6) + 'px';
+      el.style.width = s + 'px'; el.style.height = (s * 0.8) + 'px';
+      el.innerHTML = svgRock();
+      obstaclesEl.appendChild(el);
+    });
+
+    MUD_PUDDLES.forEach(function (m) {
+      var el = document.createElement('div');
+      el.className = 'puddle-svg';
+      el.style.left = (m.x - m.r * 1.1) + 'px'; el.style.top = (m.y - m.r * 0.75) + 'px';
+      el.innerHTML = svgPuddle(m.r);
+      obstaclesEl.appendChild(el);
+    });
+
     for (var i = 0; i < 60; i++) {
       var fx = 60 + Math.random() * (WORLD.w - 120);
       var fy = 60 + Math.random() * (WORLD.h - 120);
@@ -535,15 +720,59 @@
       fl.textContent = ['🌼', '🌸', '🍀', '🌿'][(Math.random() * 4) | 0];
       obstaclesEl.appendChild(fl);
     }
+
+    /* Wildblumen-/Hochgras-Wiese unten rechts: dichter und höher */
+    for (var j = 0; j < 55; j++) {
+      var mx = 680 + Math.random() * 620;
+      var my = 940 + Math.random() * 300;
+      if (inRect(mx, my, HOUSE)) continue;
+      var ml = document.createElement('div');
+      ml.className = 'flower-sprite';
+      ml.style.left = mx + 'px'; ml.style.top = my + 'px';
+      ml.style.fontSize = (14 + Math.random() * 12) + 'px';
+      ml.textContent = ['🌾', '🌾', '🌼', '🌸', '🌿'][(Math.random() * 5) | 0];
+      obstaclesEl.appendChild(ml);
+    }
   }
 
   playerEl.innerHTML = svgPlayer();
 
   var player = { x: 460, y: 700 };
   var dogPos = { x: 500, y: 740 };
-  var trailBuf = [];
   var fetching = false;
   var camX = player.x, camY = player.y;
+  var dogLeash = 160;
+  var dogWanderTarget = { x: dogPos.x, y: dogPos.y };
+  var dogWanderAt = 0;
+  var dogWanderSpeed = 60;
+  var dogWanderPause = 0;
+  var dogCalled = false, dogCallTimer = null;
+  var prevDogX = dogPos.x;
+  var fetchState = null;
+  var poop = null;
+  var dogVel = { x: 0, y: 0 };
+  var playerMud = 0, dogMud = 0, dogWasDirty = false;
+  function applyMud(el, lvl) {
+    el.style.filter = lvl > 0.03 ? 'sepia(' + Math.min(1, lvl * 1.1).toFixed(2) + ') saturate(2) brightness(' + (1 - lvl * 0.15).toFixed(2) + ')' : '';
+  }
+
+  function pickWanderTarget() {
+    var ang = Math.random() * Math.PI * 2;
+    var dist = 30 + Math.random() * (dogLeash - 30);
+    dogWanderTarget = {
+      x: Math.max(30, Math.min(WORLD.w - 30, player.x + Math.cos(ang) * dist)),
+      y: Math.max(30, Math.min(WORLD.h - 30, player.y + Math.sin(ang) * dist))
+    };
+    dogWanderSpeed = 35 + Math.random() * Math.random() * 85;
+    dogWanderPause = Math.random() < 0.3 ? 500 + Math.random() * 900 : 0;
+  }
+  function accelerateTo(vel, desired, accel, dt) {
+    var dx = desired.x - vel.x, dy = desired.y - vel.y;
+    var d = Math.hypot(dx, dy);
+    var maxDelta = accel * dt;
+    if (d <= maxDelta || d < 0.0001) { vel.x = desired.x; vel.y = desired.y; }
+    else { vel.x += dx / d * maxDelta; vel.y += dy / d * maxDelta; }
+  }
 
   function inRect(x, y, r, pad) {
     pad = pad || 0;
@@ -554,6 +783,13 @@
     var dx = (x - POND.x) / (POND.rx + pad), dy = (y - POND.y) / (POND.ry + pad);
     return dx * dx + dy * dy < 1;
   }
+  function inMud(x, y) {
+    for (var i = 0; i < MUD_PUDDLES.length; i++) {
+      var m = MUD_PUDDLES[i];
+      if (Math.hypot(x - m.x, y - m.y) < m.r) return true;
+    }
+    return false;
+  }
 
   function collides(x, y, r) {
     if (x - r < 20 || y - r < 20 || x + r > WORLD.w - 20 || y + r > WORLD.h - 20) return true;
@@ -562,7 +798,12 @@
       var t = TREES[i];
       if (Math.hypot(x - t.x, y - t.y) < t.r + r * 0.7) return true;
     }
+    for (var j = 0; j < ROCKS.length; j++) {
+      var rk = ROCKS[j];
+      if (Math.hypot(x - rk.x, y - rk.y) < rk.r + r * 0.7) return true;
+    }
     if (inPond(x, y, r * 0.5)) return true;
+    if (inCreek(x, y, r * 0.6)) return true;
     return false;
   }
 
@@ -577,7 +818,10 @@
     leashPath.setAttribute('d', 'M ' + player.x + ' ' + (player.y - 14) + ' Q ' + mx + ' ' + my + ' ' + dogPos.x + ' ' + (dogPos.y - 10));
   }
 
-  function renderDog() { dogOutEl.innerHTML = svgDog(stats.fur < 45); }
+  function renderDog() {
+    dogVisualEl.innerHTML = svgDog(stats.fur < 45);
+    dogVisualEl.classList.toggle('face-left', dogFacing < 0);
+  }
 
   function updateCamera() {
     var vw = innerWidth, vh = innerHeight;
@@ -595,10 +839,10 @@
 
   function maybeDig() {
     if (fetching || Math.random() > 0.05) return;
-    dogOutEl.classList.add('digging');
+    dogVisualEl.classList.add('digging');
     SFX.play('dig');
     setTimeout(function () {
-      dogOutEl.classList.remove('digging');
+      dogVisualEl.classList.remove('digging');
       SFX.play('bone');
       bones = (bones || 0) + 1;
       try { localStorage.setItem('mw-pet-bones', String(bones)); } catch (e) {}
@@ -654,14 +898,49 @@
     if (Math.hypot(player.x - dogPos.x, player.y - dogPos.y) > 90) { toast('Der Hund ist zu weit weg!'); return; }
     stats.love = Math.min(100, stats.love + 15); saveStats();
     SFX.play('pet');
-    dogOutEl.classList.remove('shake'); void dogOutEl.offsetWidth; dogOutEl.classList.add('shake');
+    dogVisualEl.classList.remove('shake'); void dogVisualEl.offsetWidth; dogVisualEl.classList.add('shake');
     popHeart(innerWidth / 2 - (player.x - dogPos.x), innerHeight / 2 - (player.y - dogPos.y) - 30);
+  });
+
+  /* ---- Herrufen ---- */
+  document.getElementById('btn-call').addEventListener('click', function () {
+    dogCalled = true;
+    if (dogCallTimer) { clearTimeout(dogCallTimer); dogCallTimer = null; }
+    SFX.play('call');
+  });
+
+  /* ---- Aufsammeln (Kackhaufen) ---- */
+  var btnCleanEl = document.getElementById('btn-clean');
+  function spawnPoop() {
+    var x = Math.max(60, Math.min(WORLD.w - 60, dogPos.x + (Math.random() * 50 - 25)));
+    var y = Math.max(60, Math.min(WORLD.h - 60, dogPos.y + (Math.random() * 50 - 25)));
+    if (inRect(x, y, HOUSE, 20) || inPond(x, y, 20) || inCreek(x, y, 20)) return;
+    var el = document.createElement('div');
+    el.className = 'poop-sprite';
+    el.style.left = (x - 14) + 'px'; el.style.top = (y - 14) + 'px';
+    el.textContent = '💩';
+    obstaclesEl.appendChild(el);
+    poop = { x: x, y: y, el: el };
+  }
+  function schedulePoop() {
+    var delay = 180000 + Math.random() * 240000;
+    setTimeout(function () {
+      if (sceneOutdoor.classList.contains('active') && !poop) spawnPoop();
+      schedulePoop();
+    }, delay);
+  }
+  btnCleanEl.addEventListener('click', function () {
+    if (!poop) return;
+    poop.el.remove(); poop = null;
+    btnCleanEl.hidden = true;
+    SFX.play('drop');
+    stats.love = Math.min(100, stats.love + 4); saveStats();
   });
 
   /* ---- Stöckchen werfen ---- */
   var stickEl = document.getElementById('stick');
   document.getElementById('btn-fetch').addEventListener('click', function () {
-    if (fetching) return;
+    if (fetching || fetchState) return;
     fetching = true;
     document.getElementById('btn-fetch').disabled = true;
     SFX.play('throw');
@@ -674,25 +953,8 @@
     requestAnimationFrame(function () {
       stickEl.style.left = (target.x - 10) + 'px'; stickEl.style.top = (target.y - 10) + 'px';
     });
-    setTimeout(function () {
-      dogPos = { x: target.x, y: target.y };
-      render();
-      setTimeout(function () {
-        SFX.play('grab');
-        stickEl.hidden = true;
-        setTimeout(function () {
-          dogPos = { x: player.x + 30, y: player.y };
-          render();
-          setTimeout(function () {
-            SFX.play('happy');
-            fetching = false;
-            document.getElementById('btn-fetch').disabled = false;
-            stats.love = Math.min(100, stats.love + 8); saveStats();
-            popHeart(innerWidth / 2, innerHeight / 2 - 40);
-          }, 350);
-        }, 350);
-      }, 400);
-    }, 500);
+    dogCalled = false;
+    fetchState = { phase: 'go', target: target };
   });
 
   /* ================= Szenenwechsel ================= */
@@ -709,6 +971,7 @@
     sceneOutdoor.classList.add('active');
     player.x = DOOR_ZONE.x; player.y = DOOR_ZONE.y + DOOR_ZONE.r + 25;
     dogPos = { x: player.x + 30, y: player.y };
+    prevDogX = dogPos.x; dogWanderTarget = { x: dogPos.x, y: dogPos.y }; dogCalled = false;
     render();
     renderDog();
   });
@@ -718,37 +981,109 @@
   var distAccum = 0, lastStepAt = 0, lastFurAt = 0;
   function loop(t) {
     var dt = Math.min(0.05, (t - lastT) / 1000); lastT = t;
-    if (sceneOutdoor.classList.contains('active') && !fetching) {
-      var v = getMoveVector();
-      if (v.x || v.y) {
-        var speed = 230;
-        var nx = player.x + v.x * speed * dt;
-        var ny = player.y + v.y * speed * dt;
-        if (!collides(nx, player.y, PLAYER_R)) player.x = nx;
-        if (!collides(player.x, ny, PLAYER_R)) player.y = ny;
-        distAccum += speed * dt;
-        if (distAccum - lastStepAt > 46) {
-          lastStepAt = distAccum;
-          SFX.play(inPond(player.x, player.y, PLAYER_R + 30) ? 'splash' : 'step');
+    if (sceneOutdoor.classList.contains('active')) {
+      if (!fetching) {
+        var v = getMoveVector();
+        if (v.x || v.y) {
+          var speed = 230;
+          var nx = player.x + v.x * speed * dt;
+          var ny = player.y + v.y * speed * dt;
+          if (!collides(nx, player.y, PLAYER_R)) player.x = nx;
+          if (!collides(player.x, ny, PLAYER_R)) player.y = ny;
+          distAccum += speed * dt;
+          if (distAccum - lastStepAt > 46) {
+            lastStepAt = distAccum;
+            SFX.play(inPond(player.x, player.y, PLAYER_R + 30) ? 'splash' : 'step');
+          }
+          if (distAccum - lastFurAt > 70) {
+            lastFurAt = distAccum;
+            stats.fur = Math.max(0, stats.fur - 0.8);
+            renderDog();
+            maybeDig();
+          }
         }
-        if (distAccum - lastFurAt > 70) {
-          lastFurAt = distAccum;
-          stats.fur = Math.max(0, stats.fur - 0.8);
-          renderDog();
-          maybeDig();
+        if (inMud(player.x, player.y)) { playerMud = 1; }
+        else { playerMud = Math.max(0, playerMud - dt / 5); }
+        applyMud(playerEl, playerMud);
+      }
+
+      if (fetchState) {
+        var goalF = fetchState.phase === 'return' ? { x: player.x + 30, y: player.y } : fetchState.target;
+        var fdx = goalF.x - dogPos.x, fdy = goalF.y - dogPos.y, fdist = Math.hypot(fdx, fdy);
+        var fDesiredSpeed = Math.min(260, fdist * 4);
+        var fDesVel = fdist > 0.01 ? { x: fdx / fdist * fDesiredSpeed, y: fdy / fdist * fDesiredSpeed } : { x: 0, y: 0 };
+        accelerateTo(dogVel, fDesVel, 340, dt);
+        dogPos.x += dogVel.x * dt; dogPos.y += dogVel.y * dt;
+        if (fdist <= 6) {
+          if (fetchState.phase === 'go') {
+            SFX.play('grab');
+            stickEl.hidden = true;
+            fetchState = { phase: 'return' };
+          } else {
+            fetching = false;
+            fetchState = null;
+            document.getElementById('btn-fetch').disabled = false;
+            stats.love = Math.min(100, stats.love + 8); saveStats();
+            popHeart(innerWidth / 2, innerHeight / 2 - 40);
+            SFX.play('happy');
+            dogWanderTarget = { x: dogPos.x, y: dogPos.y };
+          }
+        }
+      } else {
+        var goal = dogCalled ? player : dogWanderTarget;
+        if (!dogCalled && dogWanderPause === 0 && (t - dogWanderAt > 3200 + Math.random() * 3200 || Math.hypot(dogWanderTarget.x - dogPos.x, dogWanderTarget.y - dogPos.y) < 12)) {
+          dogWanderAt = t;
+          pickWanderTarget();
+          goal = dogWanderTarget;
+        } else if (dogWanderPause > 0) {
+          dogWanderPause = Math.max(0, dogWanderPause - dt * 1000);
+        }
+        var toGoalX = goal.x - dogPos.x, toGoalY = goal.y - dogPos.y;
+        var goalDist = Math.hypot(toGoalX, toGoalY);
+        var baseSpeed = dogCalled ? 210 : (dogWanderPause > 0 ? 0 : dogWanderSpeed);
+        var desiredSpeed = Math.min(baseSpeed, goalDist * 3.5);
+        var desVel = (goalDist > 0.01 && desiredSpeed > 0.01) ? { x: toGoalX / goalDist * desiredSpeed, y: toGoalY / goalDist * desiredSpeed } : { x: 0, y: 0 };
+        accelerateTo(dogVel, desVel, dogCalled ? 260 : 130, dt);
+        dogPos.x += dogVel.x * dt; dogPos.y += dogVel.y * dt;
+        var leashDx = dogPos.x - player.x, leashDy = dogPos.y - player.y;
+        var leashDist = Math.hypot(leashDx, leashDy);
+        if (leashDist > dogLeash) {
+          var pull = (leashDist - dogLeash) / leashDist;
+          dogPos.x -= leashDx * pull;
+          dogPos.y -= leashDy * pull;
+        }
+        if (dogCalled && leashDist < 45 && !dogCallTimer) {
+          dogCallTimer = setTimeout(function () {
+            dogCalled = false; dogCallTimer = null; dogWanderAt = performance.now(); pickWanderTarget();
+          }, 5000);
         }
       }
-      trailBuf.push({ x: player.x, y: player.y, t: t });
-      while (trailBuf.length && t - trailBuf[0].t > 700) trailBuf.shift();
-      var lag = trailBuf[0] || player;
-      var dist2 = Math.hypot(lag.x - dogPos.x, lag.y - dogPos.y);
-      if (dist2 > 1) {
-        var ease = Math.min(1, dt * 6);
-        dogPos.x += (lag.x - dogPos.x) * ease;
-        dogPos.y += (lag.y - dogPos.y) * ease;
+
+      if (Math.abs(dogVel.x) > 4) {
+        dogFacing = dogVel.x < 0 ? -1 : 1;
+        dogVisualEl.classList.toggle('face-left', dogFacing < 0);
       }
+      prevDogX = dogPos.x;
+
+      if (inMud(dogPos.x, dogPos.y)) {
+        dogMud = 1;
+        stats.fur = Math.max(0, stats.fur - 22 * dt);
+      } else {
+        dogMud = Math.max(0, dogMud - dt / 5);
+      }
+      applyMud(dogVisualEl, dogMud);
+      if (stats.fur < 45 && !dogWasDirty) { dogWasDirty = true; renderDog(); }
+      else if (stats.fur >= 45 && dogWasDirty) { dogWasDirty = false; renderDog(); }
+
+      if (poop) {
+        var pd = Math.hypot(player.x - poop.x, player.y - poop.y);
+        btnCleanEl.hidden = pd > 70;
+      } else if (!btnCleanEl.hidden) {
+        btnCleanEl.hidden = true;
+      }
+
       render();
-      if (Math.hypot(player.x - DOOR_ZONE.x, player.y - DOOR_ZONE.y) < DOOR_ZONE.r) enterHouse();
+      if (!fetching && Math.hypot(player.x - DOOR_ZONE.x, player.y - DOOR_ZONE.y) < DOOR_ZONE.r) enterHouse();
     }
     requestAnimationFrame(loop);
   }
@@ -908,6 +1243,7 @@
   buildWorld();
   renderDog();
   render();
+  schedulePoop();
 })();
 </script>
 </body>
