@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<title>Hauptspiel</title>
+<style>
+  :root {
+    --grass: #6fbf6a;
+    --grass-dark: #5aa856;
+    --path: #dcc48a;
+    --water: #5ec8e0;
+    --water-dark: #3fa8c2;
+    --fence: #8a5a3a;
+    --house-wall: #f2dcae;
+    --house-roof: #c85a4a;
+    --sky: #bfe8f5;
+    --wood: #8a5a3a;
+    --room: #f6e6c8;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+  html, body {
+    height: 100%; margin: 0; overflow: hidden;
+    font-family: 'Baloo 2', 'Comic Sans MS', system-ui, sans-serif;
+    background: #1a2e1a;
+  }
+  #app { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+
+  /* ---------- Portrait-Sperre: schwarzer Bildschirm + Dreh-Hinweis ---------- */
+  .rotate-overlay {
+    position: fixed; inset: 0;
+    background: #000;
+    color: #fff;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    z-index: 999;
+    text-align: center;
+    padding: 24px;
+  }
+  @media (orientation: portrait) {
+    .rotate-overlay { display: flex; }
+    #app { display: none; }
+  }
+  .rotate-icon { font-size: 54px; animation: rotHint 1.6s ease-in-out infinite; }
+  @keyframes rotHint { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(90deg); } }
+  .rotate-overlay p { font-size: 15px; color: #cbd5e1; max-width: 32ch; margin: 0; }
+
+  /* ---------- Szenen ---------- */
+  .scene { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; }
+  .scene.active { display: flex; }
+
+  /* ---------- Außenwelt ---------- */
+  #outdoor-stage { position: relative; }
+  .map {
+    display: grid;
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,.5);
+  }
+  .tile { position: relative; }
+  .tile.grass { background: var(--grass); }
+  .tile.grass::after {
+    content: "";
+    position: absolute; inset: 0;
+    background-image: radial-gradient(var(--grass-dark) 10%, transparent 11%);
+    background-size: 50% 50%;
+    opacity: .5;
+  }
+  .tile.fence {
+    background: #3f6b3d;
+    background-image:
+      repeating-linear-gradient(0deg, var(--fence) 0 15%, transparent 15% 100%);
+  }
+  .tile.water { background: linear-gradient(180deg, var(--water), var(--water-dark)); }
+  .tile.water::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(90deg, rgba(255,255,255,.25) 0 6%, transparent 6% 20%);
+    animation: waterFlow 2.4s linear infinite;
+  }
+  @keyframes waterFlow { to { transform: translateX(20%); } }
+  .tile.tree { background: var(--grass); }
+  .tile.house { background: var(--grass); }
+  .tile.door { background: var(--grass); }
+
+  .tree-sprite, .house-sprite {
+    position: absolute;
+    pointer-events: none;
+  }
+
+  .leash-svg { position: absolute; inset: 0; pointer-events: none; }
+
+  .sprite {
+    position: absolute;
+    transition: left .16s linear, top .16s linear;
+    pointer-events: none;
+  }
+  .sprite svg { width: 100%; height: 100%; display: block; overflow: visible; }
+  .player-sprite { z-index: 5; }
+  .dog-sprite { z-index: 4; }
+  .bob { animation: bob .5s ease-in-out infinite; }
+  @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+
+  .dpad {
+    position: absolute;
+    right: 18px; bottom: 18px;
+    display: grid;
+    grid-template-columns: repeat(3, 44px);
+    grid-template-rows: repeat(3, 44px);
+    gap: 4px;
+    z-index: 20;
+  }
+  .dpad button {
+    grid-column: 2; grid-row: 2;
+    border: none;
+    border-radius: 12px;
+    background: rgba(255,255,255,.85);
+    color: #3f6b3d;
+    font-size: 18px;
+    box-shadow: 0 4px 0 rgba(0,0,0,.25);
+  }
+  .dpad button:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,.25); }
+  .dpad button[data-dir="up"] { grid-column: 2; grid-row: 1; }
+  .dpad button[data-dir="left"] { grid-column: 1; grid-row: 2; }
+  .dpad button[data-dir="right"] { grid-column: 3; grid-row: 2; }
+  .dpad button[data-dir="down"] { grid-column: 2; grid-row: 3; }
+
+  .hint-bubble {
+    position: absolute;
+    top: 14px; left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255,255,255,.92);
+    color: #3f6b3d;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 7px 16px;
+    border-radius: 999px;
+    z-index: 20;
+    box-shadow: 0 4px 14px rgba(0,0,0,.25);
+  }
+
+  /* ---------- Haus-Innenraum ---------- */
+  #scene-house { flex-direction: column; background: var(--room); }
+  .room-bg {
+    position: absolute; inset: 0;
+    background:
+      linear-gradient(var(--room), var(--room)) bottom / 100% 62% no-repeat,
+      linear-gradient(#d9c39b, #d9c39b) top / 100% 40% no-repeat;
+  }
+  .room-bg::after {
+    content: "";
+    position: absolute; left: 0; right: 0; top: 40%;
+    height: 6px;
+    background: var(--wood);
+  }
+  .window {
+    position: absolute; top: 8%; left: 8%;
+    width: 70px; height: 50px;
+    background: var(--sky);
+    border: 6px solid #fff;
+    border-radius: 6px;
+  }
+  .rug {
+    position: absolute; bottom: 22%; left: 50%; transform: translateX(-50%);
+    width: 160px; height: 60px;
+    background: #e0a05a;
+    border-radius: 50%;
+    opacity: .8;
+  }
+
+  .dog-big { position: absolute; left: 50%; bottom: 30%; transform: translateX(-50%); width: 160px; height: 160px; z-index: 3; }
+  .dog-big svg { width: 100%; height: 100%; overflow: visible; }
+  .dog-big.happy { animation: happyBounce .5s ease; }
+  @keyframes happyBounce { 0%,100% { transform: translateX(-50%) scale(1); } 40% { transform: translateX(-50%) scale(1.12) rotate(-4deg); } 70% { transform: translateX(-50%) scale(1.05) rotate(3deg); } }
+
+  .hearts-layer { position: absolute; inset: 0; pointer-events: none; z-index: 6; overflow: hidden; }
+  .heart-fx {
+    position: absolute;
+    font-size: 22px;
+    animation: heartUp 1s ease-out forwards;
+  }
+  @keyframes heartUp { 0% { opacity: 0; transform: translateY(0) scale(.6); } 20% { opacity: 1; } 100% { opacity: 0; transform: translateY(-90px) scale(1.2); } }
+
+  .stat-bars {
+    position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 14px;
+    background: rgba(255,255,255,.7);
+    padding: 8px 16px;
+    border-radius: 999px;
+    z-index: 10;
+  }
+  .stat { display: flex; align-items: center; gap: 6px; font-size: 14px; }
+  .stat-track { width: 60px; height: 9px; border-radius: 999px; background: rgba(0,0,0,.15); overflow: hidden; }
+  .stat-fill { height: 100%; background: linear-gradient(90deg,#4ade80,#22c55e); transition: width .3s ease; }
+
+  .items-tray {
+    position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 16px;
+    z-index: 15;
+  }
+  .item {
+    width: 56px; height: 56px;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 6px 0 rgba(0,0,0,.15);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+    cursor: grab;
+    touch-action: none;
+  }
+  .item.dragging { position: fixed; z-index: 999; pointer-events: none; box-shadow: 0 10px 20px rgba(0,0,0,.3); transform: scale(1.15); }
+
+  .exit-btn {
+    position: absolute; top: 14px; left: 14px;
+    border: none; border-radius: 999px;
+    background: rgba(255,255,255,.85);
+    color: #6b4226;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 9px 16px;
+    z-index: 15;
+  }
+  .exit-btn:active { transform: scale(.95); }
+
+  /* ---------- dünner Sammel-Fortschrittsbalken (Bestellungen) ---------- */
+  .wait-bar-thin {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    height: 6px;
+    background: rgba(255,255,255,.12);
+    z-index: 50;
+    display: none;
+  }
+  .wait-bar-thin.show { display: block; }
+  .wait-bar-thin-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #22d3ee, #a855f7, #ff3d9a);
+    transition: width .5s linear;
+  }
+  .wait-bar-thin-fill.gold { background: linear-gradient(90deg, #ffd700, #fff3b0, #ffb703); }
+</style>
+</head>
+<body>
+
+<div class="rotate-overlay" id="rotate-overlay">
+  <div class="rotate-icon">📱</div>
+  <p>Bitte drehe dein Gerät ins Querformat, um zu spielen.</p>
+</div>
+
+<div id="app">
+  <div class="scene active" id="scene-outdoor">
+    <div id="outdoor-stage">
+      <div class="map" id="map"></div>
+      <svg class="leash-svg" id="leash-svg"><line id="leash-line" x1="0" y1="0" x2="0" y2="0" stroke="#8a5a3a" stroke-width="2" stroke-linecap="round" stroke-dasharray="4 3"/></svg>
+      <div class="sprite player-sprite" id="player"></div>
+      <div class="sprite dog-sprite" id="dog-outdoor"></div>
+      <div class="hint-bubble" id="hint-bubble" hidden>Zur Tür gehen, um reinzugehen 🏠</div>
+      <div class="dpad">
+        <button data-dir="up" type="button">▲</button>
+        <button data-dir="left" type="button">◀</button>
+        <button data-dir="right" type="button">▶</button>
+        <button data-dir="down" type="button">▼</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="scene" id="scene-house">
+    <div class="room-bg"></div>
+    <div class="window"></div>
+    <div class="rug"></div>
+    <button class="exit-btn" id="exit-house" type="button">🚪 Raus</button>
+    <div class="stat-bars">
+      <div class="stat">💧<div class="stat-track"><div class="stat-fill" id="stat-water"></div></div></div>
+      <div class="stat">✨<div class="stat-track"><div class="stat-fill" id="stat-fur"></div></div></div>
+      <div class="stat">❤️<div class="stat-track"><div class="stat-fill" id="stat-love"></div></div></div>
+    </div>
+    <div class="dog-big" id="dog-house"></div>
+    <div class="hearts-layer" id="hearts-layer"></div>
+    <div class="items-tray">
+      <div class="item" data-item="water" id="item-water">💧</div>
+      <div class="item" data-item="brush" id="item-brush">🪮</div>
+      <div class="item" data-item="pet" id="item-pet">✋</div>
+    </div>
+  </div>
+</div>
+
+<div class="wait-bar-thin" id="wait-bar-thin"><div class="wait-bar-thin-fill" id="wait-bar-thin-fill"></div></div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ================= Bestell-Sammelbalken (Daten von der Hauptseite) ================= */
+  (function () {
+    var KEY = 'mw-wait-order';
+    var bar = document.getElementById('wait-bar-thin');
+    var fill = document.getElementById('wait-bar-thin-fill');
+    function tick() {
+      var q;
+      try { q = JSON.parse(localStorage.getItem(KEY)); } catch (e) { q = null; }
+      if (!q || !q.length) { bar.classList.remove('show'); return; }
+      bar.classList.add('show');
+      var start = q[0].start, end = q[q.length - 1].end;
+      var now = Date.now();
+      var pct = Math.max(0, Math.min(100, ((now - start) / (end - start)) * 100));
+      fill.style.width = pct + '%';
+      fill.classList.toggle('gold', now >= end);
+    }
+    tick();
+    setInterval(tick, 1000);
+  })();
+
+  /* ================= Orientierung: Best-effort Landscape-Lock ================= */
+  document.addEventListener('click', function once() {
+    document.removeEventListener('click', once);
+    try {
+      if (screen.orientation && screen.orientation.lock) {
+        screen.orientation.lock('landscape').catch(function () {});
+      }
+    } catch (e) {}
+  }, { once: true });
+
+  /* ================= Kartendaten ================= */
+  var MAP = [
+    'FFFFFFFFFF',
+    'FGGGTGGGGF',
+    'FGGGGGWWGF',
+    'FGHHGGWGGF',
+    'FGDHGGGTGF',
+    'FFFFFFFFFF'
+  ];
+  var ROWS = MAP.length, COLS = MAP[0].length;
+  var DOOR = { x: 2, y: 4 };
+  var BLOCKED = { F: 1, T: 1, W: 1, H: 1 };
+
+  var mapEl = document.getElementById('map');
+  var stage = document.getElementById('outdoor-stage');
+  var playerEl = document.getElementById('player');
+  var dogOutEl = document.getElementById('dog-outdoor');
+  var leashLine = document.getElementById('leash-line');
+  var hintBubble = document.getElementById('hint-bubble');
+
+  var TILE = 48;
+
+  function svgTree() {
+    return '<svg viewBox="0 0 48 48"><circle cx="24" cy="18" r="14" fill="#3f9142"/><circle cx="15" cy="24" r="10" fill="#4caf50"/><circle cx="33" cy="24" r="10" fill="#4caf50"/><rect x="20" y="28" width="8" height="14" rx="2" fill="#6b4226"/></svg>';
+  }
+  function svgHouse() {
+    return '<svg viewBox="0 0 96 96"><polygon points="48,4 92,40 4,40" fill="#c85a4a"/><rect x="14" y="38" width="68" height="52" fill="#f2dcae"/><rect x="40" y="60" width="18" height="30" fill="#8a5a3a" rx="2"/><rect x="22" y="52" width="16" height="16" fill="#bfe8f5" stroke="#fff" stroke-width="3"/><rect x="60" y="52" width="16" height="16" fill="#bfe8f5" stroke="#fff" stroke-width="3"/></svg>';
+  }
+  function svgPlayer() {
+    return '<svg viewBox="0 0 40 48">' +
+      '<ellipse cx="20" cy="44" rx="10" ry="3" fill="rgba(0,0,0,.2)"/>' +
+      '<rect x="10" y="20" width="20" height="20" rx="7" fill="#4f7cff"/>' +
+      '<circle cx="20" cy="12" r="11" fill="#ffd9b3"/>' +
+      '<path d="M9 10a11 11 0 0 1 22 0c-4-3-18-3-22 0z" fill="#6b4226"/>' +
+      '<circle cx="16" cy="13" r="1.6" fill="#3a2a20"/><circle cx="24" cy="13" r="1.6" fill="#3a2a20"/>' +
+      '<path d="M16 17c2 2 6 2 8 0" stroke="#3a2a20" stroke-width="1.4" fill="none" stroke-linecap="round"/>' +
+      '</svg>';
+  }
+  function svgDog(big) {
+    return '<svg viewBox="0 0 60 44">' +
+      '<ellipse cx="30" cy="40" rx="16" ry="3" fill="rgba(0,0,0,.18)"/>' +
+      '<ellipse cx="26" cy="26" rx="17" ry="13" fill="#d9a066"/>' +
+      '<circle cx="46" cy="18" r="11" fill="#e0ab72"/>' +
+      '<path d="M38 10c-2-5 2-8 5-6-1 3-1 6-2 8z" fill="#c07f45"/>' +
+      '<path d="M52 10c3-4 8-3 8 1-3 1-6 3-7 5z" fill="#c07f45"/>' +
+      '<circle cx="42" cy="17" r="1.6" fill="#3a2a20"/><circle cx="50" cy="16" r="1.6" fill="#3a2a20"/>' +
+      '<ellipse cx="55" cy="21" rx="3" ry="2.2" fill="#3a2a20"/>' +
+      '<path d="M10 22c-6 1-8 6-4 9 3-2 6-4 8-6z" fill="#d9a066" class="tailwag"/>' +
+      '</svg>';
+  }
+
+  var grid = [];
+  for (var y = 0; y < ROWS; y++) {
+    var row = [];
+    for (var x = 0; x < COLS; x++) row.push(MAP[y][x]);
+    grid.push(row);
+  }
+
+  function buildMap() {
+    mapEl.style.gridTemplateColumns = 'repeat(' + COLS + ', ' + TILE + 'px)';
+    mapEl.style.gridTemplateRows = 'repeat(' + ROWS + ', ' + TILE + 'px)';
+    mapEl.style.width = (COLS * TILE) + 'px';
+    mapEl.style.height = (ROWS * TILE) + 'px';
+    mapEl.innerHTML = '';
+    for (var y = 0; y < ROWS; y++) {
+      for (var x = 0; x < COLS; x++) {
+        var ch = grid[y][x];
+        var t = document.createElement('div');
+        var cls = ch === 'F' ? 'fence' : ch === 'W' ? 'water' : ch === 'D' ? 'door' : 'grass';
+        t.className = 'tile ' + cls;
+        mapEl.appendChild(t);
+        if (ch === 'T') {
+          var tr = document.createElement('div');
+          tr.className = 'tree-sprite';
+          tr.style.left = (x * TILE - 2) + 'px';
+          tr.style.top = (y * TILE - 20) + 'px';
+          tr.style.width = (TILE + 4) + 'px';
+          tr.style.height = (TILE + 20) + 'px';
+          tr.innerHTML = svgTree();
+          mapEl.appendChild(tr);
+        }
+      }
+    }
+    /* Haus als ein großes Sprite über die 2x2-Fläche */
+    var hs = document.createElement('div');
+    hs.className = 'house-sprite';
+    hs.style.left = (2 * TILE) + 'px';
+    hs.style.top = (3 * TILE - TILE * 0.7) + 'px';
+    hs.style.width = (2 * TILE) + 'px';
+    hs.style.height = (2 * TILE + TILE * 0.7) + 'px';
+    hs.innerHTML = svgHouse();
+    mapEl.appendChild(hs);
+
+    stage.style.width = (COLS * TILE) + 'px';
+    stage.style.height = (ROWS * TILE) + 'px';
+    document.getElementById('leash-svg').setAttribute('width', COLS * TILE);
+    document.getElementById('leash-svg').setAttribute('height', ROWS * TILE);
+    document.getElementById('leash-svg').style.width = (COLS * TILE) + 'px';
+    document.getElementById('leash-svg').style.height = (ROWS * TILE) + 'px';
+  }
+
+  playerEl.innerHTML = svgPlayer();
+  dogOutEl.innerHTML = svgDog();
+  document.getElementById('dog-house').innerHTML = svgDog(true);
+
+  var player = { x: 5, y: 1 };
+  var trail = [];
+  var dogPos = { x: 5, y: 2 };
+  var moving = false;
+
+  function placeSprite(el, x, y, w, h) {
+    el.style.left = (x * TILE + (TILE - w) / 2) + 'px';
+    el.style.top = (y * TILE + (TILE - h) / 2 - h * 0.15) + 'px';
+    el.style.width = w + 'px';
+    el.style.height = h + 'px';
+  }
+
+  function updateLeash() {
+    var px = player.x * TILE + TILE / 2, py = player.y * TILE + TILE / 2;
+    var dx = dogPos.x * TILE + TILE / 2, dy = dogPos.y * TILE + TILE / 2;
+    leashLine.setAttribute('x1', px); leashLine.setAttribute('y1', py);
+    leashLine.setAttribute('x2', dx); leashLine.setAttribute('y2', dy);
+  }
+
+  function render() {
+    placeSprite(playerEl, player.x, player.y, 34, 42);
+    placeSprite(dogOutEl, dogPos.x, dogPos.y, 46, 34);
+    updateLeash();
+  }
+
+  function walkable(x, y) {
+    if (x < 0 || y < 0 || x >= COLS || y >= ROWS) return false;
+    return !BLOCKED[grid[y][x]];
+  }
+
+  function tryMove(dx, dy) {
+    if (moving) return;
+    var nx = player.x + dx, ny = player.y + dy;
+    if (!walkable(nx, ny)) return;
+    moving = true;
+    trail.unshift({ x: player.x, y: player.y });
+    if (trail.length > 6) trail.pop();
+    player.x = nx; player.y = ny;
+    var dogTarget = trail[Math.min(2, trail.length - 1)] || { x: player.x, y: player.y };
+    dogPos = dogTarget;
+    render();
+    hintBubble.hidden = !(nx === DOOR.x && ny === DOOR.y);
+    setTimeout(function () {
+      moving = false;
+      if (nx === DOOR.x && ny === DOOR.y) enterHouse();
+    }, 170);
+  }
+
+  document.addEventListener('keydown', function (e) {
+    var map = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0], w: [0, -1], s: [0, 1], a: [-1, 0], d: [1, 0] };
+    var m = map[e.key];
+    if (!m) return;
+    e.preventDefault();
+    tryMove(m[0], m[1]);
+  });
+  document.querySelectorAll('.dpad button').forEach(function (btn) {
+    var map = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
+    btn.addEventListener('pointerdown', function (e) {
+      e.preventDefault();
+      var m = map[btn.dataset.dir];
+      tryMove(m[0], m[1]);
+    });
+  });
+
+  /* ================= Szenenwechsel ================= */
+  var sceneOutdoor = document.getElementById('scene-outdoor');
+  var sceneHouse = document.getElementById('scene-house');
+  function enterHouse() {
+    sceneOutdoor.classList.remove('active');
+    sceneHouse.classList.add('active');
+    refreshStats();
+  }
+  document.getElementById('exit-house').addEventListener('click', function () {
+    sceneHouse.classList.remove('active');
+    sceneOutdoor.classList.add('active');
+    player.x = DOOR.x; player.y = DOOR.y;
+    render();
+  });
+
+  /* ================= Haustier-Pflege ================= */
+  var STAT_KEY = 'mw-pet-stats';
+  var stats = { water: 70, fur: 70, love: 70, t: Date.now() };
+  try {
+    var saved = JSON.parse(localStorage.getItem(STAT_KEY));
+    if (saved) stats = saved;
+  } catch (e) {}
+  function decay() {
+    var now = Date.now();
+    var minutes = (now - stats.t) / 60000;
+    stats.water = Math.max(0, stats.water - minutes * 1.5);
+    stats.fur = Math.max(0, stats.fur - minutes * 1);
+    stats.love = Math.max(0, stats.love - minutes * 1.2);
+    stats.t = now;
+  }
+  function saveStats() { try { localStorage.setItem(STAT_KEY, JSON.stringify(stats)); } catch (e) {} }
+  function refreshStats() {
+    decay();
+    document.getElementById('stat-water').style.width = stats.water + '%';
+    document.getElementById('stat-fur').style.width = stats.fur + '%';
+    document.getElementById('stat-love').style.width = stats.love + '%';
+    saveStats();
+  }
+  setInterval(function () { if (sceneHouse.classList.contains('active')) refreshStats(); }, 4000);
+
+  function popHeart(x, y) {
+    var layer = document.getElementById('hearts-layer');
+    var h = document.createElement('div');
+    h.className = 'heart-fx';
+    h.textContent = ['💖', '✨', '💕'][(Math.random() * 3) | 0];
+    h.style.left = (x - 10) + 'px';
+    h.style.top = (y - 10) + 'px';
+    layer.appendChild(h);
+    setTimeout(function () { h.remove(); }, 1000);
+  }
+
+  function careAction(kind) {
+    if (kind === 'water') stats.water = Math.min(100, stats.water + 35);
+    else if (kind === 'brush') stats.fur = Math.min(100, stats.fur + 35);
+    else if (kind === 'pet') stats.love = Math.min(100, stats.love + 35);
+    refreshStats();
+    var dog = document.getElementById('dog-house');
+    dog.classList.remove('happy'); void dog.offsetWidth; dog.classList.add('happy');
+    var rect = dog.getBoundingClientRect();
+    for (var i = 0; i < 4; i++) {
+      (function (i) {
+        setTimeout(function () {
+          popHeart(rect.left + rect.width / 2 + (Math.random() * 60 - 30), rect.top + Math.random() * 30);
+        }, i * 90);
+      })(i);
+    }
+  }
+
+  /* Drag & Drop der Pflege-Items auf den Hund (Maus + Touch), plus einfacher Tap-Fallback */
+  document.querySelectorAll('.item').forEach(function (item) {
+    var dragging = false, moved = false, clone = null;
+    item.addEventListener('pointerdown', function (e) {
+      dragging = true; moved = false;
+      try { item.setPointerCapture(e.pointerId); } catch (err) {}
+    });
+    item.addEventListener('pointermove', function (e) {
+      if (!dragging) return;
+      moved = true;
+      if (!clone) {
+        clone = item.cloneNode(true);
+        clone.classList.add('dragging');
+        document.body.appendChild(clone);
+      }
+      clone.style.left = (e.clientX - 28) + 'px';
+      clone.style.top = (e.clientY - 28) + 'px';
+    });
+    function finish(e) {
+      if (!dragging) return;
+      dragging = false;
+      var dog = document.getElementById('dog-house');
+      var r = dog.getBoundingClientRect();
+      var hit = moved && e.clientX >= r.left - 20 && e.clientX <= r.right + 20 && e.clientY >= r.top - 20 && e.clientY <= r.bottom + 20;
+      if (clone) { clone.remove(); clone = null; }
+      if (hit || !moved) careAction(item.dataset.item);
+    }
+    item.addEventListener('pointerup', finish);
+    item.addEventListener('pointercancel', function () { dragging = false; if (clone) { clone.remove(); clone = null; } });
+  });
+
+  /* ================= Größe anpassen ================= */
+  function fitStage() {
+    var vw = window.innerWidth, vh = window.innerHeight - 8;
+    TILE = Math.max(24, Math.floor(Math.min(vw / COLS, vh / ROWS)));
+    buildMap();
+    render();
+  }
+  window.addEventListener('resize', fitStage);
+  fitStage();
+})();
+</script>
+</body>
+</html>

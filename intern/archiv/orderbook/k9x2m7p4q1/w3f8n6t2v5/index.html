@@ -340,10 +340,7 @@
 
   /* ---------- floating cart button ---------- */
   .cart-fab {
-    position: fixed;
-    left: 50%;
-    bottom: 26px;
-    transform: translateX(-50%);
+    position: relative;
     z-index: 60;
     overflow: hidden;
     display: inline-flex;
@@ -377,7 +374,7 @@
     pointer-events: none;
   }
   @keyframes sheen { to { transform: rotate(1turn); } }
-  .cart-fab:active { transform: translateX(-50%) scale(.95); }
+  .cart-fab:active { transform: scale(.95); }
   @keyframes floatFab {
     50% { box-shadow: 0 26px 58px -12px rgba(168,85,247,.65), 0 0 0 1px rgba(255,255,255,.08) inset; }
   }
@@ -643,7 +640,8 @@
     .add-btn:hover { background: var(--grad); background-size: 200% 100%; box-shadow: 0 12px 28px -10px rgba(255,61,154,.6); color: #fff; }
     .btn-accent:hover { box-shadow: 0 20px 44px -12px rgba(255,61,154,.7); }
     .btn-ghost:hover { color: var(--ink); border-color: var(--pink); }
-    .cart-fab:hover { transform: translateX(-50%) translateY(-4px) scale(1.03); }
+    .cart-fab:hover { transform: translateY(-4px) scale(1.03); }
+    .wait-btn:hover { transform: translateY(-4px) scale(1.05); }
     .modal-close:hover { color: #fff; border-color: var(--pink); transform: rotate(90deg); }
     .tm-opt:hover { color: var(--pink); }
     .qty button:hover { background: var(--grad); background-size: 200% 100%; border-color: transparent; color: #fff; }
@@ -1046,6 +1044,289 @@
   .luck-result-name small { display: block; font-weight: 400; font-size: 13px; color: var(--ink-faint); margin-top: 4px; }
   .luck-result-quip { font-size: 14px; color: var(--pink); font-weight: 600; }
   .luck-result-sub { font-size: 13px; color: var(--ink-faint); }
+
+  /* ---------- Bottom-Dock: Warenkorb + Wartemodus-Knopf nebeneinander ---------- */
+  .bottom-dock {
+    position: fixed;
+    left: 50%;
+    bottom: 26px;
+    transform: translateX(-50%);
+    z-index: 60;
+    display: flex;
+    align-items: flex-end;
+    gap: 14px;
+  }
+
+  .wait-btn {
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+    width: 93px;
+    height: 93px;
+    border-radius: 50%;
+    border: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    color: #fff;
+    background: radial-gradient(circle at 35% 30%, #ff5468, #e11d2e 62%, #ad1120);
+    box-shadow: 0 18px 40px -14px rgba(225,29,46,.6), 0 0 0 1px rgba(255,255,255,.08) inset;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .15s;
+  }
+  .wait-btn.popping { z-index: 260; }
+  .wait-btn:active { transform: scale(.92); }
+
+  /* ---------- Wartemodus-Fenster (breiter, feste Größe) ---------- */
+  .wait-panel {
+    position: relative;
+    width: min(700px, 94vw);
+    height: min(640px, 88vh);
+    display: flex;
+    flex-direction: column;
+    padding: 22px;
+    border-radius: 26px;
+    background: linear-gradient(165deg, #1a1026, #120a1c);
+    border: 1px solid var(--glass-line);
+    box-shadow: 0 40px 90px -30px rgba(0,0,0,.8);
+    transform: translateY(24px) scale(.94);
+    opacity: 0;
+    transition: transform .32s cubic-bezier(.2,.8,.2,1), opacity .28s;
+    overflow: hidden;
+  }
+  .modal.open .wait-panel { transform: translateY(0) scale(1); opacity: 1; }
+  .wait-panel::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(100deg, #22d3ee, #38bdf8, #a855f7, #ff3d9a);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: .55;
+    pointer-events: none;
+  }
+  .wait-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-shrink: 0; }
+  .wait-head h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 19px;
+    font-weight: 700;
+    background: linear-gradient(100deg, #22d3ee, #52d0ec, #a855f7, #c98cf0, #ff3d9a);
+    background-size: 260% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: flow 12s ease-in-out infinite;
+  }
+
+  .wait-progress-list { flex-shrink: 0; margin-bottom: 14px; display: flex; flex-direction: column; gap: 12px; }
+  .wait-progress-wrap { flex-shrink: 0; }
+  .wait-progress-track {
+    height: 12px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.08);
+    overflow: hidden;
+    border: 1px solid var(--glass-line);
+  }
+  .wait-progress-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #22d3ee, #a855f7, #ff3d9a);
+    background-size: 200% 100%;
+    animation: flow 6s ease-in-out infinite;
+    transition: width .35s linear;
+  }
+  .wait-progress-fill.gold {
+    background: linear-gradient(90deg, #ffd700, #fff3b0, #ffb703, #ffd700);
+    background-size: 300% 100%;
+    animation: flow 2.2s linear infinite;
+    box-shadow: 0 0 14px 2px rgba(255,215,0,.65);
+  }
+  .wait-progress-text {
+    margin-top: 9px;
+    font-size: 13px;
+    color: var(--ink-dim);
+    min-height: 18px;
+    text-align: center;
+  }
+  .wait-progress-text.swap { animation: rise .3s ease both; }
+  .wait-progress-wrap.leaving { opacity: 0; transition: opacity .4s ease; }
+  .wait-progress-wrap.entering { animation: rise .4s ease both; }
+
+  .wait-body { position: relative; flex: 1; min-height: 0; }
+  .wait-screen {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 14px;
+    overflow: auto;
+    padding: 2px 2px 6px;
+  }
+  .wait-screen.active { display: flex; animation: rise .35s ease both; }
+
+  .wait-back {
+    position: absolute;
+    overflow: hidden;
+    top: -2px; left: 0;
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    border: 1px solid var(--glass-line);
+    background: rgba(255,255,255,.05);
+    color: var(--ink-dim);
+    cursor: pointer;
+    font-size: 16px;
+  }
+
+  .wait-menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: 100%; max-width: 440px; }
+  .wait-feature-btn {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    width: 100%;
+    max-width: 440px;
+    margin-top: 14px;
+    padding: 14px 18px;
+    border-radius: 16px;
+    border: 1px solid rgba(255,215,0,.65);
+    background: linear-gradient(100deg, #ffd700, #ffb703, #ff8f00);
+    background-size: 220% 100%;
+    animation: flow 5s ease-in-out infinite;
+    color: #2a1a00;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: 0 10px 26px -10px rgba(255,183,3,.6);
+    transition: transform .15s;
+  }
+  .wait-feature-btn .emoji { font-size: 26px; flex-shrink: 0; }
+  .wait-feature-copy strong { display: block; font-family: 'Space Grotesk', sans-serif; font-size: 15px; }
+  .wait-feature-copy small { display: block; font-size: 12px; color: #4a3300; font-weight: 600; margin-top: 2px; }
+  .wait-feature-btn:active { transform: scale(.97); }
+  .wait-game-btn {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 26px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--glass-line);
+    background: rgba(255,255,255,.05);
+    color: var(--ink);
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    transition: transform .15s, background .2s, color .2s;
+  }
+  .wait-game-btn .emoji { font-size: 34px; }
+  .wait-game-btn:active { transform: scale(.95); background: var(--grad); background-size: 200% 100%; color: #fff; }
+
+  /* Tic-Tac-Toe */
+  .ttt-diff {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  @media (max-width: 480px) {
+    .ttt-diff { position: static; transform: none; flex-direction: row; }
+  }
+  .ttt-diff-btn {
+    position: relative;
+    overflow: hidden;
+    padding: 9px 16px;
+    border-radius: 12px;
+    border: 1px solid var(--glass-line);
+    background: rgba(255,255,255,.05);
+    color: var(--ink-dim);
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background .2s, color .2s;
+  }
+  .ttt-diff-btn.active { background: var(--grad); background-size: 200% 100%; color: #fff; }
+  .ttt-grid { display: grid; grid-template-columns: repeat(3, 72px); grid-template-rows: repeat(3, 72px); gap: 8px; }
+  .ttt-cell {
+    position: relative;
+    overflow: hidden;
+    border-radius: 14px;
+    border: 1px solid var(--glass-line);
+    background: rgba(255,255,255,.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 30px;
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .ttt-cell.x { color: #ff3d9a; }
+  .ttt-cell.o { color: #22d3ee; }
+  .ttt-status { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 16px; }
+
+  /* Memory */
+  .mem-grid { display: grid; grid-template-columns: repeat(4, 62px); gap: 8px; }
+  .mem-card {
+    position: relative;
+    overflow: hidden;
+    width: 62px; height: 62px;
+    border-radius: 12px;
+    cursor: pointer;
+    background: rgba(255,255,255,.07);
+    border: 1px solid var(--glass-line);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+  }
+  .mem-card .face { width: 68%; height: 68%; }
+  .mem-card .face svg { width: 100%; height: 100%; display: block; }
+  .mem-card.matched { opacity: .35; }
+  .mem-status { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15px; }
+
+  /* Snake */
+  #snake-canvas { background: #0c0710; border-radius: 16px; border: 1px solid var(--glass-line); touch-action: none; }
+  .snake-score { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15px; }
+
+  /* Reaktionstest */
+  .reaction-box {
+    position: relative;
+    overflow: hidden;
+    width: 230px; height: 150px;
+    border-radius: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    color: #fff;
+    background: rgba(255,61,154,.4);
+    cursor: pointer;
+    user-select: none;
+    transition: background .15s;
+  }
+  .reaction-box.go { background: #22c55e; }
+  .reaction-result { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15px; color: var(--ink-dim); }
 </style>
 </head>
 <body>
@@ -1083,10 +1364,13 @@
 <div class="touch-aura" id="touch-aura"></div>
 <canvas id="fx"></canvas>
 
-<button class="cart-fab" id="cart-fab" type="button">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.6"/><circle cx="18" cy="20" r="1.6"/><path d="M2.5 3h2.2l2.4 12.4a2 2 0 0 0 2 1.6h8.3a2 2 0 0 0 2-1.6L23 6.5H6"/></svg>
-  <span class="label">Warenkorb</span> <span class="count" id="cart-count">0</span>
-</button>
+<div class="bottom-dock">
+  <button class="cart-fab" id="cart-fab" type="button">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.6"/><circle cx="18" cy="20" r="1.6"/><path d="M2.5 3h2.2l2.4 12.4a2 2 0 0 0 2 1.6h8.3a2 2 0 0 0 2-1.6L23 6.5H6"/></svg>
+    <span class="label">Warenkorb</span> <span class="count" id="cart-count">0</span>
+  </button>
+  <button class="wait-btn" id="wait-btn" type="button" aria-label="Wartemodus">🎮</button>
+</div>
 
 <!-- topping modal -->
 <div class="modal" id="topping-modal">
@@ -1189,6 +1473,68 @@
         <button class="btn btn-accent btn-block" id="luck-again" type="button">Nochmal spielen</button>
       </div>
 
+    </div>
+  </div>
+</div>
+
+<!-- Wartemodus -->
+<div class="modal" id="wait-modal">
+  <div class="wait-panel">
+    <div class="wait-head">
+      <h3>🎮 Wartemodus</h3>
+      <button class="modal-close" id="wait-close" type="button" aria-label="Schließen">&times;</button>
+    </div>
+
+    <div class="wait-progress-list" id="wait-progress-list">
+      <div class="wait-progress-text">Nichts unterwegs — leg doch was in den Warenkorb!</div>
+    </div>
+
+    <div class="wait-body">
+      <div class="wait-screen active" id="wait-scr-menu">
+        <div class="luck-pick-head">Womit die Zeit vertreiben?</div>
+        <div class="wait-menu-grid">
+          <button class="wait-game-btn" data-game="ttt" type="button"><span class="emoji">⭕</span>Tic-Tac-Toe</button>
+          <button class="wait-game-btn" data-game="memory" type="button"><span class="emoji">🧠</span>Memory</button>
+          <button class="wait-game-btn" data-game="snake" type="button"><span class="emoji">🐍</span>Snake</button>
+          <button class="wait-game-btn" data-game="reaction" type="button"><span class="emoji">⚡</span>Reaktionstest</button>
+        </div>
+        <a class="wait-feature-btn" id="wait-feature-btn" href="spiel/index.html" target="_blank" rel="noopener">
+          <span class="wait-feature-copy"><strong>Pets 🐶</strong></span>
+        </a>
+      </div>
+
+      <div class="wait-screen" id="wait-scr-ttt">
+        <button class="wait-back" data-back type="button" aria-label="Zurück">←</button>
+        <div class="ttt-diff" id="ttt-diff">
+          <button class="ttt-diff-btn" data-diff="easy" type="button">Leicht</button>
+          <button class="ttt-diff-btn active" data-diff="medium" type="button">Mittel</button>
+          <button class="ttt-diff-btn" data-diff="hard" type="button">Schwer</button>
+        </div>
+        <div class="ttt-status" id="ttt-status">Du bist X</div>
+        <div class="ttt-grid" id="ttt-grid"></div>
+        <button class="btn btn-ghost" id="ttt-restart" type="button">Neu starten</button>
+      </div>
+
+      <div class="wait-screen" id="wait-scr-memory">
+        <button class="wait-back" data-back type="button" aria-label="Zurück">←</button>
+        <div class="mem-status" id="mem-status">Paare finden</div>
+        <div class="mem-grid" id="mem-grid"></div>
+        <button class="btn btn-ghost" id="mem-restart" type="button">Neu starten</button>
+      </div>
+
+      <div class="wait-screen" id="wait-scr-snake">
+        <button class="wait-back" data-back type="button" aria-label="Zurück">←</button>
+        <div class="snake-score" id="snake-score">Punkte: 0</div>
+        <canvas id="snake-canvas" width="280" height="280"></canvas>
+        <div class="snake-score" id="snake-hint">Wischen oder Pfeiltasten</div>
+      </div>
+
+      <div class="wait-screen" id="wait-scr-reaction">
+        <button class="wait-back" data-back type="button" aria-label="Zurück">←</button>
+        <div class="reaction-result" id="reaction-hint">Tippe auf Start.</div>
+        <div class="reaction-box" id="reaction-box">Start</div>
+        <div class="reaction-result" id="reaction-result"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -1663,7 +2009,23 @@ var FX = (function () {
     rainOfProduct(svgMarkup);
   }
 
-  return { sparks: sparks, celebrate: celebrate, trail: trail, luckWin: luckWin, reduced: RM };
+  /* ---- goldener Funkenregen für den fertigen Wartemodus-Balken ---- */
+  function goldRain(cx, y, width) {
+    var n = Math.round(22 * D);
+    var GOLD = ['#ffd700', '#ffe066', '#fff3b0', '#ffb703', '#fff'];
+    for (var i = 0; i < n; i++) {
+      add({
+        x: (cx - width / 2 + Math.random() * width) * dpr,
+        y: y * dpr,
+        vx: rnd(-0.5, 0.5) * dpr, vy: rnd(2.4, 5) * dpr,
+        g: 0.06 * dpr, drag: 0.99,
+        life: rnd(34, 58), s: rnd(1.6, 3.2) * dpr,
+        color: pick(GOLD), shape: 'spark', glow: true
+      });
+    }
+  }
+
+  return { sparks: sparks, celebrate: celebrate, trail: trail, luckWin: luckWin, goldRain: goldRain, reduced: RM };
 })();
 
 /* ============================================================
@@ -2047,7 +2409,7 @@ var SND = (function () {
   document.getElementById('cm-close').addEventListener('click', closeCart);
   cartModal.addEventListener('click', function (e) { if (e.target === cartModal) closeCart(); });
   document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape') { closeCart(); closeToppingModal(); luckClose(); }
+    if (e.key === 'Escape') { closeCart(); closeToppingModal(); luckClose(); waitClose(); }
   });
 
   /* ============================================================
@@ -2367,6 +2729,7 @@ var SND = (function () {
     }
     try { FX.luckWin(product.art); } catch (e) {}
     try { SND.win(); } catch (e) {}
+    try { registerLuckOrder(product); } catch (e) {}
     sendLuckOrder(product, toppings);
     document.getElementById('luck-result-art').innerHTML = product.art;
     document.getElementById('luck-result-name').innerHTML =
@@ -2379,6 +2742,552 @@ var SND = (function () {
     stopReel();
     stopWheel();
     luckShow('pick');
+  });
+
+  /* ============================================================
+     Wartemodus: Zubereitungs-Fortschritt + 4 Minispiele
+     ============================================================ */
+  var PREP_INFO = {
+    'wasser-still':    { time: 30, steps: ['Wasser wird eingefüllt', 'Flasche wird verschlossen'] },
+    'wasser-medium':   { time: 35, steps: ['Wasser wird eingefüllt', 'Kohlensäure wird zugegeben', 'Flasche wird verschlossen'] },
+    'cs-multivitamin': { time: 40, steps: ['Capri-Sonne wird geschüttelt', 'Strohhalm wird angepiekst'] },
+    'cs-fairydrink':   { time: 40, steps: ['Capri-Sonne wird geschüttelt', 'Strohhalm wird angepiekst'] },
+    'cs-safarifruits': { time: 40, steps: ['Capri-Sonne wird geschüttelt', 'Strohhalm wird angepiekst'] },
+    kaffee:  { time: 50, steps: ['Kaffee wird gemahlen', 'Wasser kocht auf', 'Kaffee tropft durch'] },
+    kakao:   { time: 45, steps: ['Milch wird erhitzt', 'Kakaopulver wird eingerührt'] },
+    muesli:  { time: 25, steps: ['Müsli wird abgefüllt', 'Milch wird in die Schüssel gegossen'] },
+    chips:   { time: 15, steps: ['Tüte wird geöffnet', 'Zufallssorte wird gezogen'] },
+    popcorn: { time: 60, steps: ['Popcorn poppt', 'Popcorn wird gewürzt', 'Tüte wird befüllt'] },
+    sandwich: { time: 90, steps: ['Brot wird geschnitten', 'Belag wird aufgelegt', 'Sandwich wird zusammengeklappt', 'Wird in Folie eingepackt'] }
+  };
+  var WAIT_CAP = 300;
+  var WAIT_GRACE_MS = 5 * 60 * 1000;
+  var WAIT_ORDER_KEY = 'mw-wait-order';
+
+  var waitModal = document.getElementById('wait-modal');
+  var waitScreens = {
+    menu: document.getElementById('wait-scr-menu'),
+    ttt: document.getElementById('wait-scr-ttt'),
+    memory: document.getElementById('wait-scr-memory'),
+    snake: document.getElementById('wait-scr-snake'),
+    reaction: document.getElementById('wait-scr-reaction')
+  };
+  function waitShow(name) {
+    Object.keys(waitScreens).forEach(function (k) { waitScreens[k].classList.toggle('active', k === name); });
+  }
+  var gameTimers = [];
+  function clearGameTimers() { gameTimers.forEach(function (t) { clearTimeout(t); clearInterval(t); }); gameTimers = []; }
+
+  /* ---- Bestell-Timer: Knopf bleibt versteckt, bis eine Bestellung läuft ----
+     Beliebig viele Bestellungen laufen nacheinander (Warteschlange), es werden aber
+     immer nur 3 Balken gleichzeitig gezeigt — ist der oberste fertig, rutscht nach
+     5 Sekunden alles eine Position nach oben und der nächste rutscht nach. */
+  var WAIT_SHOW = 3;
+  var WAIT_ADVANCE_DELAY = 5000;
+  var waitQueue = [];        // [{ start, total, end, flavor }] — komplette Warteschlange
+  var waitVisibleStart = 0;  // Index des ersten aktuell sichtbaren Balkens
+  var waitAdvancing = false;
+  var waitBtnShown = false;
+  var waitHideTimer = null;
+
+  function computeCartWaitInfo() {
+    var keys = Object.keys(cart).filter(function (k) { return cart[k] > 0; });
+    var total = 0, flavor = [];
+    keys.forEach(function (k) {
+      var info = PREP_INFO[baseId(k)];
+      if (!info) return;
+      total += info.time * cart[k];
+      flavor = flavor.concat(info.steps);
+    });
+    return { total: Math.min(total, WAIT_CAP), flavor: flavor };
+  }
+
+  function revealWaitBtn() {
+    var btn = document.getElementById('wait-btn');
+    btn.style.opacity = '1';
+    btn.style.pointerEvents = 'auto';
+    btn.classList.add('popping');
+    var rect = btn.getBoundingClientRect();
+    var cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
+    var dx = innerWidth / 2 - cx, dy = innerHeight / 2 - cy;
+    var big = Math.min(3.4, (Math.min(innerWidth, innerHeight) * 0.42) / rect.width);
+    var anim = btn.animate([
+      { transform: 'translate(' + dx + 'px,' + dy + 'px) scale(' + big + ') rotate(0deg)', opacity: 0 },
+      { transform: 'translate(' + dx + 'px,' + dy + 'px) scale(' + big + ') rotate(200deg)', opacity: 1, offset: 0.18 },
+      { transform: 'translate(0,0) scale(1) rotate(620deg)', opacity: 1 }
+    ], { duration: 620, easing: 'cubic-bezier(.16,.84,.2,1.06)' });
+    anim.onfinish = function () { btn.classList.remove('popping'); };
+  }
+  function hideWaitBtn() {
+    waitBtnShown = false;
+    waitQueue = [];
+    waitVisibleStart = 0;
+    waitFinalCelebrated = false;
+    clearWaitFxTimers();
+    try { localStorage.removeItem(WAIT_ORDER_KEY); } catch (e) {}
+    var btn = document.getElementById('wait-btn');
+    btn.style.opacity = '';
+    btn.style.pointerEvents = '';
+  }
+  function scheduleWaitHide() {
+    if (waitHideTimer) clearTimeout(waitHideTimer);
+    if (!waitQueue.length) return;
+    var lastEnd = waitQueue[waitQueue.length - 1].end;
+    var ms = (lastEnd + WAIT_GRACE_MS) - Date.now();
+    if (ms <= 0) { hideWaitBtn(); return; }
+    waitHideTimer = setTimeout(hideWaitBtn, ms);
+  }
+  function registerOrderInfo(info) {
+    if (!info || !info.total) return;
+    var now = Date.now();
+    var prevEnd = waitQueue.length ? waitQueue[waitQueue.length - 1].end : now;
+    var start = Math.max(prevEnd, now);
+    waitQueue.push({ start: start, total: info.total, end: start + info.total * 1000, flavor: info.flavor });
+    waitFinalCelebrated = false;
+    try { localStorage.setItem(WAIT_ORDER_KEY, JSON.stringify(waitQueue)); } catch (e) {}
+    scheduleWaitHide();
+    if (!waitBtnShown) {
+      waitBtnShown = true;
+      revealWaitBtn();
+    }
+  }
+  function registerOrder() { registerOrderInfo(computeCartWaitInfo()); }
+  function computeProductWaitInfo(product) {
+    var info = PREP_INFO[product.id];
+    if (!info) return { total: 0, flavor: [] };
+    return { total: Math.min(info.time, WAIT_CAP), flavor: info.steps.slice() };
+  }
+  function registerLuckOrder(product) { registerOrderInfo(computeProductWaitInfo(product)); }
+
+  function visibleQueue() { return waitQueue.slice(waitVisibleStart, waitVisibleStart + WAIT_SHOW); }
+  /* holt den Anzeige-Ausschnitt ohne Animation auf den korrekten Stand (z.B. nach Wiederöffnen) —
+     Ziel ist immer, dass am Ende nur die letzte (aktuelle) Bestellung übrig bleibt. */
+  function catchUpVisibleStart() {
+    var now = Date.now();
+    while (true) {
+      var first = waitQueue[waitVisibleStart];
+      if (!first) break;
+      var isLast = waitVisibleStart === waitQueue.length - 1;
+      if (!isLast && now - first.end >= WAIT_ADVANCE_DELAY) waitVisibleStart++;
+      else break;
+    }
+  }
+
+  var waitProgTimer = null, waitTextTimer = null, waitFlavorIdx = [];
+  var waitFinalCelebrated = false, waitFxTimers = [];
+  function clearWaitFxTimers() { waitFxTimers.forEach(function (t) { clearTimeout(t); }); waitFxTimers = []; }
+  function startGoldSparkShower(cx, y, width) {
+    var count = 0;
+    function burst() {
+      try { FX.goldRain(cx, y, width); } catch (e) {}
+      count++;
+      if (count < 12) waitFxTimers.push(setTimeout(burst, 280));
+    }
+    burst();
+  }
+  function renderProgressList() {
+    var wrap = document.getElementById('wait-progress-list');
+    var vis = visibleQueue();
+    if (!vis.length) {
+      wrap.innerHTML = '<div class="wait-progress-text">Nichts unterwegs — leg doch was in den Warenkorb!</div>';
+      return;
+    }
+    wrap.innerHTML = vis.map(function (o, i) {
+      return '<div class="wait-progress-wrap">' +
+        '<div class="wait-progress-track"><div class="wait-progress-fill" id="wpf-' + i + '"></div></div>' +
+        '<div class="wait-progress-text" id="wpt-' + i + '"></div>' +
+        '</div>';
+    }).join('');
+    waitFlavorIdx = vis.map(function () { return 0; });
+  }
+  function advanceQueueWithAnimation() {
+    if (waitAdvancing) return;
+    var wrap = document.getElementById('wait-progress-list');
+    var items = Array.prototype.slice.call(wrap.children);
+    if (!items.length) return;
+    waitAdvancing = true;
+    items[0].classList.add('leaving');
+    var restRects = items.slice(1).map(function (el) { return el.getBoundingClientRect(); });
+    gameTimers.push(setTimeout(function () {
+      waitVisibleStart++;
+      renderProgressList();
+      var newItems = Array.prototype.slice.call(wrap.children);
+      newItems.slice(0, restRects.length).forEach(function (el, i) {
+        var newRect = el.getBoundingClientRect();
+        var dy = restRects[i].top - newRect.top;
+        el.style.transition = 'none';
+        el.style.transform = 'translateY(' + dy + 'px)';
+        requestAnimationFrame(function () {
+          el.style.transition = 'transform .4s cubic-bezier(.2,.8,.2,1)';
+          el.style.transform = 'translateY(0)';
+        });
+      });
+      var lastNew = newItems[newItems.length - 1];
+      if (lastNew && newItems.length === WAIT_SHOW) lastNew.classList.add('entering');
+      waitAdvancing = false;
+    }, 420));
+  }
+  function startWaitProgress() {
+    clearInterval(waitProgTimer); clearInterval(waitTextTimer);
+    catchUpVisibleStart();
+    renderProgressList();
+    if (!waitQueue.length) return;
+    function tick() {
+      if (waitAdvancing) return;
+      var now = Date.now();
+      var vis = visibleQueue();
+      vis.forEach(function (o, i) {
+        var fill = document.getElementById('wpf-' + i);
+        var text = document.getElementById('wpt-' + i);
+        if (!fill) return;
+        var isLastOverall = (waitVisibleStart + i) === waitQueue.length - 1;
+        if (now < o.start) {
+          fill.style.width = '0%';
+          fill.classList.remove('gold');
+          text.textContent = 'Wartet, bis die vorherige Bestellung fertig ist …';
+        } else if (now >= o.end) {
+          fill.style.width = '100%';
+          if (isLastOverall) {
+            fill.classList.add('gold');
+            text.textContent = 'Alles fertig! Bereit zum Abholen 🎉✨';
+            if (!waitFinalCelebrated) {
+              waitFinalCelebrated = true;
+              try { SND.win(); } catch (e2) {}
+              var rect = fill.getBoundingClientRect();
+              startGoldSparkShower(rect.left + rect.width / 2, rect.bottom, rect.width);
+            }
+          } else {
+            fill.classList.remove('gold');
+            text.textContent = 'Fertig! Bestellung ' + (waitVisibleStart + i + 1) + ' steht bereit 🎉';
+          }
+        } else {
+          fill.classList.remove('gold');
+          var pct = Math.min(100, ((now - o.start) / 1000 / o.total) * 100);
+          fill.style.width = pct + '%';
+          var flavor = o.flavor.length ? o.flavor : ['Alles wird vorbereitet …'];
+          text.textContent = flavor[waitFlavorIdx[i] % flavor.length];
+        }
+      });
+      var first = vis[0];
+      var isLast = waitVisibleStart === waitQueue.length - 1;
+      if (first && !isLast && now >= first.end && now - first.end >= WAIT_ADVANCE_DELAY) {
+        advanceQueueWithAnimation();
+      } else if (first && isLast && now >= first.end) {
+        clearInterval(waitProgTimer);
+        clearInterval(waitTextTimer);
+      }
+    }
+    tick();
+    waitProgTimer = setInterval(tick, 300);
+    waitTextTimer = setInterval(function () {
+      waitFlavorIdx = waitFlavorIdx.map(function (v) { return v + 1; });
+    }, 2600);
+  }
+
+  function waitOpen() {
+    try { SND.click(); } catch (e) {}
+    waitModal.classList.add('open');
+    waitShow('menu');
+    startWaitProgress();
+  }
+  function waitClose() {
+    if (!waitModal.classList.contains('open')) return;
+    waitModal.classList.remove('open');
+    clearGameTimers();
+    stopSnake();
+    clearInterval(waitProgTimer);
+    clearInterval(waitTextTimer);
+    clearWaitFxTimers();
+  }
+  document.getElementById('wait-btn').addEventListener('click', waitOpen);
+  document.getElementById('wait-close').addEventListener('click', function () { try { SND.click(); } catch (e) {} waitClose(); });
+  waitModal.addEventListener('click', function (e) { if (e.target === waitModal) waitClose(); });
+
+  document.querySelectorAll('.wait-game-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      try { SND.click(); } catch (e) {}
+      var g = btn.dataset.game;
+      clearGameTimers();
+      if (g === 'ttt') startTTT();
+      else if (g === 'memory') startMemory();
+      else if (g === 'snake') startSnake();
+      else if (g === 'reaction') startReaction();
+      waitShow(g);
+    });
+  });
+  document.querySelectorAll('.wait-back').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      try { SND.click(); } catch (e) {}
+      clearGameTimers();
+      stopSnake();
+      waitShow('menu');
+    });
+  });
+
+  /* ---- Spiel 1: Tic-Tac-Toe ---- */
+  var tttBoard = [], tttOver = false;
+  function tttWinner(b) {
+    var lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+    for (var i = 0; i < lines.length; i++) {
+      var a = lines[i][0], c = lines[i][1], d = lines[i][2];
+      if (b[a] && b[a] === b[c] && b[a] === b[d]) return b[a];
+    }
+    if (b.every(function (v) { return v; })) return 'draw';
+    return null;
+  }
+  var tttDifficulty = 'medium';
+  var TTT_MISTAKE = { easy: 0.72, medium: 0.34, hard: 0.11 };
+  function tttEmpties(b) {
+    return b.map(function (v, i) { return v ? null : i; }).filter(function (v) { return v !== null; });
+  }
+  function tttAiMove() {
+    var b = tttBoard;
+    /* auf leicht/mittel/schwer baut die KI hin und wieder absichtlich einen Fehler ein */
+    if (Math.random() < TTT_MISTAKE[tttDifficulty]) {
+      var free = tttEmpties(b);
+      if (free.length) return free[(Math.random() * free.length) | 0];
+    }
+    function tryWin(sym) {
+      for (var i = 0; i < 9; i++) {
+        if (!b[i]) { b[i] = sym; var win = tttWinner(b) === sym; b[i] = null; if (win) return i; }
+      }
+      return -1;
+    }
+    var m = tryWin('O');
+    if (m < 0) m = tryWin('X');
+    if (m < 0 && !b[4]) m = 4;
+    if (m < 0) {
+      var corners = [0, 2, 6, 8].filter(function (i) { return !b[i]; });
+      if (corners.length) m = corners[(Math.random() * corners.length) | 0];
+    }
+    if (m < 0) {
+      var empties = b.map(function (v, i) { return v ? null : i; }).filter(function (v) { return v !== null; });
+      m = empties[(Math.random() * empties.length) | 0];
+    }
+    return m;
+  }
+  function renderTTT() {
+    var grid = document.getElementById('ttt-grid');
+    grid.innerHTML = '';
+    tttBoard.forEach(function (v, i) {
+      var cell = document.createElement('div');
+      cell.className = 'ttt-cell' + (v ? ' ' + v.toLowerCase() : '');
+      cell.textContent = v || '';
+      cell.dataset.i = i;
+      grid.appendChild(cell);
+    });
+  }
+  function tttEnd(w) {
+    tttOver = true;
+    var status = document.getElementById('ttt-status');
+    if (w === 'draw') { status.textContent = 'Unentschieden!'; }
+    else if (w === 'X') { status.textContent = 'Du hast gewonnen! 🎉'; try { SND.win(); } catch (e) {} }
+    else { status.textContent = 'Computer gewinnt!'; }
+  }
+  function startTTT() {
+    tttBoard = Array(9).fill(null);
+    tttOver = false;
+    document.getElementById('ttt-status').textContent = 'Du bist X — du beginnst!';
+    renderTTT();
+  }
+  document.getElementById('ttt-grid').addEventListener('click', function (e) {
+    var cell = e.target.closest('.ttt-cell');
+    if (!cell || tttOver) return;
+    var i = +cell.dataset.i;
+    if (tttBoard[i]) return;
+    try { SND.click(); } catch (err) {}
+    tttBoard[i] = 'X';
+    var w = tttWinner(tttBoard);
+    renderTTT();
+    if (w) { tttEnd(w); return; }
+    gameTimers.push(setTimeout(function () {
+      if (tttOver) return;
+      var m = tttAiMove();
+      if (m >= 0) tttBoard[m] = 'O';
+      var w2 = tttWinner(tttBoard);
+      renderTTT();
+      if (w2) tttEnd(w2);
+    }, 350));
+  });
+  document.getElementById('ttt-restart').addEventListener('click', function () { try { SND.click(); } catch (e) {} startTTT(); });
+  document.querySelectorAll('.ttt-diff-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      try { SND.click(); } catch (e) {}
+      tttDifficulty = btn.dataset.diff;
+      document.querySelectorAll('.ttt-diff-btn').forEach(function (b) { b.classList.toggle('active', b === btn); });
+      startTTT();
+    });
+  });
+
+  /* ---- Spiel 2: Memory ---- */
+  var memCards = [], memFlipped = [], memMatched = 0, memBusy = false;
+  function renderMemory() {
+    var grid = document.getElementById('mem-grid');
+    grid.innerHTML = '';
+    memCards.forEach(function (c, i) {
+      var el = document.createElement('div');
+      el.className = 'mem-card' + (c.matched ? ' matched' : '');
+      el.dataset.i = i;
+      el.innerHTML = (c.open || c.matched) ? ('<span class="face">' + c.art + '</span>') : '❓';
+      grid.appendChild(el);
+    });
+  }
+  function startMemory() {
+    var pool = PRODUCTS.slice(0, 6);
+    var deck = pool.concat(pool).map(function (p) { return { id: p.id, art: p.art, open: false, matched: false }; });
+    for (var i = deck.length - 1; i > 0; i--) {
+      var j = (Math.random() * (i + 1)) | 0;
+      var tmp = deck[i]; deck[i] = deck[j]; deck[j] = tmp;
+    }
+    memCards = deck; memFlipped = []; memMatched = 0; memBusy = false;
+    document.getElementById('mem-status').textContent = 'Paare finden: 0 / ' + pool.length;
+    renderMemory();
+  }
+  document.getElementById('mem-grid').addEventListener('click', function (e) {
+    if (memBusy) return;
+    var el = e.target.closest('.mem-card');
+    if (!el) return;
+    var i = +el.dataset.i, c = memCards[i];
+    if (c.open || c.matched) return;
+    try { SND.click(); } catch (err) {}
+    c.open = true;
+    memFlipped.push(i);
+    renderMemory();
+    if (memFlipped.length === 2) {
+      memBusy = true;
+      var a = memCards[memFlipped[0]], b = memCards[memFlipped[1]];
+      if (a.id === b.id) {
+        a.matched = b.matched = true;
+        memMatched++;
+        memFlipped = [];
+        memBusy = false;
+        var done = memMatched === memCards.length / 2;
+        document.getElementById('mem-status').textContent = done ? 'Geschafft! 🎉' : ('Paare finden: ' + memMatched + ' / ' + (memCards.length / 2));
+        if (done) { try { SND.win(); } catch (err2) {} }
+        renderMemory();
+      } else {
+        gameTimers.push(setTimeout(function () {
+          a.open = false; b.open = false;
+          memFlipped = []; memBusy = false;
+          renderMemory();
+        }, 700));
+      }
+    }
+  });
+  document.getElementById('mem-restart').addEventListener('click', function () { try { SND.click(); } catch (e) {} startMemory(); });
+
+  /* ---- Spiel 3: Snake ---- */
+  var snakeCv, snakeCtx, snakeTimer = null, snakeDir, snakeNextDir, snakeBody, snakeFood, snakeAlive, snakeCell = 20, snakeCols = 14;
+  function stopSnake() { if (snakeTimer) { clearInterval(snakeTimer); snakeTimer = null; } }
+  function snakeRandCell() { return { x: (Math.random() * snakeCols) | 0, y: (Math.random() * snakeCols) | 0 }; }
+  function drawSnake() {
+    var ctx = snakeCtx, cs = snakeCell;
+    ctx.clearRect(0, 0, snakeCv.width, snakeCv.height);
+    ctx.fillStyle = '#ff3d9a';
+    ctx.fillRect(snakeFood.x * cs + 2, snakeFood.y * cs + 2, cs - 4, cs - 4);
+    snakeBody.forEach(function (s, i) {
+      ctx.fillStyle = i === 0 ? '#22d3ee' : '#a855f7';
+      ctx.fillRect(s.x * cs + 1, s.y * cs + 1, cs - 2, cs - 2);
+    });
+  }
+  function snakeTick() {
+    if (!snakeAlive) return;
+    snakeDir = snakeNextDir;
+    var head = { x: snakeBody[0].x + snakeDir.x, y: snakeBody[0].y + snakeDir.y };
+    var hit = head.x < 0 || head.x >= snakeCols || head.y < 0 || head.y >= snakeCols ||
+      snakeBody.some(function (s) { return s.x === head.x && s.y === head.y; });
+    if (hit) {
+      snakeAlive = false;
+      stopSnake();
+      document.getElementById('snake-score').textContent = 'Game Over — Punkte: ' + (snakeBody.length - 3) + ' (antippen für neu)';
+      drawSnake();
+      return;
+    }
+    snakeBody.unshift(head);
+    if (head.x === snakeFood.x && head.y === snakeFood.y) {
+      document.getElementById('snake-score').textContent = 'Punkte: ' + (snakeBody.length - 3);
+      try { SND.click(); } catch (e) {}
+      do { snakeFood = snakeRandCell(); } while (snakeBody.some(function (s) { return s.x === snakeFood.x && s.y === snakeFood.y; }));
+    } else {
+      snakeBody.pop();
+    }
+    drawSnake();
+  }
+  function startSnake() {
+    snakeCv = document.getElementById('snake-canvas');
+    snakeCtx = snakeCv.getContext('2d');
+    snakeBody = [{ x: 6, y: 7 }, { x: 5, y: 7 }, { x: 4, y: 7 }];
+    snakeDir = { x: 1, y: 0 }; snakeNextDir = { x: 1, y: 0 };
+    do { snakeFood = snakeRandCell(); } while (snakeBody.some(function (s) { return s.x === snakeFood.x && s.y === snakeFood.y; }));
+    snakeAlive = true;
+    document.getElementById('snake-score').textContent = 'Punkte: 0';
+    stopSnake();
+    drawSnake();
+    snakeTimer = setInterval(snakeTick, 130);
+  }
+  function snakeSetDir(x, y) {
+    if (snakeDir.x === -x && snakeDir.y === -y) return;
+    snakeNextDir = { x: x, y: y };
+  }
+  document.addEventListener('keydown', function (e) {
+    if (!waitScreens.snake.classList.contains('active')) return;
+    if (e.key === 'ArrowUp') snakeSetDir(0, -1);
+    else if (e.key === 'ArrowDown') snakeSetDir(0, 1);
+    else if (e.key === 'ArrowLeft') snakeSetDir(-1, 0);
+    else if (e.key === 'ArrowRight') snakeSetDir(1, 0);
+  });
+  (function () {
+    var sx = 0, sy = 0;
+    var cv = document.getElementById('snake-canvas');
+    cv.addEventListener('touchstart', function (e) { var t = e.touches[0]; sx = t.clientX; sy = t.clientY; }, { passive: true });
+    cv.addEventListener('touchend', function (e) {
+      var t = e.changedTouches[0];
+      var dx = t.clientX - sx, dy = t.clientY - sy;
+      if (Math.abs(dx) > Math.abs(dy)) snakeSetDir(dx > 0 ? 1 : -1, 0);
+      else snakeSetDir(0, dy > 0 ? 1 : -1);
+    }, { passive: true });
+    cv.addEventListener('click', function () { if (!snakeAlive) startSnake(); });
+  })();
+
+  /* ---- Spiel 4: Reaktionstest ---- */
+  var reactionState = 'idle', reactionStart = 0;
+  function resetReactionUI() {
+    var box = document.getElementById('reaction-box');
+    box.classList.remove('go');
+    box.textContent = 'Start';
+    document.getElementById('reaction-hint').textContent = 'Tippe auf Start.';
+    document.getElementById('reaction-result').textContent = '';
+    reactionState = 'idle';
+  }
+  function startReaction() { resetReactionUI(); }
+  document.getElementById('reaction-box').addEventListener('click', function () {
+    var box = this;
+    if (reactionState === 'idle') {
+      reactionState = 'waiting';
+      box.textContent = 'Warte …';
+      document.getElementById('reaction-hint').textContent = 'Tippe, sobald es grün wird!';
+      document.getElementById('reaction-result').textContent = '';
+      var delay = 1000 + Math.random() * 2200;
+      gameTimers.push(setTimeout(function () {
+        reactionState = 'go';
+        box.classList.add('go');
+        box.textContent = 'JETZT!';
+        reactionStart = Date.now();
+      }, delay));
+    } else if (reactionState === 'waiting') {
+      clearGameTimers();
+      resetReactionUI();
+      document.getElementById('reaction-result').textContent = 'Zu früh! Nochmal versuchen.';
+    } else if (reactionState === 'go') {
+      var ms = Date.now() - reactionStart;
+      try { SND.click(); } catch (e) {}
+      var rate = ms < 220 ? 'Blitzschnell! ⚡' : ms < 350 ? 'Stark! 👍' : ms < 500 ? 'Nicht schlecht.' : 'Geht noch schneller!';
+      document.getElementById('reaction-result').textContent = ms + ' ms — ' + rate;
+      box.classList.remove('go');
+      box.textContent = 'Nochmal';
+      reactionState = 'idle';
+      document.getElementById('reaction-hint').textContent = 'Tippe auf Nochmal.';
+    }
   });
 
   function totalItems() {
@@ -2438,6 +3347,8 @@ var SND = (function () {
 
     /* zufällige Partikel-Animation zur Bestellung */
     try { FX.celebrate(); } catch (e) {}
+    /* Wartemodus-Timer sofort starten, Knopf ggf. einblenden */
+    try { registerOrder(); } catch (e) {}
 
     btn.disabled = true;
     var original = btn.textContent;
@@ -2480,7 +3391,7 @@ var SND = (function () {
   var aura = document.getElementById('touch-aura');
   var pressing = false;
   var lastTrail = null;
-  var RIPPLE_SEL = '.btn, .drink-card, .tm-opt, .modal-close, .cart-fab, .qty button, .cl-remove, .luck-pick-btn, .luck-reel-display';
+  var RIPPLE_SEL = '.btn, .drink-card, .tm-opt, .modal-close, .cart-fab, .qty button, .cl-remove, .luck-pick-btn, .luck-reel-display, .wait-btn, .wait-game-btn, .wait-back, .ttt-cell, .ttt-diff-btn, .mem-card, .reaction-box, .wait-feature-btn';
 
   function spawnRipple(el, x, y) {
     var r = el.getBoundingClientRect();
