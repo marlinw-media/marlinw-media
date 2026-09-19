@@ -39,41 +39,35 @@
   .scene { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; }
   .scene.active { display: flex; }
 
-  /* ---------- Außenwelt ---------- */
-  #outdoor-stage { position: relative; }
-  .map { display: grid; position: relative; overflow: hidden; }
-  .tile { position: relative; }
-  .tile.grass {
+  /* ---------- Außenwelt: freie Welt, kein Kachelraster ---------- */
+  #outdoor-stage { position: fixed; inset: 0; overflow: hidden; }
+  #world { position: absolute; top: 0; left: 0; }
+  #ground {
+    position: absolute; top: 0; left: 0;
     background:
-      radial-gradient(circle at 30% 30%, rgba(255,255,255,.12), transparent 55%),
-      linear-gradient(160deg, #7bc96f, #5fae55 60%, #4d9a44);
+      radial-gradient(ellipse 600px 420px at 12% 18%, rgba(255,255,255,.10), transparent 60%),
+      radial-gradient(ellipse 500px 380px at 68% 62%, rgba(35,85,32,.20), transparent 55%),
+      radial-gradient(ellipse 700px 500px at 88% 12%, rgba(255,255,255,.08), transparent 60%),
+      radial-gradient(ellipse 550px 400px at 28% 82%, rgba(35,85,32,.16), transparent 55%),
+      radial-gradient(ellipse 480px 360px at 52% 40%, rgba(255,255,255,.06), transparent 60%),
+      linear-gradient(160deg, #7bc96f, #5fae55 55%, #4d9a44);
   }
-  .tile.grass::after {
+  #ground::after {
     content: "";
     position: absolute; inset: 0;
-    background-image:
-      radial-gradient(rgba(60,120,50,.35) 8%, transparent 9%),
-      radial-gradient(rgba(90,160,70,.3) 6%, transparent 7%);
-    background-size: 60% 60%, 40% 40%;
-    background-position: 15% 70%, 70% 20%;
+    opacity: .55; mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='280' height='280'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.32  0 0 0 0 0.55  0 0 0 0 0.27  0 0 0 0.4 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 260px 260px;
   }
-  .tile.fence { background: linear-gradient(160deg, #4a7a3f, #3c6534); }
-  .tile.puddle {
-    background: radial-gradient(ellipse at center, #8fd8ea 0%, #6fc0d8 60%, transparent 75%),
-      linear-gradient(160deg, #7bc96f, #5fae55 60%, #4d9a44);
-  }
+  .fence-edge { position: absolute; pointer-events: none; background-repeat: repeat; }
+  .obstacle, .tree-sprite, .house-sprite, .pond-svg, .flower-sprite { position: absolute; pointer-events: none; }
 
-  .fence-post {
-    position: absolute; pointer-events: none;
-  }
-  .tree-sprite, .house-sprite, .river-svg, .flower-sprite { position: absolute; pointer-events: none; }
+  .leash-svg { position: absolute; top: 0; left: 0; pointer-events: none; z-index: 3; overflow: visible; }
 
-  .leash-svg { position: absolute; inset: 0; pointer-events: none; z-index: 3; overflow: visible; }
-
-  .sprite { position: absolute; transition: left .17s ease-out, top .17s ease-out; }
+  .sprite { position: absolute; transition: none; }
   .sprite svg { width: 100%; height: 100%; display: block; overflow: visible; }
   .player-sprite { z-index: 5; }
-  .dog-sprite { z-index: 4; transition: left .17s ease-out, top .17s ease-out, transform .3s ease; }
+  .dog-sprite { z-index: 4; transition: transform .3s ease; }
   .dog-sprite.shake { animation: shakeDog .5s ease; }
   @keyframes shakeDog { 0%,100% { transform: rotate(0); } 20% { transform: rotate(-12deg); } 40% { transform: rotate(10deg); } 60% { transform: rotate(-8deg); } 80% { transform: rotate(6deg); } }
   .dog-sprite.digging { animation: digBob .35s ease-in-out infinite; }
@@ -214,11 +208,14 @@
 <div id="app">
   <div class="scene active" id="scene-outdoor">
     <div id="outdoor-stage">
-      <div class="map" id="map"></div>
-      <svg class="leash-svg" id="leash-svg"><path id="leash-path" fill="none" stroke="#8a5a3a" stroke-width="3" stroke-linecap="round"/></svg>
-      <div class="stick-sprite" id="stick" hidden>🥢</div>
-      <div class="sprite player-sprite" id="player"></div>
-      <div class="sprite dog-sprite" id="dog-outdoor"></div>
+      <div id="world">
+        <div id="ground"></div>
+        <div id="obstacles"></div>
+        <svg class="leash-svg" id="leash-svg"><path id="leash-path" fill="none" stroke="#8a5a3a" stroke-width="3" stroke-linecap="round"/></svg>
+        <div class="stick-sprite" id="stick" hidden>🥢</div>
+        <div class="sprite player-sprite" id="player"></div>
+        <div class="sprite dog-sprite" id="dog-outdoor"></div>
+      </div>
       <div class="toast" id="toast"></div>
     </div>
     <div class="joystick" id="joystick">
@@ -346,26 +343,25 @@
     return { play: play };
   })();
 
-  /* ================= Kartendaten ================= */
-  var MAP = [
-    'FFFFFFFFFF',
-    'FGGGTGGGGF',
-    'FGGGGGWWGF',
-    'FGHHGGWPGF',
-    'FGDHGGGTGF',
-    'FFFFFFFFFF'
+  /* ================= Freie Welt (kein Kachelraster) ================= */
+  var WORLD = { w: 2200, h: 1300 };
+  var DOOR_ZONE = { x: 330, y: 648, r: 55 };
+  var HOUSE = { x: 220, y: 430, w: 300, h: 190 };
+  var TREES = [
+    { x: 520, y: 260, r: 26 }, { x: 900, y: 180, r: 24 }, { x: 1450, y: 340, r: 28 },
+    { x: 1780, y: 760, r: 24 }, { x: 640, y: 900, r: 26 }, { x: 1150, y: 1020, r: 22 }
   ];
-  var ROWS = MAP.length, COLS = MAP[0].length;
-  var DOOR = { x: 2, y: 4 };
-  var BLOCKED = { F: 1, T: 1, W: 1, H: 1 };
+  var POND = { x: 1400, y: 620, rx: 150, ry: 100 };
+  var PLAYER_R = 15, DOG_R = 13;
 
-  var mapEl = document.getElementById('map');
+  var worldEl = document.getElementById('world');
+  var groundEl = document.getElementById('ground');
+  var obstaclesEl = document.getElementById('obstacles');
   var stage = document.getElementById('outdoor-stage');
   var playerEl = document.getElementById('player');
   var dogOutEl = document.getElementById('dog-outdoor');
   var leashPath = document.getElementById('leash-path');
   var toastEl = document.getElementById('toast');
-  var TILE = 48;
 
   function toast(msg) {
     toastEl.textContent = msg;
@@ -463,125 +459,138 @@
       speck +
       '</svg>';
   }
-  function svgRiver(w, h) {
-    return '<svg viewBox="0 0 ' + w + ' ' + h + '" width="' + w + '" height="' + h + '">' + DEFS +
-      '<path d="M6 4 Q ' + (w * 0.5) + ' -6 ' + (w - 6) + ' 8 L ' + (w - 4) + ' ' + (h - 8) + ' Q ' + (w * 0.5) + ' ' + (h + 6) + ' 4 ' + (h - 4) + ' Z" fill="url(#gRiver)"/>' +
-      '<path d="M10 ' + (h * 0.3) + ' Q ' + (w * 0.5) + ' ' + (h * 0.2) + ' ' + (w - 10) + ' ' + (h * 0.35) + '" stroke="#fff" stroke-opacity=".4" stroke-width="3" fill="none"/>' +
-      '<path d="M10 ' + (h * 0.6) + ' Q ' + (w * 0.5) + ' ' + (h * 0.72) + ' ' + (w - 10) + ' ' + (h * 0.6) + '" stroke="#fff" stroke-opacity=".3" stroke-width="3" fill="none"/>' +
+  function svgPond() {
+    /* unregelmäßiger, organischer Teich statt gerader Kanten */
+    var w = POND.rx * 2, h = POND.ry * 2;
+    var path = 'M ' + w * 0.02 + ' ' + h * 0.42 +
+      ' C ' + w * -0.03 + ' ' + h * 0.18 + ', ' + w * 0.22 + ' ' + h * -0.06 + ', ' + w * 0.46 + ' ' + h * 0.02 +
+      ' C ' + w * 0.7 + ' ' + h * 0.09 + ', ' + w * 0.92 + ' ' + h * 0.06 + ', ' + w * 1.01 + ' ' + h * 0.34 +
+      ' C ' + w * 1.08 + ' ' + h * 0.58 + ', ' + w * 0.9 + ' ' + h * 0.72 + ', ' + w * 0.78 + ' ' + h * 0.9 +
+      ' C ' + w * 0.6 + ' ' + h * 1.06 + ', ' + w * 0.3 + ' ' + h * 1.02 + ', ' + w * 0.14 + ' ' + h * 0.86 +
+      ' C ' + w * 0.0 + ' ' + h * 0.72 + ', ' + w * 0.06 + ' ' + h * 0.58 + ', ' + w * 0.02 + ' ' + h * 0.42 + ' Z';
+    return '<svg viewBox="' + (-w * 0.12) + ' ' + (-h * 0.12) + ' ' + (w * 1.24) + ' ' + (h * 1.24) + '" width="' + w + '" height="' + h + '" style="overflow:visible">' + DEFS +
+      '<filter id="pn" x="-30%" y="-30%" width="160%" height="160%"><feTurbulence type="fractalNoise" baseFrequency="0.025" numOctaves="2" result="t"/><feDisplacementMap in="SourceGraphic" in2="t" scale="16"/></filter>' +
+      '<path d="' + path + '" fill="url(#gRiver)" stroke="#2f7a91" stroke-width="2" filter="url(#pn)"/>' +
+      '<path d="' + path + '" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="4" filter="url(#pn)" transform="scale(.82) translate(' + w * 0.09 + ',' + h * 0.08 + ')"/>' +
       '</svg>';
   }
 
-  var grid = [];
-  for (var y = 0; y < ROWS; y++) { var row = []; for (var x = 0; x < COLS; x++) row.push(MAP[y][x]); grid.push(row); }
+  function buildWorld() {
+    groundEl.style.width = WORLD.w + 'px';
+    groundEl.style.height = WORLD.h + 'px';
+    worldEl.style.width = WORLD.w + 'px';
+    worldEl.style.height = WORLD.h + 'px';
+    document.getElementById('leash-svg').setAttribute('width', WORLD.w);
+    document.getElementById('leash-svg').setAttribute('height', WORLD.h);
+    document.getElementById('leash-svg').style.width = WORLD.w + 'px';
+    document.getElementById('leash-svg').style.height = WORLD.h + 'px';
 
-  function buildMap() {
-    mapEl.style.gridTemplateColumns = 'repeat(' + COLS + ', ' + TILE + 'px)';
-    mapEl.style.gridTemplateRows = 'repeat(' + ROWS + ', ' + TILE + 'px)';
-    mapEl.style.width = (COLS * TILE) + 'px';
-    mapEl.style.height = (ROWS * TILE) + 'px';
-    mapEl.innerHTML = '';
-    var flowerSpots = {};
-    for (var y = 0; y < ROWS; y++) {
-      for (var x = 0; x < COLS; x++) {
-        var ch = grid[y][x];
-        var t = document.createElement('div');
-        var cls = ch === 'F' ? 'fence' : (ch === 'W' ? 'grass' : (ch === 'P' ? 'puddle' : 'grass'));
-        t.className = 'tile ' + cls;
-        if (ch === 'F') {
-          t.innerHTML = '<div style="position:absolute;inset:4px 40% 0 40%;background:linear-gradient(180deg,#a8703c,#6b4226);border-radius:2px"></div>';
-        }
-        mapEl.appendChild(t);
-        if (ch === 'T') {
-          var tr = document.createElement('div');
-          tr.className = 'tree-sprite';
-          tr.style.left = (x * TILE - TILE * 0.15) + 'px';
-          tr.style.top = (y * TILE - TILE * 0.35) + 'px';
-          tr.style.width = (TILE * 1.3) + 'px';
-          tr.style.height = (TILE * 1.5) + 'px';
-          tr.innerHTML = svgTree();
-          mapEl.appendChild(tr);
-        }
-        if (ch === 'G' && Math.random() < 0.12) {
-          var fl = document.createElement('div');
-          fl.className = 'flower-sprite';
-          fl.style.left = (x * TILE + TILE * 0.6) + 'px';
-          fl.style.top = (y * TILE + TILE * 0.6) + 'px';
-          fl.style.fontSize = (TILE * 0.22) + 'px';
-          fl.textContent = ['🌼', '🌸', '🍀'][(Math.random() * 3) | 0];
-          mapEl.appendChild(fl);
-        }
-      }
-    }
-    /* Fluss als ein organisches Gesamt-Shape über die W-Kacheln */
-    var wCells = [];
-    for (var yy = 0; yy < ROWS; yy++) for (var xx = 0; xx < COLS; xx++) if (grid[yy][xx] === 'W') wCells.push([xx, yy]);
-    if (wCells.length) {
-      var minX = Math.min.apply(null, wCells.map(function (c) { return c[0]; }));
-      var maxX = Math.max.apply(null, wCells.map(function (c) { return c[0]; }));
-      var minY = Math.min.apply(null, wCells.map(function (c) { return c[1]; }));
-      var maxY = Math.max.apply(null, wCells.map(function (c) { return c[1]; }));
-      var rv = document.createElement('div');
-      rv.className = 'river-svg';
-      var pad = TILE * 0.25;
-      rv.style.left = (minX * TILE - pad) + 'px';
-      rv.style.top = (minY * TILE - pad) + 'px';
-      var rw = (maxX - minX + 1) * TILE + pad * 2, rh = (maxY - minY + 1) * TILE + pad * 2;
-      rv.innerHTML = svgRiver(rw, rh);
-      mapEl.appendChild(rv);
-    }
-    /* Haus als ein großes Sprite */
+    obstaclesEl.innerHTML = '';
+    var FENCE = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'36\' height=\'36\'%3E%3Crect x=\'15\' y=\'2\' width=\'7\' height=\'32\' rx=\'2\' fill=\'%238a5a3a\'/%3E%3Crect x=\'0\' y=\'11\' width=\'36\' height=\'4\' fill=\'%236b4226\'/%3E%3Crect x=\'0\' y=\'22\' width=\'36\' height=\'4\' fill=\'%236b4226\'/%3E%3C/svg%3E")';
+    [
+      { l: 0, t: 0, w: WORLD.w, h: 36, rep: 'repeat-x' },
+      { l: 0, t: WORLD.h - 36, w: WORLD.w, h: 36, rep: 'repeat-x' },
+      { l: 0, t: 0, w: 36, h: WORLD.h, rep: 'repeat-y' },
+      { l: WORLD.w - 36, t: 0, w: 36, h: WORLD.h, rep: 'repeat-y' }
+    ].forEach(function (f) {
+      var el = document.createElement('div');
+      el.className = 'fence-edge';
+      el.style.left = f.l + 'px'; el.style.top = f.t + 'px';
+      el.style.width = f.w + 'px'; el.style.height = f.h + 'px';
+      el.style.backgroundImage = FENCE; el.style.backgroundRepeat = f.rep;
+      obstaclesEl.appendChild(el);
+    });
+
+    var pond = document.createElement('div');
+    pond.className = 'pond-svg';
+    pond.style.left = (POND.x - POND.rx) + 'px'; pond.style.top = (POND.y - POND.ry) + 'px';
+    pond.innerHTML = svgPond();
+    obstaclesEl.appendChild(pond);
+
     var hs = document.createElement('div');
     hs.className = 'house-sprite';
-    hs.style.left = (2 * TILE) + 'px';
-    hs.style.top = (3 * TILE - TILE * 0.75) + 'px';
-    hs.style.width = (2 * TILE) + 'px';
-    hs.style.height = (2 * TILE + TILE * 0.75) + 'px';
+    hs.style.left = (HOUSE.x - 20) + 'px'; hs.style.top = (HOUSE.y - 70) + 'px';
+    hs.style.width = (HOUSE.w + 40) + 'px'; hs.style.height = (HOUSE.h + 70) + 'px';
     hs.innerHTML = svgHouse();
-    mapEl.appendChild(hs);
+    obstaclesEl.appendChild(hs);
 
-    stage.style.width = (COLS * TILE) + 'px';
-    stage.style.height = (ROWS * TILE) + 'px';
-    var lsvg = document.getElementById('leash-svg');
-    lsvg.style.width = (COLS * TILE) + 'px';
-    lsvg.style.height = (ROWS * TILE) + 'px';
+    TREES.forEach(function (tr) {
+      var el = document.createElement('div');
+      el.className = 'tree-sprite';
+      var s = tr.r * 3.6;
+      el.style.left = (tr.x - s / 2) + 'px'; el.style.top = (tr.y - s * 0.62) + 'px';
+      el.style.width = s + 'px'; el.style.height = (s * 1.15) + 'px';
+      el.innerHTML = svgTree();
+      obstaclesEl.appendChild(el);
+    });
+
+    for (var i = 0; i < 60; i++) {
+      var fx = 60 + Math.random() * (WORLD.w - 120);
+      var fy = 60 + Math.random() * (WORLD.h - 120);
+      if (inRect(fx, fy, HOUSE) || inPond(fx, fy, 20)) continue;
+      var fl = document.createElement('div');
+      fl.className = 'flower-sprite';
+      fl.style.left = fx + 'px'; fl.style.top = fy + 'px';
+      fl.style.fontSize = (12 + Math.random() * 8) + 'px';
+      fl.textContent = ['🌼', '🌸', '🍀', '🌿'][(Math.random() * 4) | 0];
+      obstaclesEl.appendChild(fl);
+    }
   }
 
   playerEl.innerHTML = svgPlayer();
 
-  var player = { x: 5, y: 1 };
-  var trail = [];
-  var dogPos = { x: 5, y: 2 };
-  var moving = false;
+  var player = { x: 460, y: 700 };
+  var dogPos = { x: 500, y: 740 };
+  var trailBuf = [];
   var fetching = false;
+  var camX = player.x, camY = player.y;
+
+  function inRect(x, y, r, pad) {
+    pad = pad || 0;
+    return x > r.x - pad && x < r.x + r.w + pad && y > r.y - pad && y < r.y + r.h + pad;
+  }
+  function inPond(x, y, pad) {
+    pad = pad || 0;
+    var dx = (x - POND.x) / (POND.rx + pad), dy = (y - POND.y) / (POND.ry + pad);
+    return dx * dx + dy * dy < 1;
+  }
+
+  function collides(x, y, r) {
+    if (x - r < 20 || y - r < 20 || x + r > WORLD.w - 20 || y + r > WORLD.h - 20) return true;
+    if (inRect(x, y, HOUSE, r)) return true;
+    for (var i = 0; i < TREES.length; i++) {
+      var t = TREES[i];
+      if (Math.hypot(x - t.x, y - t.y) < t.r + r * 0.7) return true;
+    }
+    if (inPond(x, y, r * 0.5)) return true;
+    return false;
+  }
 
   function placeSprite(el, x, y, w, h) {
-    el.style.left = (x * TILE + (TILE - w) / 2) + 'px';
-    el.style.top = (y * TILE + (TILE - h) / 2 - h * 0.15) + 'px';
+    el.style.left = (x - w / 2) + 'px';
+    el.style.top = (y - h * 0.82) + 'px';
     el.style.width = w + 'px'; el.style.height = h + 'px';
   }
-  function centerPx(x, y) { return { x: x * TILE + TILE / 2, y: y * TILE + TILE / 2 }; }
 
   function updateLeash() {
-    var p = centerPx(player.x, player.y);
-    var d = centerPx(dogPos.x, dogPos.y);
-    var mx = (p.x + d.x) / 2, my = (p.y + d.y) / 2 + 10;
-    leashPath.setAttribute('d', 'M ' + p.x + ' ' + p.y + ' Q ' + mx + ' ' + my + ' ' + d.x + ' ' + d.y);
+    var mx = (player.x + dogPos.x) / 2, my = (player.y + dogPos.y) / 2 + 14;
+    leashPath.setAttribute('d', 'M ' + player.x + ' ' + (player.y - 14) + ' Q ' + mx + ' ' + my + ' ' + dogPos.x + ' ' + (dogPos.y - 10));
   }
-  var leashRaf;
-  function leashLoop() { updateLeash(); leashRaf = requestAnimationFrame(leashLoop); }
 
-  function renderDog() {
-    dogOutEl.innerHTML = svgDog(stats.fur < 45);
+  function renderDog() { dogOutEl.innerHTML = svgDog(stats.fur < 45); }
+
+  function updateCamera() {
+    var vw = innerWidth, vh = innerHeight;
+    camX = WORLD.w <= vw ? WORLD.w / 2 : Math.max(vw / 2, Math.min(WORLD.w - vw / 2, player.x));
+    camY = WORLD.h <= vh ? WORLD.h / 2 : Math.max(vh / 2, Math.min(WORLD.h - vh / 2, player.y));
+    worldEl.style.transform = 'translate(' + (vw / 2 - camX) + 'px,' + (vh / 2 - camY) + 'px)';
   }
 
   function render() {
-    placeSprite(playerEl, player.x, player.y, 34, 42);
-    placeSprite(dogOutEl, dogPos.x, dogPos.y, 46, 34);
-  }
-
-  function walkable(x, y) {
-    if (x < 0 || y < 0 || x >= COLS || y >= ROWS) return false;
-    return !BLOCKED[grid[y][x]];
+    placeSprite(playerEl, player.x, player.y, 36, 46);
+    placeSprite(dogOutEl, dogPos.x, dogPos.y, 50, 38);
+    updateLeash();
+    updateCamera();
   }
 
   function maybeDig() {
@@ -597,77 +606,56 @@
     }, 650);
   }
 
-  function tryMove(dx, dy) {
-    if (moving || fetching) return;
-    var nx = player.x + dx, ny = player.y + dy;
-    if (!walkable(nx, ny)) return;
-    moving = true;
-    trail.unshift({ x: player.x, y: player.y });
-    if (trail.length > 6) trail.pop();
-    player.x = nx; player.y = ny;
-    dogPos = trail[Math.min(2, trail.length - 1)] || { x: player.x, y: player.y };
-    render();
-    SFX.play(grid[ny][nx] === 'P' ? 'splash' : 'step');
-    stats.fur = Math.max(0, stats.fur - 0.6);
-    renderDog();
-    setTimeout(function () {
-      moving = false;
-      if (nx === DOOR.x && ny === DOOR.y) enterHouse();
-      else maybeDig();
-    }, 160);
-  }
-
+  /* ---- Eingabe: Tastatur (frei, auch diagonal) + Joystick ---- */
+  var keys = {};
   document.addEventListener('keydown', function (e) {
-    var map = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0], w: [0, -1], s: [0, 1], a: [-1, 0], d: [1, 0] };
-    var m = map[e.key];
-    if (!m) return;
-    e.preventDefault();
-    tryMove(m[0], m[1]);
+    keys[e.key] = true;
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].indexOf(e.key) >= 0) e.preventDefault();
   });
+  document.addEventListener('keyup', function (e) { keys[e.key] = false; });
 
-  /* ---- virtueller Joystick ---- */
+  var joyVec = { x: 0, y: 0 };
   (function () {
     var base = document.getElementById('joy-base');
     var knob = document.getElementById('joy-knob');
-    var active = false, dir = null, timer = null;
-    function doStep() {
-      var m = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[dir];
-      if (m) tryMove(m[0], m[1]);
-    }
-    function setDir(d) {
-      if (d === dir) return;
-      dir = d;
-      clearInterval(timer);
-      if (d) { doStep(); timer = setInterval(doStep, 230); }
-    }
+    var active = false;
     function update(e) {
       var r = base.getBoundingClientRect();
       var cx = r.left + r.width / 2, cy = r.top + r.height / 2;
       var dx = e.clientX - cx, dy = e.clientY - cy;
-      var dist = Math.min(Math.hypot(dx, dy), r.width / 2 - 8);
+      var maxD = r.width / 2 - 6;
+      var dist = Math.min(Math.hypot(dx, dy), maxD);
       var ang = Math.atan2(dy, dx);
       knob.style.transform = 'translate(' + (Math.cos(ang) * dist) + 'px,' + (Math.sin(ang) * dist) + 'px)';
-      if (Math.hypot(dx, dy) < r.width * 0.18) { setDir(null); return; }
-      var deg = ang * 180 / Math.PI;
-      setDir(deg > -45 && deg <= 45 ? 'right' : deg > 45 && deg <= 135 ? 'down' : (deg > 135 || deg <= -135) ? 'left' : 'up');
+      var mag = dist / maxD;
+      if (mag < 0.12) { joyVec.x = 0; joyVec.y = 0; return; }
+      joyVec.x = Math.cos(ang) * mag; joyVec.y = Math.sin(ang) * mag;
     }
     base.addEventListener('pointerdown', function (e) { active = true; try { base.setPointerCapture(e.pointerId); } catch (err) {} update(e); });
     base.addEventListener('pointermove', function (e) { if (active) update(e); });
-    function end() { active = false; setDir(null); knob.style.transform = 'translate(0,0)'; }
+    function end() { active = false; joyVec.x = 0; joyVec.y = 0; knob.style.transform = 'translate(0,0)'; }
     base.addEventListener('pointerup', end);
     base.addEventListener('pointercancel', end);
   })();
 
+  function getMoveVector() {
+    var kx = 0, ky = 0;
+    if (keys.ArrowLeft || keys.a) kx -= 1;
+    if (keys.ArrowRight || keys.d) kx += 1;
+    if (keys.ArrowUp || keys.w) ky -= 1;
+    if (keys.ArrowDown || keys.s) ky += 1;
+    if (kx || ky) { var len = Math.hypot(kx, ky); return { x: kx / len, y: ky / len }; }
+    if (joyVec.x || joyVec.y) return joyVec;
+    return { x: 0, y: 0 };
+  }
+
   /* ---- Streicheln (Außen) ---- */
   document.getElementById('btn-pet').addEventListener('click', function () {
-    var near = Math.abs(player.x - dogPos.x) <= 1 && Math.abs(player.y - dogPos.y) <= 1;
-    if (!near) { toast('Der Hund ist zu weit weg!'); return; }
+    if (Math.hypot(player.x - dogPos.x, player.y - dogPos.y) > 90) { toast('Der Hund ist zu weit weg!'); return; }
     stats.love = Math.min(100, stats.love + 15); saveStats();
     SFX.play('pet');
     dogOutEl.classList.remove('shake'); void dogOutEl.offsetWidth; dogOutEl.classList.add('shake');
-    var d = centerPx(dogPos.x, dogPos.y);
-    var stageRect = stage.getBoundingClientRect();
-    popHeart(stageRect.left + d.x, stageRect.top + d.y - 20);
+    popHeart(innerWidth / 2 - (player.x - dogPos.x), innerHeight / 2 - (player.y - dogPos.y) - 30);
   });
 
   /* ---- Stöckchen werfen ---- */
@@ -677,18 +665,14 @@
     fetching = true;
     document.getElementById('btn-fetch').disabled = true;
     SFX.play('throw');
-    var candidates = [];
-    for (var yy = Math.max(0, player.y - 2); yy <= Math.min(ROWS - 1, player.y + 2); yy++) {
-      for (var xx = Math.max(0, player.x - 2); xx <= Math.min(COLS - 1, player.x + 2); xx++) {
-        if (walkable(xx, yy) && !(xx === player.x && yy === player.y)) candidates.push({ x: xx, y: yy });
-      }
-    }
-    var target = candidates.length ? candidates[(Math.random() * candidates.length) | 0] : player;
-    var p0 = centerPx(player.x, player.y), p1 = centerPx(target.x, target.y);
+    var ang = Math.random() * Math.PI * 2, dist = 140 + Math.random() * 100;
+    var target = { x: player.x + Math.cos(ang) * dist, y: player.y + Math.sin(ang) * dist };
+    target.x = Math.max(40, Math.min(WORLD.w - 40, target.x));
+    target.y = Math.max(40, Math.min(WORLD.h - 40, target.y));
     stickEl.hidden = false;
-    stickEl.style.left = (p0.x - 10) + 'px'; stickEl.style.top = (p0.y - 10) + 'px';
+    stickEl.style.left = (player.x - 10) + 'px'; stickEl.style.top = (player.y - 10) + 'px';
     requestAnimationFrame(function () {
-      stickEl.style.left = (p1.x - 10) + 'px'; stickEl.style.top = (p1.y - 10) + 'px';
+      stickEl.style.left = (target.x - 10) + 'px'; stickEl.style.top = (target.y - 10) + 'px';
     });
     setTimeout(function () {
       dogPos = { x: target.x, y: target.y };
@@ -697,16 +681,14 @@
         SFX.play('grab');
         stickEl.hidden = true;
         setTimeout(function () {
-          dogPos = { x: player.x, y: player.y };
+          dogPos = { x: player.x + 30, y: player.y };
           render();
           setTimeout(function () {
             SFX.play('happy');
             fetching = false;
             document.getElementById('btn-fetch').disabled = false;
             stats.love = Math.min(100, stats.love + 8); saveStats();
-            var d = centerPx(player.x, player.y);
-            var stageRect = stage.getBoundingClientRect();
-            popHeart(stageRect.left + d.x, stageRect.top + d.y - 20);
+            popHeart(innerWidth / 2, innerHeight / 2 - 40);
           }, 350);
         }, 350);
       }, 400);
@@ -719,20 +701,58 @@
   function enterHouse() {
     sceneOutdoor.classList.remove('active');
     sceneHouse.classList.add('active');
-    cancelAnimationFrame(leashRaf);
     refreshStats();
     renderDogHouse();
   }
   document.getElementById('exit-house').addEventListener('click', function () {
     sceneHouse.classList.remove('active');
     sceneOutdoor.classList.add('active');
-    player.x = DOOR.x; player.y = DOOR.y;
-    dogPos = { x: DOOR.x, y: DOOR.y };
-    trail = [];
+    player.x = DOOR_ZONE.x; player.y = DOOR_ZONE.y + DOOR_ZONE.r + 25;
+    dogPos = { x: player.x + 30, y: player.y };
     render();
     renderDog();
-    leashLoop();
   });
+
+  /* ================= Spielschleife ================= */
+  var lastT = performance.now();
+  var distAccum = 0, lastStepAt = 0, lastFurAt = 0;
+  function loop(t) {
+    var dt = Math.min(0.05, (t - lastT) / 1000); lastT = t;
+    if (sceneOutdoor.classList.contains('active') && !fetching) {
+      var v = getMoveVector();
+      if (v.x || v.y) {
+        var speed = 230;
+        var nx = player.x + v.x * speed * dt;
+        var ny = player.y + v.y * speed * dt;
+        if (!collides(nx, player.y, PLAYER_R)) player.x = nx;
+        if (!collides(player.x, ny, PLAYER_R)) player.y = ny;
+        distAccum += speed * dt;
+        if (distAccum - lastStepAt > 46) {
+          lastStepAt = distAccum;
+          SFX.play(inPond(player.x, player.y, PLAYER_R + 30) ? 'splash' : 'step');
+        }
+        if (distAccum - lastFurAt > 70) {
+          lastFurAt = distAccum;
+          stats.fur = Math.max(0, stats.fur - 0.8);
+          renderDog();
+          maybeDig();
+        }
+      }
+      trailBuf.push({ x: player.x, y: player.y, t: t });
+      while (trailBuf.length && t - trailBuf[0].t > 700) trailBuf.shift();
+      var lag = trailBuf[0] || player;
+      var dist2 = Math.hypot(lag.x - dogPos.x, lag.y - dogPos.y);
+      if (dist2 > 1) {
+        var ease = Math.min(1, dt * 6);
+        dogPos.x += (lag.x - dogPos.x) * ease;
+        dogPos.y += (lag.y - dogPos.y) * ease;
+      }
+      render();
+      if (Math.hypot(player.x - DOOR_ZONE.x, player.y - DOOR_ZONE.y) < DOOR_ZONE.r) enterHouse();
+    }
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
 
   /* ================= Haustier-Pflege ================= */
   var STAT_KEY = 'mw-pet-stats';
@@ -882,19 +902,12 @@
     item.addEventListener('pointercancel', function () { dragging = false; if (clone) { clone.remove(); clone = null; } });
   });
 
-  /* ================= Größe anpassen ================= */
-  function fitStage() {
-    var vw = window.innerWidth, vh = window.innerHeight - 4;
-    TILE = Math.max(24, Math.floor(Math.min(vw / COLS, vh / ROWS)));
-    buildMap();
-    renderDog();
-    render();
-  }
-  window.addEventListener('resize', fitStage);
+  window.addEventListener('resize', updateCamera);
   document.getElementById('drop-couch').innerHTML = svgCouch();
   document.getElementById('drop-basket').innerHTML = svgBasket();
-  fitStage();
-  leashLoop();
+  buildWorld();
+  renderDog();
+  render();
 })();
 </script>
 </body>
