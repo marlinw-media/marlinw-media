@@ -1087,7 +1087,7 @@
       return ((t ^ t >>> 14) >>> 0) / 4294967296;
     };
   }
-  var MAZE_CW = 11, MAZE_CH = 9, MAZE_TILE = 42;
+  var MAZE_CW = 16, MAZE_CH = 12, MAZE_TILE = 42;
   var MAZE_GW = MAZE_CW * 2 + 1, MAZE_GH = MAZE_CH * 2 + 1;
   var mazeGrid = (function buildMazeGrid() {
     var rng = mulberry32(1337);
@@ -1195,15 +1195,40 @@
     mazeKeyEl.style.display = '';
     mazeExitEl.style.left = (mazeExitCell.gx * MAZE_TILE + MAZE_TILE / 2 - 17) + 'px';
     mazeExitEl.style.top = (mazeExitCell.gy * MAZE_TILE + MAZE_TILE / 2 - 17) + 'px';
-    var openCells = [];
+    /* Schlüssel bewusst abseits vom direkten Weg zum Ausgang platzieren, damit man
+       zuerst in eine Sackgasse abbiegen und danach wieder zurück muss. */
+    function mazeBFS(sx, sy) {
+      var dist = mazeGrid.map(function (row) { return row.map(function () { return -1; }); });
+      dist[sy][sx] = 0;
+      var q = [[sx, sy]], qi = 0;
+      while (qi < q.length) {
+        var cx = q[qi][0], cy = q[qi][1]; qi++;
+        [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(function (d) {
+          var nx = cx + d[0], ny = cy + d[1];
+          if (nx >= 0 && nx < MAZE_GW && ny >= 0 && ny < MAZE_GH && mazeGrid[ny][nx] === 0 && dist[ny][nx] === -1) {
+            dist[ny][nx] = dist[cy][cx] + 1;
+            q.push([nx, ny]);
+          }
+        });
+      }
+      return dist;
+    }
+    var distFromStart = mazeBFS(mazeStartCell.gx, mazeStartCell.gy);
+    var distFromExit = mazeBFS(mazeExitCell.gx, mazeExitCell.gy);
+    var directDist = distFromStart[mazeExitCell.gy][mazeExitCell.gx];
+    var candidates = [];
     for (var gy = 1; gy < MAZE_GH; gy += 2) {
       for (var gx = 1; gx < MAZE_GW; gx += 2) {
-        if (mazeGrid[gy][gx] === 0 && !(gx === mazeStartCell.gx && gy === mazeStartCell.gy) && !(gx === mazeExitCell.gx && gy === mazeExitCell.gy)) {
-          openCells.push({ gx: gx, gy: gy });
-        }
+        if (mazeGrid[gy][gx] !== 0) continue;
+        if (gx === mazeStartCell.gx && gy === mazeStartCell.gy) continue;
+        if (gx === mazeExitCell.gx && gy === mazeExitCell.gy) continue;
+        var detour = distFromStart[gy][gx] + distFromExit[gy][gx] - directDist;
+        candidates.push({ gx: gx, gy: gy, detour: detour });
       }
     }
-    var pick = openCells[(Math.random() * openCells.length) | 0];
+    candidates.sort(function (a, b) { return b.detour - a.detour; });
+    var topCount = Math.max(1, Math.ceil(candidates.length * 0.35));
+    var pick = candidates[(Math.random() * topCount) | 0];
     mazeKeyPos = { x: pick.gx * MAZE_TILE + MAZE_TILE / 2, y: pick.gy * MAZE_TILE + MAZE_TILE / 2 };
     mazeKeyEl.style.left = (mazeKeyPos.x - 14) + 'px'; mazeKeyEl.style.top = (mazeKeyPos.y - 14) + 'px';
     mazeRender();
@@ -1293,6 +1318,7 @@
     sceneOutdoor.classList.remove('active');
     scenePlatform.classList.add('active');
     scenePlatformActive = true;
+    if (!platBlocksEl.children.length) platBuild();
     platResetDog();
     platRender();
   }
@@ -1390,8 +1416,8 @@
         }
       }
 
-      if (Math.abs(dogVel.x) > 4) {
-        dogFacing = dogVel.x < 0 ? -1 : 1;
+      if (Math.abs(dogPos.x - prevDogX) > 0.4) {
+        dogFacing = dogPos.x < prevDogX ? -1 : 1;
         dogVisualEl.classList.toggle('face-left', dogFacing < 0);
       }
       prevDogX = dogPos.x;
