@@ -61,19 +61,20 @@
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='280' height='280'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.32  0 0 0 0 0.55  0 0 0 0 0.27  0 0 0 0.4 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     background-size: 260px 260px;
   }
-  .fence-edge { position: absolute; pointer-events: none; background-repeat: repeat; z-index: 3; }
+  .fence-edge { position: absolute; pointer-events: none; background-repeat: repeat; z-index: 2; }
   .obstacle, .tree-sprite, .house-sprite, .pond-svg, .flower-sprite, .creek-svg, .bridge-sprite, .gravel-svg, .gate-sprite, .poop-sprite, .rock-sprite, .puddle-svg { position: absolute; pointer-events: none; }
   .creek-svg, .gravel-svg, .puddle-svg { z-index: 1; }
-  .pond-svg, .bridge-sprite { z-index: 2; }
-  .gate-sprite { z-index: 4; }
+  .pond-svg, .bridge-sprite, .house-sprite, .gate-sprite { z-index: 2; }
   .poop-sprite { font-size: 26px; z-index: 2; }
+  /* Bäume/Felsen liegen perspektivisch VOR allem Boden-Deko, aber hinter Spieler/Hund/Leine */
+  .tree-sprite, .rock-sprite { z-index: 3; }
 
-  .leash-svg { position: absolute; top: 0; left: 0; pointer-events: none; z-index: 3; overflow: visible; }
+  .leash-svg { position: absolute; top: 0; left: 0; pointer-events: none; z-index: 4; overflow: visible; }
 
   .sprite { position: absolute; transition: none; }
   .sprite svg { width: 100%; height: 100%; display: block; overflow: visible; }
-  .player-sprite { z-index: 5; }
-  .dog-sprite { z-index: 4; }
+  .player-sprite { z-index: 6; }
+  .dog-sprite { z-index: 5; }
   .dog-visual { width: 100%; height: 100%; transition: transform .25s ease; }
   .dog-visual svg { width: 100%; height: 100%; display: block; overflow: visible; }
   .dog-visual.face-left { transform: scaleX(-1); }
@@ -128,6 +129,30 @@
   .action-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,.2); }
   .action-btn:disabled { opacity: .45; }
   .action-btn[hidden] { display: none; }
+
+  /* ---------- Höhlen-Labyrinth ---------- */
+  #maze-stage { position: fixed; inset: 0; overflow: hidden; background: #15100c; }
+  #maze-world { position: absolute; top: 0; left: 0; }
+  #maze-ground { position: absolute; inset: 0; background: linear-gradient(160deg, #4a4038, #2c2620); }
+  .maze-wall {
+    position: absolute; box-sizing: border-box;
+    background: linear-gradient(160deg, #857b6e, #4c463d);
+    border: 2px solid #241f1a; border-radius: 3px;
+  }
+  .maze-key { position: absolute; font-size: 28px; z-index: 5; filter: drop-shadow(0 0 6px gold); }
+  .maze-exit { position: absolute; font-size: 34px; z-index: 5; }
+
+  /* ---------- Jump'n'Run ---------- */
+  #platform-stage { position: fixed; inset: 0; overflow: hidden; }
+  #platform-world { position: absolute; top: 0; left: 0; }
+  #platform-bg { position: absolute; inset: 0; background: linear-gradient(180deg, #ffd9a0, #ffb27a 55%, #e8935a); }
+  .platform-block {
+    position: absolute; box-sizing: border-box;
+    background: linear-gradient(160deg, #b06a3a, #7a4526);
+    border-top: 6px solid #6fcf6b;
+  }
+  .platform-goal { position: absolute; font-size: 46px; z-index: 5; }
+  .platform-jump-btn { position: fixed; right: 18px; bottom: 110px; z-index: 41; }
 
   /* ---------- Haus-Innenraum ---------- */
   #scene-house { flex-direction: column; background: var(--room); }
@@ -228,15 +253,40 @@
       </div>
       <div class="toast" id="toast"></div>
     </div>
-    <div class="joystick" id="joystick">
-      <div class="joy-base" id="joy-base"><div class="joy-knob" id="joy-knob"></div></div>
-    </div>
     <div class="action-buttons">
       <button class="action-btn" id="btn-pet" type="button">✋ Streicheln</button>
       <button class="action-btn" id="btn-call" type="button">📣 Herrufen</button>
       <button class="action-btn" id="btn-fetch" type="button">🥢 Stöckchen</button>
       <button class="action-btn" id="btn-clean" type="button" hidden>🧹 Aufsammeln</button>
     </div>
+  </div>
+
+  <div class="scene" id="scene-maze">
+    <div id="maze-stage">
+      <div id="maze-world">
+        <div id="maze-ground"></div>
+        <div id="maze-walls"></div>
+        <div class="maze-key" id="maze-key">🔑</div>
+        <div class="maze-exit" id="maze-exit-sprite">⛳</div>
+        <div class="sprite dog-sprite" id="maze-dog"><div class="dog-visual" id="maze-dog-visual"></div></div>
+      </div>
+      <div class="toast" id="maze-toast"></div>
+    </div>
+    <button class="exit-btn" id="maze-exit-btn" type="button">🚪 Verlassen</button>
+  </div>
+
+  <div class="scene" id="scene-platform">
+    <div id="platform-stage">
+      <div id="platform-world">
+        <div id="platform-bg"></div>
+        <div id="platform-platforms"></div>
+        <div class="platform-goal" id="platform-goal">⛩️</div>
+        <div class="sprite dog-sprite" id="platform-dog"><div class="dog-visual" id="platform-dog-visual"></div></div>
+      </div>
+      <div class="toast" id="platform-toast"></div>
+    </div>
+    <button class="exit-btn" id="platform-exit-btn" type="button">🚪 Verlassen</button>
+    <button class="action-btn platform-jump-btn" id="btn-jump" type="button">⬆️ Springen</button>
   </div>
 
   <div class="scene" id="scene-house">
@@ -263,6 +313,10 @@
       <div class="item" data-item="snack" id="item-snack">🍖</div>
     </div>
   </div>
+</div>
+
+<div class="joystick" id="joystick">
+  <div class="joy-base" id="joy-base"><div class="joy-knob" id="joy-knob"></div></div>
 </div>
 
 <div class="wait-bar-thin" id="wait-bar-thin"><div class="wait-bar-thin-fill" id="wait-bar-thin-fill"></div></div>
@@ -365,8 +419,14 @@
   var ROCKS = [
     { x: 150, y: 150, r: 22 }, { x: 235, y: 210, r: 17 }, { x: 110, y: 260, r: 19 },
     { x: 320, y: 120, r: 15 }, { x: 380, y: 230, r: 23 }, { x: 190, y: 320, r: 16 },
-    { x: 2080, y: 900, r: 20 }, { x: 2000, y: 1000, r: 16 }
+    { x: 2080, y: 900, r: 20 }, { x: 2000, y: 1000, r: 16 },
+    /* Felsregion um den Höhleneingang */
+    { x: 1970, y: 1070, r: 22 }, { x: 2135, y: 1090, r: 18 }, { x: 1955, y: 1225, r: 17 },
+    { x: 2145, y: 1235, r: 21 }, { x: 2065, y: 1045, r: 15 }, { x: 2020, y: 1270, r: 16 }
   ];
+  var CAVE_ENTRANCE = { x: 2050, y: 1180, r: 55 };
+  var JHOUSE = { x: 1580, y: 40, w: 200, h: 140 };
+  var JDOOR_ZONE = { x: 1680, y: 205, r: 50 };
   var MUD_PUDDLES = [
     { x: 700, y: 500, r: 46 }, { x: 1050, y: 720, r: 40 }, { x: 1650, y: 950, r: 52 },
     { x: 900, y: 1080, r: 42 }, { x: 1900, y: 320, r: 38 }, { x: 160, y: 900, r: 44 }
@@ -459,6 +519,27 @@
       '<rect x="62" y="52" width="16" height="16" fill="#bfe8f5" stroke="#fff" stroke-width="3"/>' +
       '<rect x="76" y="10" width="8" height="16" fill="#8a5a3a"/>' +
       '<circle cx="24" cy="96" r="4" fill="#e07360" opacity=".8"/><circle cx="30" cy="96" r="4" fill="#e8639c" opacity=".8"/>' +
+      '</svg>';
+  }
+  function svgJapaneseHouse() {
+    return '<svg viewBox="0 0 100 90">' + DEFS +
+      '<polygon points="50,2 94,30 82,30 82,36 18,36 18,30 6,30" fill="#8a2f2f" stroke="#5a1c1c" stroke-width="1.5"/>' +
+      '<polygon points="50,10 82,30 18,30" fill="#a8403f"/>' +
+      '<rect x="20" y="36" width="60" height="46" fill="#e8cfa0" stroke="#6b4226" stroke-width="1.5"/>' +
+      '<rect x="20" y="36" width="60" height="6" fill="#c9a565"/>' +
+      '<rect x="34" y="52" width="32" height="30" fill="#f4e8cf" stroke="#8a5a3a" stroke-width="1.5"/>' +
+      '<line x1="50" y1="52" x2="50" y2="82" stroke="#8a5a3a" stroke-width="1.2"/>' +
+      '<line x1="34" y1="67" x2="66" y2="67" stroke="#8a5a3a" stroke-width="1.2"/>' +
+      '<rect x="8" y="10" width="6" height="20" fill="#8a5a3a"/>' +
+      '<circle cx="11" cy="8" r="4" fill="#a8403f"/>' +
+      '</svg>';
+  }
+  function svgCaveMouth() {
+    return '<svg viewBox="0 0 140 110">' + DEFS +
+      '<ellipse cx="70" cy="104" rx="60" ry="6" fill="rgba(0,0,0,.25)"/>' +
+      '<path d="M6 100C-2 60 18 14 70 10c52 4 72 50 64 90z" fill="url(#gRock)" stroke="#4a463c" stroke-width="2"/>' +
+      '<ellipse cx="70" cy="76" rx="34" ry="40" fill="#120d0a"/>' +
+      '<ellipse cx="70" cy="76" rx="34" ry="40" fill="none" stroke="#000" stroke-width="2" opacity=".5"/>' +
       '</svg>';
   }
   function svgPlayer() {
@@ -681,6 +762,20 @@
     hs.innerHTML = svgHouse();
     obstaclesEl.appendChild(hs);
 
+    var jh = document.createElement('div');
+    jh.className = 'house-sprite';
+    jh.style.left = (JHOUSE.x - 10) + 'px'; jh.style.top = (JHOUSE.y - 20) + 'px';
+    jh.style.width = (JHOUSE.w + 20) + 'px'; jh.style.height = (JHOUSE.h + 40) + 'px';
+    jh.innerHTML = svgJapaneseHouse();
+    obstaclesEl.appendChild(jh);
+
+    var cave = document.createElement('div');
+    cave.className = 'house-sprite';
+    cave.style.left = (CAVE_ENTRANCE.x - 70) + 'px'; cave.style.top = (CAVE_ENTRANCE.y - 90) + 'px';
+    cave.style.width = '140px'; cave.style.height = '110px';
+    cave.innerHTML = svgCaveMouth();
+    obstaclesEl.appendChild(cave);
+
     TREES.forEach(function (tr) {
       var el = document.createElement('div');
       el.className = 'tree-sprite';
@@ -794,6 +889,7 @@
   function collides(x, y, r) {
     if (x - r < 20 || y - r < 20 || x + r > WORLD.w - 20 || y + r > WORLD.h - 20) return true;
     if (inRect(x, y, HOUSE, r)) return true;
+    if (inRect(x, y, JHOUSE, r)) return true;
     for (var i = 0; i < TREES.length; i++) {
       var t = TREES[i];
       if (Math.hypot(x - t.x, y - t.y) < t.r + r * 0.7) return true;
@@ -960,21 +1056,256 @@
   /* ================= Szenenwechsel ================= */
   var sceneOutdoor = document.getElementById('scene-outdoor');
   var sceneHouse = document.getElementById('scene-house');
+  var sceneMaze = document.getElementById('scene-maze');
+  var scenePlatform = document.getElementById('scene-platform');
+  var joystickEl = document.getElementById('joystick');
+  function setJoystickVisible(v) { joystickEl.style.display = v ? '' : 'none'; }
   function enterHouse() {
     sceneOutdoor.classList.remove('active');
     sceneHouse.classList.add('active');
+    setJoystickVisible(false);
     refreshStats();
     renderDogHouse();
   }
   document.getElementById('exit-house').addEventListener('click', function () {
     sceneHouse.classList.remove('active');
     sceneOutdoor.classList.add('active');
+    setJoystickVisible(true);
     player.x = DOOR_ZONE.x; player.y = DOOR_ZONE.y + DOOR_ZONE.r + 25;
     dogPos = { x: player.x + 30, y: player.y };
     prevDogX = dogPos.x; dogWanderTarget = { x: dogPos.x, y: dogPos.y }; dogCalled = false;
     render();
     renderDog();
   });
+
+  /* ================= Höhlen-Labyrinth ================= */
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      var t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  var MAZE_CW = 11, MAZE_CH = 9, MAZE_TILE = 42;
+  var MAZE_GW = MAZE_CW * 2 + 1, MAZE_GH = MAZE_CH * 2 + 1;
+  var mazeGrid = (function buildMazeGrid() {
+    var rng = mulberry32(1337);
+    var grid = [];
+    for (var i = 0; i < MAZE_GH; i++) grid.push(new Array(MAZE_GW).fill(1));
+    var visited = new Array(MAZE_CW * MAZE_CH).fill(false);
+    function idx(cx, cy) { return cy * MAZE_CW + cx; }
+    var stack = [{ x: 0, y: 0 }];
+    visited[0] = true;
+    grid[1][1] = 0;
+    while (stack.length) {
+      var cur = stack[stack.length - 1];
+      var dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+      for (var i = dirs.length - 1; i > 0; i--) {
+        var j = (rng() * (i + 1)) | 0;
+        var tmp = dirs[i]; dirs[i] = dirs[j]; dirs[j] = tmp;
+      }
+      var moved = false;
+      for (var d = 0; d < dirs.length; d++) {
+        var nx = cur.x + dirs[d][0], ny = cur.y + dirs[d][1];
+        if (nx >= 0 && nx < MAZE_CW && ny >= 0 && ny < MAZE_CH && !visited[idx(nx, ny)]) {
+          visited[idx(nx, ny)] = true;
+          grid[2 * cur.y + 1 + dirs[d][1]][2 * cur.x + 1 + dirs[d][0]] = 0;
+          grid[2 * ny + 1][2 * nx + 1] = 0;
+          stack.push({ x: nx, y: ny });
+          moved = true;
+          break;
+        }
+      }
+      if (!moved) stack.pop();
+    }
+    return grid;
+  })();
+  var mazeStartCell = { gx: 1, gy: 1 };
+  var mazeExitCell = { gx: MAZE_GW - 2, gy: MAZE_GH - 2 };
+  var mazeDogPos = { x: 0, y: 0 };
+  var mazeVel = { x: 0, y: 0 };
+  var mazeKeyPos = null, mazeHasKey = false;
+  var mazeCamX = 0, mazeCamY = 0;
+  var mazeWorldEl = document.getElementById('maze-world');
+  var mazeGroundEl = document.getElementById('maze-ground');
+  var mazeWallsEl = document.getElementById('maze-walls');
+  var mazeDogEl = document.getElementById('maze-dog');
+  var mazeDogVisualEl = document.getElementById('maze-dog-visual');
+  var mazeKeyEl = document.getElementById('maze-key');
+  var mazeExitEl = document.getElementById('maze-exit-sprite');
+  var mazeToastEl = document.getElementById('maze-toast');
+  var mazeStage = document.getElementById('maze-stage');
+  function mazeToast(msg) {
+    mazeToastEl.textContent = msg;
+    mazeToastEl.classList.add('show');
+    clearTimeout(mazeToast._t);
+    mazeToast._t = setTimeout(function () { mazeToastEl.classList.remove('show'); }, 1800);
+  }
+  function mazeCell(gx, gy) {
+    if (gy < 0 || gy >= MAZE_GH || gx < 0 || gx >= MAZE_GW) return 1;
+    return mazeGrid[gy][gx];
+  }
+  function mazeBuildWalls() {
+    mazeWorldEl.style.width = (MAZE_GW * MAZE_TILE) + 'px';
+    mazeWorldEl.style.height = (MAZE_GH * MAZE_TILE) + 'px';
+    mazeGroundEl.style.width = (MAZE_GW * MAZE_TILE) + 'px';
+    mazeGroundEl.style.height = (MAZE_GH * MAZE_TILE) + 'px';
+    mazeWallsEl.innerHTML = '';
+    for (var gy = 0; gy < MAZE_GH; gy++) {
+      for (var gx = 0; gx < MAZE_GW; gx++) {
+        if (mazeGrid[gy][gx] === 1) {
+          var w = document.createElement('div');
+          w.className = 'maze-wall';
+          w.style.left = (gx * MAZE_TILE) + 'px'; w.style.top = (gy * MAZE_TILE) + 'px';
+          w.style.width = MAZE_TILE + 'px'; w.style.height = MAZE_TILE + 'px';
+          mazeWallsEl.appendChild(w);
+        }
+      }
+    }
+  }
+  mazeBuildWalls();
+  function mazeCollides(x, y, r) {
+    var gx0 = Math.floor((x - r) / MAZE_TILE), gx1 = Math.floor((x + r) / MAZE_TILE);
+    var gy0 = Math.floor((y - r) / MAZE_TILE), gy1 = Math.floor((y + r) / MAZE_TILE);
+    for (var gy = gy0; gy <= gy1; gy++) {
+      for (var gx = gx0; gx <= gx1; gx++) {
+        if (mazeCell(gx, gy) === 1) return true;
+      }
+    }
+    return false;
+  }
+  function mazePlaceDog(gx, gy) {
+    mazeDogPos = { x: gx * MAZE_TILE + MAZE_TILE / 2, y: gy * MAZE_TILE + MAZE_TILE / 2 };
+    mazeVel = { x: 0, y: 0 };
+  }
+  function mazeRender() {
+    mazeDogEl.style.left = (mazeDogPos.x - 25) + 'px'; mazeDogEl.style.top = (mazeDogPos.y - 20) + 'px';
+    mazeDogEl.style.width = '50px'; mazeDogEl.style.height = '38px';
+    var vw = innerWidth, vh = innerHeight, ww = MAZE_GW * MAZE_TILE, wh = MAZE_GH * MAZE_TILE;
+    mazeCamX = ww <= vw ? ww / 2 : Math.max(vw / 2, Math.min(ww - vw / 2, mazeDogPos.x));
+    mazeCamY = wh <= vh ? wh / 2 : Math.max(vh / 2, Math.min(wh - vh / 2, mazeDogPos.y));
+    mazeWorldEl.style.transform = 'translate(' + (vw / 2 - mazeCamX) + 'px,' + (vh / 2 - mazeCamY) + 'px)';
+  }
+  function enterCave() {
+    sceneOutdoor.classList.remove('active');
+    sceneMaze.classList.add('active');
+    mazePlaceDog(mazeStartCell.gx, mazeStartCell.gy);
+    mazeHasKey = false;
+    mazeKeyEl.style.display = '';
+    mazeExitEl.style.left = (mazeExitCell.gx * MAZE_TILE + MAZE_TILE / 2 - 17) + 'px';
+    mazeExitEl.style.top = (mazeExitCell.gy * MAZE_TILE + MAZE_TILE / 2 - 17) + 'px';
+    var openCells = [];
+    for (var gy = 1; gy < MAZE_GH; gy += 2) {
+      for (var gx = 1; gx < MAZE_GW; gx += 2) {
+        if (mazeGrid[gy][gx] === 0 && !(gx === mazeStartCell.gx && gy === mazeStartCell.gy) && !(gx === mazeExitCell.gx && gy === mazeExitCell.gy)) {
+          openCells.push({ gx: gx, gy: gy });
+        }
+      }
+    }
+    var pick = openCells[(Math.random() * openCells.length) | 0];
+    mazeKeyPos = { x: pick.gx * MAZE_TILE + MAZE_TILE / 2, y: pick.gy * MAZE_TILE + MAZE_TILE / 2 };
+    mazeKeyEl.style.left = (mazeKeyPos.x - 14) + 'px'; mazeKeyEl.style.top = (mazeKeyPos.y - 14) + 'px';
+    mazeRender();
+  }
+  function exitMaze() {
+    sceneMaze.classList.remove('active');
+    sceneOutdoor.classList.add('active');
+    player.x = CAVE_ENTRANCE.x; player.y = CAVE_ENTRANCE.y + CAVE_ENTRANCE.r + 25;
+    dogPos = { x: player.x + 30, y: player.y };
+    prevDogX = dogPos.x; dogWanderTarget = { x: dogPos.x, y: dogPos.y }; dogCalled = false;
+    render(); renderDog();
+  }
+  document.getElementById('maze-exit-btn').addEventListener('click', exitMaze);
+
+  /* ================= Jump'n'Run (Japanisches Haus) ================= */
+  var PLATFORM_W = 2500, PLATFORM_H = 640, PLATFORM_GROUND_Y = 560;
+  var PLATFORM_BLOCKS = [
+    { x: 0, y: 560, w: 420, h: 80 },
+    { x: 500, y: 560, w: 260, h: 80 },
+    { x: 840, y: 480, w: 140, h: 30 },
+    { x: 1060, y: 560, w: 220, h: 80 },
+    { x: 1360, y: 420, w: 130, h: 30 },
+    { x: 1560, y: 560, w: 200, h: 80 },
+    { x: 1840, y: 470, w: 120, h: 30 },
+    { x: 2040, y: 560, w: 460, h: 80 }
+  ];
+  var PLATFORM_GOAL = { x: 2420, y: 560 };
+  var platDog = { x: 60, y: 500, vx: 0, vy: 0, onGround: false };
+  var platWorldEl = document.getElementById('platform-world');
+  var platBlocksEl = document.getElementById('platform-platforms');
+  var platDogEl = document.getElementById('platform-dog');
+  var platDogVisualEl = document.getElementById('platform-dog-visual');
+  var platGoalEl = document.getElementById('platform-goal');
+  var platToastEl = document.getElementById('platform-toast');
+  var platFacing = 1;
+  var scenePlatformActive = false;
+  function platToast(msg) {
+    platToastEl.textContent = msg;
+    platToastEl.classList.add('show');
+    clearTimeout(platToast._t);
+    platToast._t = setTimeout(function () { platToastEl.classList.remove('show'); }, 1800);
+  }
+  function platBuild() {
+    platWorldEl.style.width = PLATFORM_W + 'px';
+    platWorldEl.style.height = PLATFORM_H + 'px';
+    platBlocksEl.innerHTML = '';
+    PLATFORM_BLOCKS.forEach(function (b) {
+      var el = document.createElement('div');
+      el.className = 'platform-block';
+      el.style.left = b.x + 'px'; el.style.top = b.y + 'px';
+      el.style.width = b.w + 'px'; el.style.height = b.h + 'px';
+      platBlocksEl.appendChild(el);
+    });
+    platGoalEl.style.left = (PLATFORM_GOAL.x - 23) + 'px'; platGoalEl.style.top = (PLATFORM_GOAL.y - 60) + 'px';
+  }
+  platBuild();
+  function platGroundAt(x, yTop, yBottom, vy) {
+    for (var i = 0; i < PLATFORM_BLOCKS.length; i++) {
+      var b = PLATFORM_BLOCKS[i];
+      if (x > b.x + 6 && x < b.x + b.w - 6 && yBottom >= b.y && yBottom <= b.y + 18 && vy >= 0) {
+        return b.y;
+      }
+    }
+    return null;
+  }
+  function platBlocked(x, y, halfW, halfH) {
+    for (var i = 0; i < PLATFORM_BLOCKS.length; i++) {
+      var b = PLATFORM_BLOCKS[i];
+      if (x + halfW > b.x && x - halfW < b.x + b.w && y + halfH > b.y && y - halfH < b.y + b.h) return true;
+    }
+    return false;
+  }
+  function platResetDog() {
+    platDog = { x: 60, y: 500, vx: 0, vy: 0, onGround: false };
+    platFacing = 1;
+  }
+  function platRender() {
+    platDogEl.style.left = (platDog.x - 25) + 'px'; platDogEl.style.top = (platDog.y - 30) + 'px';
+    platDogEl.style.width = '50px'; platDogEl.style.height = '38px';
+    var vw = innerWidth, vh = innerHeight;
+    var camX = Math.max(vw / 2, Math.min(PLATFORM_W - vw / 2, platDog.x));
+    platWorldEl.style.transform = 'translate(' + (vw / 2 - camX) + 'px,0px)';
+  }
+  var platJumpQueued = false;
+  document.getElementById('btn-jump').addEventListener('click', function () { platJumpQueued = true; });
+  function enterPlatform() {
+    sceneOutdoor.classList.remove('active');
+    scenePlatform.classList.add('active');
+    scenePlatformActive = true;
+    platResetDog();
+    platRender();
+  }
+  function exitPlatform() {
+    scenePlatform.classList.remove('active');
+    sceneOutdoor.classList.add('active');
+    scenePlatformActive = false;
+    player.x = JDOOR_ZONE.x; player.y = JDOOR_ZONE.y + JDOOR_ZONE.r + 25;
+    dogPos = { x: player.x + 30, y: player.y };
+    prevDogX = dogPos.x; dogWanderTarget = { x: dogPos.x, y: dogPos.y }; dogCalled = false;
+    render(); renderDog();
+  }
+  document.getElementById('platform-exit-btn').addEventListener('click', exitPlatform);
 
   /* ================= Spielschleife ================= */
   var lastT = performance.now();
@@ -1083,11 +1414,74 @@
       }
 
       render();
-      if (!fetching && Math.hypot(player.x - DOOR_ZONE.x, player.y - DOOR_ZONE.y) < DOOR_ZONE.r) enterHouse();
+      if (!fetching) {
+        if (Math.hypot(player.x - DOOR_ZONE.x, player.y - DOOR_ZONE.y) < DOOR_ZONE.r) enterHouse();
+        else if (Math.hypot(player.x - CAVE_ENTRANCE.x, player.y - CAVE_ENTRANCE.y) < CAVE_ENTRANCE.r) enterCave();
+        else if (Math.hypot(player.x - JDOOR_ZONE.x, player.y - JDOOR_ZONE.y) < JDOOR_ZONE.r) enterPlatform();
+      }
+    } else if (sceneMaze.classList.contains('active')) {
+      var mv = getMoveVector();
+      var mSpeed = 190;
+      var mDesVel = (mv.x || mv.y) ? { x: mv.x * mSpeed, y: mv.y * mSpeed } : { x: 0, y: 0 };
+      accelerateTo(mazeVel, mDesVel, 900, dt);
+      var mnx = mazeDogPos.x + mazeVel.x * dt, mny = mazeDogPos.y + mazeVel.y * dt;
+      if (!mazeCollides(mnx, mazeDogPos.y, 14)) mazeDogPos.x = mnx; else mazeVel.x = 0;
+      if (!mazeCollides(mazeDogPos.x, mny, 14)) mazeDogPos.y = mny; else mazeVel.y = 0;
+      if (Math.abs(mazeVel.x) > 4) mazeDogVisualEl.classList.toggle('face-left', mazeVel.x < 0);
+      if (!mazeHasKey && mazeKeyPos && Math.hypot(mazeDogPos.x - mazeKeyPos.x, mazeDogPos.y - mazeKeyPos.y) < 26) {
+        mazeHasKey = true;
+        mazeKeyEl.style.display = 'none';
+        SFX.play('bone');
+        mazeToast('Schlüssel gefunden!');
+      }
+      if (Math.hypot(mazeDogPos.x - (mazeExitCell.gx * MAZE_TILE + MAZE_TILE / 2), mazeDogPos.y - (mazeExitCell.gy * MAZE_TILE + MAZE_TILE / 2)) < 26) {
+        if (mazeHasKey) {
+          SFX.play('happy');
+          stats.love = Math.min(100, stats.love + 12); saveStats();
+          bones = (bones || 0) + 1;
+          try { localStorage.setItem('mw-pet-bones', String(bones)); } catch (e) {}
+          mazeToast('Geschafft! 🎉');
+          setTimeout(exitMaze, 900);
+        } else {
+          mazeToast('Du brauchst noch den Schlüssel!');
+        }
+      }
+      mazeRender();
+    } else if (scenePlatformActive) {
+      var pv = getMoveVector();
+      var pAccel = 900, pMaxSpeed = 210;
+      if (pv.x) { platDog.vx += pv.x * pAccel * dt; platDog.vx = Math.max(-pMaxSpeed, Math.min(pMaxSpeed, platDog.vx)); }
+      else { var damp = 900 * dt; if (Math.abs(platDog.vx) <= damp) platDog.vx = 0; else platDog.vx -= Math.sign(platDog.vx) * damp; }
+      if (Math.abs(platDog.vx) > 4) { platFacing = platDog.vx < 0 ? -1 : 1; platDogVisualEl.classList.toggle('face-left', platFacing < 0); }
+      if (platJumpQueued || keys[' '] || keys.ArrowUp || keys.w) {
+        if (platDog.onGround) { platDog.vy = -430; platDog.onGround = false; SFX.play('happy'); }
+        platJumpQueued = false;
+      }
+      platDog.vy += 1100 * dt;
+      var pnx = platDog.x + platDog.vx * dt;
+      if (!platBlocked(pnx, platDog.y - 14, 15, 14)) platDog.x = pnx;
+      platDog.x = Math.max(15, Math.min(PLATFORM_W - 15, platDog.x));
+      var pny = platDog.y + platDog.vy * dt;
+      var landY = platGroundAt(platDog.x, platDog.y, pny, platDog.vy);
+      if (landY !== null) { platDog.y = landY; platDog.vy = 0; platDog.onGround = true; }
+      else { platDog.y = pny; platDog.onGround = false; }
+      if (platDog.y > PLATFORM_H + 100) { platResetDog(); platToast('Autsch! Nochmal von vorne.'); }
+      if (Math.hypot(platDog.x - PLATFORM_GOAL.x, platDog.y - PLATFORM_GOAL.y) < 40) {
+        SFX.play('happy');
+        stats.love = Math.min(100, stats.love + 12); saveStats();
+        bones = (bones || 0) + 1;
+        try { localStorage.setItem('mw-pet-bones', String(bones)); } catch (e) {}
+        platToast('Geschafft! 🎉');
+        scenePlatformActive = false;
+        setTimeout(exitPlatform, 900);
+      }
+      platRender();
     }
     requestAnimationFrame(loop);
   }
   requestAnimationFrame(loop);
+  mazeDogVisualEl.innerHTML = svgDog(false);
+  platDogVisualEl.innerHTML = svgDog(false);
 
   /* ================= Haustier-Pflege ================= */
   var STAT_KEY = 'mw-pet-stats';
