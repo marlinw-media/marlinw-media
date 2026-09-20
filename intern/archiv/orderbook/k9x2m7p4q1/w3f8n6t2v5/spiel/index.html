@@ -143,7 +143,12 @@
   .maze-exit { position: absolute; font-size: 34px; z-index: 5; }
 
   /* ---------- Jump'n'Run ---------- */
-  #platform-stage { position: fixed; inset: 0; overflow: hidden; }
+  #platform-stage { position: fixed; inset: 0; overflow: hidden; background: #ffb27a; }
+  .scene-objective {
+    position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,.45); color: #fff; font-weight: 700; font-size: 13px;
+    padding: 6px 16px; border-radius: 999px; z-index: 45; white-space: nowrap;
+  }
   #platform-world { position: absolute; top: 0; left: 0; }
   #platform-bg { position: absolute; inset: 0; background: linear-gradient(180deg, #ffd9a0, #ffb27a 55%, #e8935a); }
   .platform-block {
@@ -153,6 +158,37 @@
   }
   .platform-goal { position: absolute; font-size: 46px; z-index: 5; }
   .platform-jump-btn { position: fixed; right: 18px; bottom: 110px; z-index: 41; }
+
+  /* ---------- Mini-Spiel-Overlays (Angeln / Autospiel) ---------- */
+  .overlay {
+    position: fixed; inset: 0; z-index: 80; background: rgba(0,0,0,.55);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .overlay[hidden] { display: none; }
+  .overlay-card {
+    background: #fdf6e6; border-radius: 22px; padding: 20px 26px 26px;
+    width: min(90vw, 380px); text-align: center; box-shadow: 0 12px 30px rgba(0,0,0,.4);
+  }
+  .overlay-card h3 { margin: 0 0 6px; color: #4a3320; }
+  .overlay-hint { margin: 0 0 14px; font-size: 12px; color: #7a6a55; }
+  .overlay-msg { min-height: 20px; margin-top: 10px; font-weight: 700; color: #3f6b3d; }
+  .overlay-btn {
+    border: none; border-radius: 999px; background: #ffb703; color: #4a3320;
+    font-weight: 700; font-size: 14px; padding: 10px 22px; box-shadow: 0 4px 0 rgba(0,0,0,.2);
+  }
+  .overlay-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,.2); }
+  .overlay-close {
+    display: block; margin: 14px auto 0; border: none; background: none;
+    color: #9a8570; font-size: 12px; font-weight: 700;
+  }
+  .fish-track { position: relative; height: 22px; background: #cfe8f5; border-radius: 999px; margin-bottom: 16px; overflow: hidden; }
+  .fish-zone { position: absolute; top: 0; bottom: 0; background: #6fcf6b; opacity: .8; }
+  .fish-marker { position: absolute; top: 50%; transform: translate(-50%,-50%); font-size: 18px; left: 0%; }
+  .car-card { width: min(90vw, 300px); }
+  .car-road { position: relative; height: 320px; background: linear-gradient(180deg,#6b6b6b,#4a4a4a); border-radius: 12px; overflow: hidden; margin-bottom: 10px; }
+  .car-lane-line { position: absolute; top: 0; bottom: 0; width: 2px; background: repeating-linear-gradient(#fff 0 14px, transparent 14px 28px); opacity: .5; }
+  .car-player, .car-obstacle { position: absolute; font-size: 30px; transform: translateX(-50%); }
+  .car-controls { display: flex; gap: 20px; justify-content: center; margin-top: 8px; }
 
   /* ---------- Haus-Innenraum ---------- */
   #scene-house { flex-direction: column; background: var(--room); }
@@ -258,6 +294,8 @@
       <button class="action-btn" id="btn-call" type="button">📣 Herrufen</button>
       <button class="action-btn" id="btn-fetch" type="button">🥢 Stöckchen</button>
       <button class="action-btn" id="btn-clean" type="button" hidden>🧹 Aufsammeln</button>
+      <button class="action-btn" id="btn-fish" type="button" hidden>🎣 Angeln</button>
+      <button class="action-btn" id="btn-car" type="button" hidden>🚗 Autospiel</button>
     </div>
   </div>
 
@@ -271,6 +309,7 @@
         <div class="sprite dog-sprite" id="maze-dog"><div class="dog-visual" id="maze-dog-visual"></div></div>
       </div>
       <div class="toast" id="maze-toast"></div>
+      <div class="scene-objective">🔑 Finde den Schlüssel und dann den Ausgang!</div>
     </div>
     <button class="exit-btn" id="maze-exit-btn" type="button">🚪 Verlassen</button>
   </div>
@@ -284,6 +323,7 @@
         <div class="sprite dog-sprite" id="platform-dog"><div class="dog-visual" id="platform-dog-visual"></div></div>
       </div>
       <div class="toast" id="platform-toast"></div>
+      <div class="scene-objective">⛩️ Spring bis zum Torii am Ende!</div>
     </div>
     <button class="exit-btn" id="platform-exit-btn" type="button">🚪 Verlassen</button>
     <button class="action-btn platform-jump-btn" id="btn-jump" type="button">⬆️ Springen</button>
@@ -317,6 +357,36 @@
 
 <div class="joystick" id="joystick">
   <div class="joy-base" id="joy-base"><div class="joy-knob" id="joy-knob"></div></div>
+</div>
+
+<div class="overlay" id="fish-overlay" hidden>
+  <div class="overlay-card">
+    <h3>🎣 Angeln</h3>
+    <p class="overlay-hint">Drück "Anschlag!", wenn der Zeiger in der grünen Zone ist!</p>
+    <div class="fish-track" id="fish-track"><div class="fish-zone" id="fish-zone"></div><div class="fish-marker" id="fish-marker">🎣</div></div>
+    <button class="overlay-btn" id="fish-strike-btn" type="button">Anschlag!</button>
+    <div class="overlay-msg" id="fish-msg">&nbsp;</div>
+    <button class="overlay-close" id="fish-close-btn" type="button">✕ Schließen</button>
+  </div>
+</div>
+
+<div class="overlay" id="car-overlay" hidden>
+  <div class="overlay-card car-card">
+    <h3>🚗 Autospiel</h3>
+    <p class="overlay-hint">Weiche den Autos aus!</p>
+    <div class="car-road" id="car-road">
+      <div class="car-lane-line" style="left:33.3%"></div>
+      <div class="car-lane-line" style="left:66.6%"></div>
+      <div class="car-player" id="car-player">🐶</div>
+    </div>
+    <div class="overlay-msg">Punkte: <span id="car-score">0</span></div>
+    <div class="overlay-msg" id="car-status">&nbsp;</div>
+    <div class="car-controls">
+      <button class="overlay-btn" id="car-left-btn" type="button">◀</button>
+      <button class="overlay-btn" id="car-right-btn" type="button">▶</button>
+    </div>
+    <button class="overlay-close" id="car-close-btn" type="button">✕ Schließen</button>
+  </div>
 </div>
 
 <div class="wait-bar-thin" id="wait-bar-thin"><div class="wait-bar-thin-fill" id="wait-bar-thin-fill"></div></div>
@@ -444,6 +514,9 @@
     { x: 330, y: 700 }, { x: 330, y: 860 }, { x: 420, y: 910 }, { x: 420, y: 1100 }, { x: 420, y: 1264 }
   ];
   var GATE_POS = { x: 420, y: 1264 };
+  var DOCK_POS = { x: POND.x - POND.rx - 30, y: POND.y - 10 };
+  var FISH_SPOT = { x: DOCK_POS.x - 10, y: DOCK_POS.y, r: 70 };
+  var CAR_SPOT = { x: GATE_POS.x, y: GATE_POS.y - 20, r: 70 };
   var PLAYER_R = 15, DOG_R = 13;
 
   function distToSeg(px, py, ax, ay, bx, by) {
@@ -673,6 +746,15 @@
       '<line x1="30" y1="10" x2="10" y2="29" stroke="#6b4226" stroke-width="3"/>' +
       '</svg>';
   }
+  function svgDock() {
+    return '<svg viewBox="0 0 140 60">' +
+      '<rect x="0" y="24" width="140" height="16" fill="url(#gTrunk)" stroke="#4a2f1a" stroke-width="1.5"/>' +
+      [8, 30, 52, 74, 96, 118].map(function (x) {
+        return '<rect x="' + x + '" y="12" width="8" height="14" fill="#8a5a3a" stroke="#4a2f1a" stroke-width="1"/>' +
+          '<rect x="' + x + '" y="38" width="8" height="20" fill="#6b4226" opacity=".8"/>';
+      }).join('') +
+      '</svg>';
+  }
   function svgPuddle(r) {
     var w = r * 2, h = r * 1.3;
     var path = 'M ' + w * 0.03 + ' ' + h * 0.5 +
@@ -734,6 +816,13 @@
     gate.style.width = '40px'; gate.style.height = '40px';
     gate.innerHTML = svgGate();
     obstaclesEl.appendChild(gate);
+
+    var dock = document.createElement('div');
+    dock.className = 'gate-sprite';
+    dock.style.left = (DOCK_POS.x - 20) + 'px'; dock.style.top = (DOCK_POS.y - 20) + 'px';
+    dock.style.width = '140px'; dock.style.height = '60px';
+    dock.innerHTML = svgDock();
+    obstaclesEl.appendChild(dock);
 
     var creekB = boundsOf(CREEK_PTS, 40);
     var creek = document.createElement('div');
@@ -1033,6 +1122,136 @@
     stats.love = Math.min(100, stats.love + 4); saveStats();
   });
 
+  /* ---- Easter Eggs: Angeln & Autospiel ---- */
+  var miniGameOpen = false;
+  var btnFishEl = document.getElementById('btn-fish');
+  var btnCarEl = document.getElementById('btn-car');
+
+  var fishOverlay = document.getElementById('fish-overlay');
+  var fishZoneEl = document.getElementById('fish-zone');
+  var fishMarkerEl = document.getElementById('fish-marker');
+  var fishMsgEl = document.getElementById('fish-msg');
+  var fishPos = 0, fishDir = 1, fishSpeed = 0.55, fishZoneStart = 0.4, fishZoneWidth = 0.18, fishRAFId = null, fishLastT = 0;
+  function fishNewZone() {
+    fishZoneWidth = 0.14 + Math.random() * 0.08;
+    fishZoneStart = Math.random() * (1 - fishZoneWidth);
+    fishZoneEl.style.left = (fishZoneStart * 100) + '%';
+    fishZoneEl.style.width = (fishZoneWidth * 100) + '%';
+  }
+  function fishLoop(t) {
+    var dt = fishLastT ? Math.min(0.05, (t - fishLastT) / 1000) : 0; fishLastT = t;
+    fishPos += fishDir * fishSpeed * dt;
+    if (fishPos > 1) { fishPos = 1; fishDir = -1; }
+    if (fishPos < 0) { fishPos = 0; fishDir = 1; }
+    fishMarkerEl.style.left = (fishPos * 100) + '%';
+    fishRAFId = requestAnimationFrame(fishLoop);
+  }
+  btnFishEl.addEventListener('click', function () {
+    miniGameOpen = true;
+    fishOverlay.hidden = false;
+    fishMsgEl.textContent = ' ';
+    fishNewZone();
+    fishPos = 0; fishDir = 1; fishLastT = 0;
+    fishRAFId = requestAnimationFrame(fishLoop);
+  });
+  document.getElementById('fish-strike-btn').addEventListener('click', function () {
+    var hit = fishPos >= fishZoneStart && fishPos <= fishZoneStart + fishZoneWidth;
+    if (hit) {
+      SFX.play('happy');
+      stats.love = Math.min(100, stats.love + 6); saveStats();
+      bones = (bones || 0) + 1;
+      try { localStorage.setItem('mw-pet-bones', String(bones)); } catch (e) {}
+      fishMsgEl.textContent = 'Fisch gefangen! 🐟';
+    } else {
+      SFX.play('splash');
+      fishMsgEl.textContent = 'Entwischt, nochmal!';
+    }
+    fishNewZone();
+  });
+  document.getElementById('fish-close-btn').addEventListener('click', function () {
+    cancelAnimationFrame(fishRAFId);
+    fishOverlay.hidden = true;
+    miniGameOpen = false;
+  });
+
+  var carOverlay = document.getElementById('car-overlay');
+  var carRoadEl = document.getElementById('car-road');
+  var carPlayerEl = document.getElementById('car-player');
+  var carScoreEl = document.getElementById('car-score');
+  var carStatusEl = document.getElementById('car-status');
+  var carLane = 1, carObstacles = [], carScore = 0, carSpawnAt = 0, carRAFId = null, carLastT = 0, carOver = false;
+  function carLaneX(lane) { return (lane + 0.5) / 3 * 100; }
+  function carReset() {
+    carLane = 1; carScore = 0; carOver = false;
+    carObstacles.forEach(function (o) { o.el.remove(); });
+    carObstacles = [];
+    carPlayerEl.style.left = carLaneX(carLane) + '%';
+    carScoreEl.textContent = '0';
+    carStatusEl.innerHTML = '&nbsp;';
+  }
+  function carLoop(t) {
+    var dt = carLastT ? Math.min(0.05, (t - carLastT) / 1000) : 0; carLastT = t;
+    if (!carOver) {
+      carScore += dt * 10;
+      carScoreEl.textContent = carScore.toFixed(0);
+      var roadH = carRoadEl.clientHeight;
+      var speed = 140 + Math.min(160, carScore);
+      carSpawnAt -= dt;
+      if (carSpawnAt <= 0) {
+        carSpawnAt = 0.9 + Math.random() * 0.5;
+        var lane = (Math.random() * 3) | 0;
+        var el = document.createElement('div');
+        el.className = 'car-obstacle';
+        el.textContent = '🚙';
+        el.style.left = carLaneX(lane) + '%';
+        el.style.top = '-30px';
+        carRoadEl.appendChild(el);
+        carObstacles.push({ lane: lane, y: -30, el: el });
+      }
+      var playerY = roadH - 40;
+      for (var i = carObstacles.length - 1; i >= 0; i--) {
+        var o = carObstacles[i];
+        o.y += speed * dt;
+        o.el.style.top = o.y + 'px';
+        if (o.y > roadH + 30) { o.el.remove(); carObstacles.splice(i, 1); continue; }
+        if (o.lane === carLane && Math.abs(o.y - playerY) < 26) {
+          carOver = true;
+          SFX.play('drop');
+          var reward = Math.max(1, Math.round(carScore / 15));
+          stats.love = Math.min(100, stats.love + Math.min(10, reward)); saveStats();
+          carStatusEl.textContent = 'Autsch! ◀/▶ zum Neustart';
+        }
+      }
+    }
+    carRAFId = requestAnimationFrame(carLoop);
+  }
+  function carMove(dir) {
+    if (carOver) { carReset(); return; }
+    carLane = Math.max(0, Math.min(2, carLane + dir));
+    carPlayerEl.style.left = carLaneX(carLane) + '%';
+  }
+  document.getElementById('car-left-btn').addEventListener('click', function () { carMove(-1); });
+  document.getElementById('car-right-btn').addEventListener('click', function () { carMove(1); });
+  btnCarEl.addEventListener('click', function () {
+    miniGameOpen = true;
+    carOverlay.hidden = false;
+    carLastT = 0; carSpawnAt = 0.6;
+    carReset();
+    carRAFId = requestAnimationFrame(carLoop);
+  });
+  document.getElementById('car-close-btn').addEventListener('click', function () {
+    cancelAnimationFrame(carRAFId);
+    carObstacles.forEach(function (o) { o.el.remove(); });
+    carObstacles = [];
+    carOverlay.hidden = true;
+    miniGameOpen = false;
+  });
+  document.addEventListener('keydown', function (e) {
+    if (carOverlay.hidden) return;
+    if (e.key === 'ArrowLeft' || e.key === 'a') carMove(-1);
+    if (e.key === 'ArrowRight' || e.key === 'd') carMove(1);
+  });
+
   /* ---- Stöckchen werfen ---- */
   var stickEl = document.getElementById('stick');
   document.getElementById('btn-fetch').addEventListener('click', function () {
@@ -1119,6 +1338,14 @@
       }
       if (!moved) stack.pop();
     }
+    /* Braiding: zusätzliche Wände einreißen, damit es mehr Abzweigungen/Schleifen statt nur einem Weg gibt */
+    for (var wy = 1; wy < MAZE_GH - 1; wy++) {
+      for (var wx = 1; wx < MAZE_GW - 1; wx++) {
+        var isInterWall = (wx % 2 === 0) !== (wy % 2 === 0);
+        if (!isInterWall || grid[wy][wx] !== 1) continue;
+        if (rng() < 0.16) grid[wy][wx] = 0;
+      }
+    }
     return grid;
   })();
   var mazeStartCell = { gx: 1, gy: 1 };
@@ -1157,8 +1384,9 @@
         if (mazeGrid[gy][gx] === 1) {
           var w = document.createElement('div');
           w.className = 'maze-wall';
-          w.style.left = (gx * MAZE_TILE) + 'px'; w.style.top = (gy * MAZE_TILE) + 'px';
-          w.style.width = MAZE_TILE + 'px'; w.style.height = MAZE_TILE + 'px';
+          var wInset = 4;
+          w.style.left = (gx * MAZE_TILE + wInset) + 'px'; w.style.top = (gy * MAZE_TILE + wInset) + 'px';
+          w.style.width = (MAZE_TILE - wInset * 2) + 'px'; w.style.height = (MAZE_TILE - wInset * 2) + 'px';
           mazeWallsEl.appendChild(w);
         }
       }
@@ -1244,18 +1472,54 @@
   document.getElementById('maze-exit-btn').addEventListener('click', exitMaze);
 
   /* ================= Jump'n'Run (Japanisches Haus) ================= */
-  var PLATFORM_W = 2500, PLATFORM_H = 640, PLATFORM_GROUND_Y = 560;
-  var PLATFORM_BLOCKS = [
-    { x: 0, y: 560, w: 420, h: 80 },
-    { x: 500, y: 560, w: 260, h: 80 },
-    { x: 840, y: 480, w: 140, h: 30 },
-    { x: 1060, y: 560, w: 220, h: 80 },
-    { x: 1360, y: 420, w: 130, h: 30 },
-    { x: 1560, y: 560, w: 200, h: 80 },
-    { x: 1840, y: 470, w: 120, h: 30 },
-    { x: 2040, y: 560, w: 460, h: 80 }
+  var PLATFORM_W = 2500, PLATFORM_H = 640;
+  var PLATFORM_LEVELS = [
+    {
+      blocks: [
+        { x: 0, y: 560, w: 420, h: 80 },
+        { x: 500, y: 560, w: 260, h: 80 },
+        { x: 840, y: 480, w: 140, h: 30 },
+        { x: 1060, y: 560, w: 220, h: 80 },
+        { x: 1360, y: 420, w: 130, h: 30 },
+        { x: 1560, y: 560, w: 200, h: 80 },
+        { x: 1840, y: 470, w: 120, h: 30 },
+        { x: 2040, y: 560, w: 460, h: 80 }
+      ],
+      goal: { x: 2420, y: 560 }
+    },
+    {
+      blocks: [
+        { x: 0, y: 560, w: 300, h: 80 },
+        { x: 380, y: 500, w: 100, h: 24 },
+        { x: 560, y: 440, w: 100, h: 24 },
+        { x: 740, y: 500, w: 100, h: 24 },
+        { x: 920, y: 560, w: 300, h: 80 },
+        { x: 1300, y: 500, w: 90, h: 24 },
+        { x: 1460, y: 440, w: 90, h: 24 },
+        { x: 1620, y: 500, w: 90, h: 24 },
+        { x: 1780, y: 560, w: 260, h: 80 },
+        { x: 2120, y: 560, w: 380, h: 80 }
+      ],
+      goal: { x: 2400, y: 560 }
+    },
+    {
+      blocks: [
+        { x: 0, y: 560, w: 500, h: 80 },
+        { x: 640, y: 560, w: 160, h: 80 },
+        { x: 640, y: 380, w: 160, h: 24 },
+        { x: 940, y: 560, w: 160, h: 80 },
+        { x: 940, y: 380, w: 160, h: 24 },
+        { x: 1240, y: 560, w: 160, h: 80 },
+        { x: 1480, y: 500, w: 140, h: 24 },
+        { x: 1720, y: 560, w: 160, h: 80 },
+        { x: 1980, y: 500, w: 120, h: 24 },
+        { x: 2160, y: 560, w: 340, h: 80 }
+      ],
+      goal: { x: 2440, y: 560 }
+    }
   ];
-  var PLATFORM_GOAL = { x: 2420, y: 560 };
+  var PLATFORM_BLOCKS = PLATFORM_LEVELS[0].blocks;
+  var PLATFORM_GOAL = PLATFORM_LEVELS[0].goal;
   var platDog = { x: 60, y: 500, vx: 0, vy: 0, onGround: false };
   var platWorldEl = document.getElementById('platform-world');
   var platBlocksEl = document.getElementById('platform-platforms');
@@ -1271,7 +1535,10 @@
     clearTimeout(platToast._t);
     platToast._t = setTimeout(function () { platToastEl.classList.remove('show'); }, 1800);
   }
-  function platBuild() {
+  function platBuild(levelIdx) {
+    var lvl = PLATFORM_LEVELS[levelIdx || 0];
+    PLATFORM_BLOCKS = lvl.blocks;
+    PLATFORM_GOAL = lvl.goal;
     platWorldEl.style.width = PLATFORM_W + 'px';
     platWorldEl.style.height = PLATFORM_H + 'px';
     platBlocksEl.innerHTML = '';
@@ -1284,7 +1551,7 @@
     });
     platGoalEl.style.left = (PLATFORM_GOAL.x - 23) + 'px'; platGoalEl.style.top = (PLATFORM_GOAL.y - 60) + 'px';
   }
-  platBuild();
+  platBuild(0);
   function platGroundAt(x, yTop, yBottom, vy) {
     for (var i = 0; i < PLATFORM_BLOCKS.length; i++) {
       var b = PLATFORM_BLOCKS[i];
@@ -1310,7 +1577,8 @@
     platDogEl.style.width = '50px'; platDogEl.style.height = '38px';
     var vw = innerWidth, vh = innerHeight;
     var camX = Math.max(vw / 2, Math.min(PLATFORM_W - vw / 2, platDog.x));
-    platWorldEl.style.transform = 'translate(' + (vw / 2 - camX) + 'px,0px)';
+    var camY = PLATFORM_H <= vh ? PLATFORM_H / 2 : Math.max(vh / 2, Math.min(PLATFORM_H - vh / 2, platDog.y));
+    platWorldEl.style.transform = 'translate(' + (vw / 2 - camX) + 'px,' + (vh / 2 - camY) + 'px)';
   }
   var platJumpQueued = false;
   document.getElementById('btn-jump').addEventListener('click', function () { platJumpQueued = true; });
@@ -1318,7 +1586,7 @@
     sceneOutdoor.classList.remove('active');
     scenePlatform.classList.add('active');
     scenePlatformActive = true;
-    if (!platBlocksEl.children.length) platBuild();
+    platBuild((Math.random() * PLATFORM_LEVELS.length) | 0);
     platResetDog();
     platRender();
   }
@@ -1339,7 +1607,7 @@
   function loop(t) {
     var dt = Math.min(0.05, (t - lastT) / 1000); lastT = t;
     if (sceneOutdoor.classList.contains('active')) {
-      if (!fetching) {
+      if (!fetching && !miniGameOpen) {
         var v = getMoveVector();
         if (v.x || v.y) {
           var speed = 230;
@@ -1438,9 +1706,11 @@
       } else if (!btnCleanEl.hidden) {
         btnCleanEl.hidden = true;
       }
+      btnFishEl.hidden = Math.hypot(player.x - FISH_SPOT.x, player.y - FISH_SPOT.y) > FISH_SPOT.r;
+      btnCarEl.hidden = Math.hypot(player.x - CAR_SPOT.x, player.y - CAR_SPOT.y) > CAR_SPOT.r;
 
       render();
-      if (!fetching) {
+      if (!fetching && !miniGameOpen) {
         if (Math.hypot(player.x - DOOR_ZONE.x, player.y - DOOR_ZONE.y) < DOOR_ZONE.r) enterHouse();
         else if (Math.hypot(player.x - CAVE_ENTRANCE.x, player.y - CAVE_ENTRANCE.y) < CAVE_ENTRANCE.r) enterCave();
         else if (Math.hypot(player.x - JDOOR_ZONE.x, player.y - JDOOR_ZONE.y) < JDOOR_ZONE.r) enterPlatform();
@@ -1451,8 +1721,8 @@
       var mDesVel = (mv.x || mv.y) ? { x: mv.x * mSpeed, y: mv.y * mSpeed } : { x: 0, y: 0 };
       accelerateTo(mazeVel, mDesVel, 900, dt);
       var mnx = mazeDogPos.x + mazeVel.x * dt, mny = mazeDogPos.y + mazeVel.y * dt;
-      if (!mazeCollides(mnx, mazeDogPos.y, 14)) mazeDogPos.x = mnx; else mazeVel.x = 0;
-      if (!mazeCollides(mazeDogPos.x, mny, 14)) mazeDogPos.y = mny; else mazeVel.y = 0;
+      if (!mazeCollides(mnx, mazeDogPos.y, 9)) mazeDogPos.x = mnx; else mazeVel.x = 0;
+      if (!mazeCollides(mazeDogPos.x, mny, 9)) mazeDogPos.y = mny; else mazeVel.y = 0;
       if (Math.abs(mazeVel.x) > 4) mazeDogVisualEl.classList.toggle('face-left', mazeVel.x < 0);
       if (!mazeHasKey && mazeKeyPos && Math.hypot(mazeDogPos.x - mazeKeyPos.x, mazeDogPos.y - mazeKeyPos.y) < 26) {
         mazeHasKey = true;
