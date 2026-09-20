@@ -159,36 +159,26 @@
   .platform-goal { position: absolute; font-size: 46px; z-index: 5; }
   .platform-jump-btn { position: fixed; right: 18px; bottom: 110px; z-index: 41; }
 
-  /* ---------- Mini-Spiel-Overlays (Angeln / Autospiel) ---------- */
-  .overlay {
-    position: fixed; inset: 0; z-index: 80; background: rgba(0,0,0,.55);
-    display: flex; align-items: center; justify-content: center;
+  /* ---------- Angeln (Vollbild) ---------- */
+  #fish-stage { position: fixed; inset: 0; overflow: hidden; background: #2f7a91; }
+  #fish-world { position: absolute; top: 0; left: 0; }
+  #fish-water {
+    position: absolute; inset: 0;
+    background: linear-gradient(160deg, #7fd4e8, #3f9fbf 60%, #2f7a91);
   }
-  .overlay[hidden] { display: none; }
-  .overlay-card {
-    background: #fdf6e6; border-radius: 22px; padding: 20px 26px 26px;
-    width: min(90vw, 380px); text-align: center; box-shadow: 0 12px 30px rgba(0,0,0,.4);
-  }
-  .overlay-card h3 { margin: 0 0 6px; color: #4a3320; }
-  .overlay-hint { margin: 0 0 14px; font-size: 12px; color: #7a6a55; }
-  .overlay-msg { min-height: 20px; margin-top: 10px; font-weight: 700; color: #3f6b3d; }
-  .overlay-btn {
-    border: none; border-radius: 999px; background: #ffb703; color: #4a3320;
-    font-weight: 700; font-size: 14px; padding: 10px 22px; box-shadow: 0 4px 0 rgba(0,0,0,.2);
-  }
-  .overlay-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,.2); }
-  .overlay-close {
-    display: block; margin: 14px auto 0; border: none; background: none;
-    color: #9a8570; font-size: 12px; font-weight: 700;
-  }
-  .fish-track { position: relative; height: 22px; background: #cfe8f5; border-radius: 999px; margin-bottom: 16px; overflow: hidden; }
-  .fish-zone { position: absolute; top: 0; bottom: 0; background: #6fcf6b; opacity: .8; }
-  .fish-marker { position: absolute; top: 50%; transform: translate(-50%,-50%); font-size: 18px; left: 0%; }
-  .car-card { width: min(90vw, 300px); }
-  .car-road { position: relative; height: 320px; background: linear-gradient(180deg,#6b6b6b,#4a4a4a); border-radius: 12px; overflow: hidden; margin-bottom: 10px; }
-  .car-lane-line { position: absolute; top: 0; bottom: 0; width: 2px; background: repeating-linear-gradient(#fff 0 14px, transparent 14px 28px); opacity: .5; }
-  .car-player, .car-obstacle { position: absolute; font-size: 30px; transform: translateX(-50%); }
-  .car-controls { display: flex; gap: 20px; justify-content: center; margin-top: 8px; }
+  .fish-sprite { position: absolute; font-size: 26px; transition: none; }
+  #fish-boat { font-size: 34px; z-index: 5; }
+  #fish-fishes { position: absolute; top: 0; left: 0; }
+
+  /* ---------- Autospiel (Vollbild) ---------- */
+  #car-stage { position: fixed; inset: 0; overflow: hidden; background: #4a4a4a; }
+  #car-world { position: absolute; top: 0; left: 0; }
+  #car-road-bg { position: absolute; inset: 0; background: linear-gradient(90deg, #3f8f3a 0 6%, #5a5a5a 6% 94%, #3f8f3a 94% 100%); }
+  #car-lanes { position: absolute; left: 50%; top: 0; bottom: 0; width: 4px; margin-left: -2px; background: repeating-linear-gradient(#fff 0 24px, transparent 24px 48px); opacity: .5; }
+  .car-lane-div { position: absolute; top: 0; bottom: 0; width: 3px; background: repeating-linear-gradient(#fff 0 20px, transparent 20px 42px); opacity: .55; }
+  .car-obstacle-sprite { position: absolute; font-size: 32px; transform: translateX(-50%); z-index: 4; }
+  #car-player { font-size: 32px; z-index: 5; transform: translateX(-50%); }
+  .car-goal { position: absolute; font-size: 30px; z-index: 4; transform: translateX(-50%); }
 
   /* ---------- Haus-Innenraum ---------- */
   #scene-house { flex-direction: column; background: var(--room); }
@@ -294,8 +284,6 @@
       <button class="action-btn" id="btn-call" type="button">📣 Herrufen</button>
       <button class="action-btn" id="btn-fetch" type="button">🥢 Stöckchen</button>
       <button class="action-btn" id="btn-clean" type="button" hidden>🧹 Aufsammeln</button>
-      <button class="action-btn" id="btn-fish" type="button" hidden>🎣 Angeln</button>
-      <button class="action-btn" id="btn-car" type="button" hidden>🚗 Autospiel</button>
     </div>
   </div>
 
@@ -323,10 +311,38 @@
         <div class="sprite dog-sprite" id="platform-dog"><div class="dog-visual" id="platform-dog-visual"></div></div>
       </div>
       <div class="toast" id="platform-toast"></div>
-      <div class="scene-objective">⛩️ Spring bis zum Torii am Ende!</div>
+      <div class="scene-objective">⛩️ Du läufst von allein – einfach zur richtigen Zeit springen!</div>
     </div>
     <button class="exit-btn" id="platform-exit-btn" type="button">🚪 Verlassen</button>
     <button class="action-btn platform-jump-btn" id="btn-jump" type="button">⬆️ Springen</button>
+  </div>
+
+  <div class="scene" id="scene-fish">
+    <div id="fish-stage">
+      <div id="fish-world">
+        <div id="fish-water"></div>
+        <div id="fish-fishes"></div>
+        <div class="sprite" id="fish-boat">🚣</div>
+      </div>
+      <div class="toast" id="fish-toast"></div>
+      <div class="scene-objective" id="fish-objective">🐟 Fange 6 Fische!</div>
+    </div>
+    <button class="exit-btn" id="fish-exit-btn" type="button">🚪 Verlassen</button>
+  </div>
+
+  <div class="scene" id="scene-car">
+    <div id="car-stage">
+      <div id="car-world">
+        <div id="car-road-bg"></div>
+        <div id="car-lanes"></div>
+        <div id="car-obstacles"></div>
+        <div class="car-goal" id="car-goal">🏁</div>
+        <div class="sprite" id="car-player">🚕</div>
+      </div>
+      <div class="toast" id="car-toast"></div>
+      <div class="scene-objective">🏁 Weiche aus und erreiche das Ziel!</div>
+    </div>
+    <button class="exit-btn" id="car-exit-btn" type="button">🚪 Verlassen</button>
   </div>
 
   <div class="scene" id="scene-house">
@@ -357,36 +373,6 @@
 
 <div class="joystick" id="joystick">
   <div class="joy-base" id="joy-base"><div class="joy-knob" id="joy-knob"></div></div>
-</div>
-
-<div class="overlay" id="fish-overlay" hidden>
-  <div class="overlay-card">
-    <h3>🎣 Angeln</h3>
-    <p class="overlay-hint">Drück "Anschlag!", wenn der Zeiger in der grünen Zone ist!</p>
-    <div class="fish-track" id="fish-track"><div class="fish-zone" id="fish-zone"></div><div class="fish-marker" id="fish-marker">🎣</div></div>
-    <button class="overlay-btn" id="fish-strike-btn" type="button">Anschlag!</button>
-    <div class="overlay-msg" id="fish-msg">&nbsp;</div>
-    <button class="overlay-close" id="fish-close-btn" type="button">✕ Schließen</button>
-  </div>
-</div>
-
-<div class="overlay" id="car-overlay" hidden>
-  <div class="overlay-card car-card">
-    <h3>🚗 Autospiel</h3>
-    <p class="overlay-hint">Weiche den Autos aus!</p>
-    <div class="car-road" id="car-road">
-      <div class="car-lane-line" style="left:33.3%"></div>
-      <div class="car-lane-line" style="left:66.6%"></div>
-      <div class="car-player" id="car-player">🐶</div>
-    </div>
-    <div class="overlay-msg">Punkte: <span id="car-score">0</span></div>
-    <div class="overlay-msg" id="car-status">&nbsp;</div>
-    <div class="car-controls">
-      <button class="overlay-btn" id="car-left-btn" type="button">◀</button>
-      <button class="overlay-btn" id="car-right-btn" type="button">▶</button>
-    </div>
-    <button class="overlay-close" id="car-close-btn" type="button">✕ Schließen</button>
-  </div>
 </div>
 
 <div class="wait-bar-thin" id="wait-bar-thin"><div class="wait-bar-thin-fill" id="wait-bar-thin-fill"></div></div>
@@ -514,8 +500,9 @@
     { x: 330, y: 700 }, { x: 330, y: 860 }, { x: 420, y: 910 }, { x: 420, y: 1100 }, { x: 420, y: 1264 }
   ];
   var GATE_POS = { x: 420, y: 1264 };
-  var DOCK_POS = { x: POND.x - POND.rx - 30, y: POND.y - 10 };
-  var FISH_SPOT = { x: DOCK_POS.x - 10, y: DOCK_POS.y, r: 70 };
+  var DOCK_W = 150, DOCK_H = 36;
+  var DOCK_POS = { x: POND.x - POND.rx - (DOCK_W - 90), y: POND.y - DOCK_H / 2 };
+  var FISH_SPOT = { x: POND.x - POND.rx - 8, y: POND.y, r: 45 };
   var CAR_SPOT = { x: GATE_POS.x, y: GATE_POS.y - 20, r: 70 };
   var PLAYER_R = 15, DOG_R = 13;
 
@@ -747,12 +734,16 @@
       '</svg>';
   }
   function svgDock() {
-    return '<svg viewBox="0 0 140 60">' +
-      '<rect x="0" y="24" width="140" height="16" fill="url(#gTrunk)" stroke="#4a2f1a" stroke-width="1.5"/>' +
-      [8, 30, 52, 74, 96, 118].map(function (x) {
-        return '<rect x="' + x + '" y="12" width="8" height="14" fill="#8a5a3a" stroke="#4a2f1a" stroke-width="1"/>' +
-          '<rect x="' + x + '" y="38" width="8" height="20" fill="#6b4226" opacity=".8"/>';
+    /* Gleicher Look wie die Brücke: flaches Bohlen-Deck mit Geländer */
+    var w = DOCK_W, h = DOCK_H;
+    return '<svg viewBox="0 0 ' + w + ' ' + h + '">' +
+      '<ellipse cx="' + (w / 2) + '" cy="' + (h - 4) + '" rx="' + (w / 2 - 4) + '" ry="4" fill="rgba(0,0,0,.15)"/>' +
+      '<rect x="3" y="' + (h * 0.34) + '" width="' + (w - 6) + '" height="' + (h * 0.38) + '" rx="3" fill="url(#gTrunk)" stroke="#4a2f1a" stroke-width="1.5"/>' +
+      [10, 30, 50, 70, 90, 110, 130].filter(function (x) { return x < w - 6; }).map(function (x) {
+        return '<line x1="' + x + '" y1="' + (h * 0.34) + '" x2="' + x + '" y2="' + (h * 0.72) + '" stroke="#4a2f1a" stroke-width="1.2"/>';
       }).join('') +
+      '<rect x="3" y="' + (h * 0.18) + '" width="' + (w - 6) + '" height="4" rx="2" fill="#8a5a3a"/>' +
+      '<rect x="3" y="' + (h * 0.72) + '" width="' + (w - 6) + '" height="4" rx="2" fill="#8a5a3a"/>' +
       '</svg>';
   }
   function svgPuddle(r) {
@@ -817,13 +808,6 @@
     gate.innerHTML = svgGate();
     obstaclesEl.appendChild(gate);
 
-    var dock = document.createElement('div');
-    dock.className = 'gate-sprite';
-    dock.style.left = (DOCK_POS.x - 20) + 'px'; dock.style.top = (DOCK_POS.y - 20) + 'px';
-    dock.style.width = '140px'; dock.style.height = '60px';
-    dock.innerHTML = svgDock();
-    obstaclesEl.appendChild(dock);
-
     var creekB = boundsOf(CREEK_PTS, 40);
     var creek = document.createElement('div');
     creek.className = 'creek-svg';
@@ -843,6 +827,13 @@
     bridge.style.width = BRIDGE_W + 'px'; bridge.style.height = BRIDGE_H + 'px';
     bridge.innerHTML = svgBridge();
     obstaclesEl.appendChild(bridge);
+
+    var dock = document.createElement('div');
+    dock.className = 'bridge-sprite';
+    dock.style.left = DOCK_POS.x + 'px'; dock.style.top = DOCK_POS.y + 'px';
+    dock.style.width = DOCK_W + 'px'; dock.style.height = DOCK_H + 'px';
+    dock.innerHTML = svgDock();
+    obstaclesEl.appendChild(dock);
 
     var hs = document.createElement('div');
     hs.className = 'house-sprite';
@@ -1122,136 +1113,6 @@
     stats.love = Math.min(100, stats.love + 4); saveStats();
   });
 
-  /* ---- Easter Eggs: Angeln & Autospiel ---- */
-  var miniGameOpen = false;
-  var btnFishEl = document.getElementById('btn-fish');
-  var btnCarEl = document.getElementById('btn-car');
-
-  var fishOverlay = document.getElementById('fish-overlay');
-  var fishZoneEl = document.getElementById('fish-zone');
-  var fishMarkerEl = document.getElementById('fish-marker');
-  var fishMsgEl = document.getElementById('fish-msg');
-  var fishPos = 0, fishDir = 1, fishSpeed = 0.55, fishZoneStart = 0.4, fishZoneWidth = 0.18, fishRAFId = null, fishLastT = 0;
-  function fishNewZone() {
-    fishZoneWidth = 0.14 + Math.random() * 0.08;
-    fishZoneStart = Math.random() * (1 - fishZoneWidth);
-    fishZoneEl.style.left = (fishZoneStart * 100) + '%';
-    fishZoneEl.style.width = (fishZoneWidth * 100) + '%';
-  }
-  function fishLoop(t) {
-    var dt = fishLastT ? Math.min(0.05, (t - fishLastT) / 1000) : 0; fishLastT = t;
-    fishPos += fishDir * fishSpeed * dt;
-    if (fishPos > 1) { fishPos = 1; fishDir = -1; }
-    if (fishPos < 0) { fishPos = 0; fishDir = 1; }
-    fishMarkerEl.style.left = (fishPos * 100) + '%';
-    fishRAFId = requestAnimationFrame(fishLoop);
-  }
-  btnFishEl.addEventListener('click', function () {
-    miniGameOpen = true;
-    fishOverlay.hidden = false;
-    fishMsgEl.textContent = ' ';
-    fishNewZone();
-    fishPos = 0; fishDir = 1; fishLastT = 0;
-    fishRAFId = requestAnimationFrame(fishLoop);
-  });
-  document.getElementById('fish-strike-btn').addEventListener('click', function () {
-    var hit = fishPos >= fishZoneStart && fishPos <= fishZoneStart + fishZoneWidth;
-    if (hit) {
-      SFX.play('happy');
-      stats.love = Math.min(100, stats.love + 6); saveStats();
-      bones = (bones || 0) + 1;
-      try { localStorage.setItem('mw-pet-bones', String(bones)); } catch (e) {}
-      fishMsgEl.textContent = 'Fisch gefangen! 🐟';
-    } else {
-      SFX.play('splash');
-      fishMsgEl.textContent = 'Entwischt, nochmal!';
-    }
-    fishNewZone();
-  });
-  document.getElementById('fish-close-btn').addEventListener('click', function () {
-    cancelAnimationFrame(fishRAFId);
-    fishOverlay.hidden = true;
-    miniGameOpen = false;
-  });
-
-  var carOverlay = document.getElementById('car-overlay');
-  var carRoadEl = document.getElementById('car-road');
-  var carPlayerEl = document.getElementById('car-player');
-  var carScoreEl = document.getElementById('car-score');
-  var carStatusEl = document.getElementById('car-status');
-  var carLane = 1, carObstacles = [], carScore = 0, carSpawnAt = 0, carRAFId = null, carLastT = 0, carOver = false;
-  function carLaneX(lane) { return (lane + 0.5) / 3 * 100; }
-  function carReset() {
-    carLane = 1; carScore = 0; carOver = false;
-    carObstacles.forEach(function (o) { o.el.remove(); });
-    carObstacles = [];
-    carPlayerEl.style.left = carLaneX(carLane) + '%';
-    carScoreEl.textContent = '0';
-    carStatusEl.innerHTML = '&nbsp;';
-  }
-  function carLoop(t) {
-    var dt = carLastT ? Math.min(0.05, (t - carLastT) / 1000) : 0; carLastT = t;
-    if (!carOver) {
-      carScore += dt * 10;
-      carScoreEl.textContent = carScore.toFixed(0);
-      var roadH = carRoadEl.clientHeight;
-      var speed = 140 + Math.min(160, carScore);
-      carSpawnAt -= dt;
-      if (carSpawnAt <= 0) {
-        carSpawnAt = 0.9 + Math.random() * 0.5;
-        var lane = (Math.random() * 3) | 0;
-        var el = document.createElement('div');
-        el.className = 'car-obstacle';
-        el.textContent = '🚙';
-        el.style.left = carLaneX(lane) + '%';
-        el.style.top = '-30px';
-        carRoadEl.appendChild(el);
-        carObstacles.push({ lane: lane, y: -30, el: el });
-      }
-      var playerY = roadH - 40;
-      for (var i = carObstacles.length - 1; i >= 0; i--) {
-        var o = carObstacles[i];
-        o.y += speed * dt;
-        o.el.style.top = o.y + 'px';
-        if (o.y > roadH + 30) { o.el.remove(); carObstacles.splice(i, 1); continue; }
-        if (o.lane === carLane && Math.abs(o.y - playerY) < 26) {
-          carOver = true;
-          SFX.play('drop');
-          var reward = Math.max(1, Math.round(carScore / 15));
-          stats.love = Math.min(100, stats.love + Math.min(10, reward)); saveStats();
-          carStatusEl.textContent = 'Autsch! ◀/▶ zum Neustart';
-        }
-      }
-    }
-    carRAFId = requestAnimationFrame(carLoop);
-  }
-  function carMove(dir) {
-    if (carOver) { carReset(); return; }
-    carLane = Math.max(0, Math.min(2, carLane + dir));
-    carPlayerEl.style.left = carLaneX(carLane) + '%';
-  }
-  document.getElementById('car-left-btn').addEventListener('click', function () { carMove(-1); });
-  document.getElementById('car-right-btn').addEventListener('click', function () { carMove(1); });
-  btnCarEl.addEventListener('click', function () {
-    miniGameOpen = true;
-    carOverlay.hidden = false;
-    carLastT = 0; carSpawnAt = 0.6;
-    carReset();
-    carRAFId = requestAnimationFrame(carLoop);
-  });
-  document.getElementById('car-close-btn').addEventListener('click', function () {
-    cancelAnimationFrame(carRAFId);
-    carObstacles.forEach(function (o) { o.el.remove(); });
-    carObstacles = [];
-    carOverlay.hidden = true;
-    miniGameOpen = false;
-  });
-  document.addEventListener('keydown', function (e) {
-    if (carOverlay.hidden) return;
-    if (e.key === 'ArrowLeft' || e.key === 'a') carMove(-1);
-    if (e.key === 'ArrowRight' || e.key === 'd') carMove(1);
-  });
-
   /* ---- Stöckchen werfen ---- */
   var stickEl = document.getElementById('stick');
   document.getElementById('btn-fetch').addEventListener('click', function () {
@@ -1473,47 +1334,46 @@
 
   /* ================= Jump'n'Run (Japanisches Haus) ================= */
   var PLATFORM_W = 2500, PLATFORM_H = 640;
+  var PLAT_FORWARD_SPEED = 170, PLAT_JUMP_VY = -480, PLAT_GRAVITY = 1100;
   var PLATFORM_LEVELS = [
     {
       blocks: [
         { x: 0, y: 560, w: 420, h: 80 },
-        { x: 500, y: 560, w: 260, h: 80 },
-        { x: 840, y: 480, w: 140, h: 30 },
-        { x: 1060, y: 560, w: 220, h: 80 },
-        { x: 1360, y: 420, w: 130, h: 30 },
-        { x: 1560, y: 560, w: 200, h: 80 },
-        { x: 1840, y: 470, w: 120, h: 30 },
-        { x: 2040, y: 560, w: 460, h: 80 }
+        { x: 500, y: 560, w: 240, h: 80 },
+        { x: 820, y: 500, w: 120, h: 26 },
+        { x: 1020, y: 560, w: 200, h: 80 },
+        { x: 1300, y: 500, w: 120, h: 26 },
+        { x: 1500, y: 440, w: 120, h: 26 },
+        { x: 1700, y: 500, w: 120, h: 26 },
+        { x: 1900, y: 560, w: 600, h: 80 }
       ],
       goal: { x: 2420, y: 560 }
     },
     {
       blocks: [
         { x: 0, y: 560, w: 300, h: 80 },
-        { x: 380, y: 500, w: 100, h: 24 },
-        { x: 560, y: 440, w: 100, h: 24 },
-        { x: 740, y: 500, w: 100, h: 24 },
-        { x: 920, y: 560, w: 300, h: 80 },
-        { x: 1300, y: 500, w: 90, h: 24 },
-        { x: 1460, y: 440, w: 90, h: 24 },
-        { x: 1620, y: 500, w: 90, h: 24 },
-        { x: 1780, y: 560, w: 260, h: 80 },
-        { x: 2120, y: 560, w: 380, h: 80 }
+        { x: 420, y: 500, w: 110, h: 26 },
+        { x: 620, y: 560, w: 300, h: 80 },
+        { x: 1000, y: 500, w: 110, h: 26 },
+        { x: 1200, y: 440, w: 110, h: 26 },
+        { x: 1400, y: 500, w: 110, h: 26 },
+        { x: 1600, y: 560, w: 300, h: 80 },
+        { x: 1980, y: 500, w: 110, h: 26 },
+        { x: 2170, y: 560, w: 330, h: 80 }
       ],
       goal: { x: 2400, y: 560 }
     },
     {
       blocks: [
-        { x: 0, y: 560, w: 500, h: 80 },
-        { x: 640, y: 560, w: 160, h: 80 },
-        { x: 640, y: 380, w: 160, h: 24 },
-        { x: 940, y: 560, w: 160, h: 80 },
-        { x: 940, y: 380, w: 160, h: 24 },
-        { x: 1240, y: 560, w: 160, h: 80 },
-        { x: 1480, y: 500, w: 140, h: 24 },
-        { x: 1720, y: 560, w: 160, h: 80 },
-        { x: 1980, y: 500, w: 120, h: 24 },
-        { x: 2160, y: 560, w: 340, h: 80 }
+        { x: 0, y: 560, w: 380, h: 80 },
+        { x: 480, y: 560, w: 200, h: 80 },
+        { x: 760, y: 500, w: 110, h: 26 },
+        { x: 950, y: 440, w: 110, h: 26 },
+        { x: 1140, y: 500, w: 110, h: 26 },
+        { x: 1330, y: 560, w: 300, h: 80 },
+        { x: 1710, y: 560, w: 160, h: 80 },
+        { x: 1950, y: 500, w: 120, h: 26 },
+        { x: 2150, y: 560, w: 350, h: 80 }
       ],
       goal: { x: 2440, y: 560 }
     }
@@ -1601,13 +1461,142 @@
   }
   document.getElementById('platform-exit-btn').addEventListener('click', exitPlatform);
 
+  /* ================= Angeln (Vollbild) ================= */
+  var sceneFish = document.getElementById('scene-fish');
+  var FISH_WORLD = { w: 1000, h: 700 };
+  var FISH_TARGET = 6;
+  var fishWorldEl = document.getElementById('fish-world');
+  var fishFishesEl = document.getElementById('fish-fishes');
+  var fishBoatEl = document.getElementById('fish-boat');
+  var fishToastEl = document.getElementById('fish-toast');
+  var fishObjectiveEl = document.getElementById('fish-objective');
+  var fishBoatPos = { x: 0, y: 0 };
+  var fishVel = { x: 0, y: 0 };
+  var fishCaught = 0;
+  var fishList = [];
+  function fishToast(msg) {
+    fishToastEl.textContent = msg;
+    fishToastEl.classList.add('show');
+    clearTimeout(fishToast._t);
+    fishToast._t = setTimeout(function () { fishToastEl.classList.remove('show'); }, 1600);
+  }
+  function fishUpdateObjective() {
+    fishObjectiveEl.textContent = '🐟 Fange ' + FISH_TARGET + ' Fische! (' + fishCaught + '/' + FISH_TARGET + ')';
+  }
+  function fishSpawnAll() {
+    fishFishesEl.innerHTML = '';
+    fishList = [];
+    for (var i = 0; i < FISH_TARGET + 4; i++) {
+      var x = 60 + Math.random() * (FISH_WORLD.w - 120);
+      var y = 60 + Math.random() * (FISH_WORLD.h - 120);
+      var el = document.createElement('div');
+      el.className = 'fish-sprite';
+      el.textContent = '🐟';
+      el.style.left = (x - 13) + 'px'; el.style.top = (y - 13) + 'px';
+      fishFishesEl.appendChild(el);
+      fishList.push({ x: x, y: y, vx: (Math.random() * 2 - 1) * 26, vy: (Math.random() * 2 - 1) * 26, el: el, caught: false });
+    }
+  }
+  function fishRender() {
+    fishBoatEl.style.left = (fishBoatPos.x - 17) + 'px'; fishBoatEl.style.top = (fishBoatPos.y - 17) + 'px';
+    var vw = innerWidth, vh = innerHeight;
+    var camX = FISH_WORLD.w <= vw ? FISH_WORLD.w / 2 : Math.max(vw / 2, Math.min(FISH_WORLD.w - vw / 2, fishBoatPos.x));
+    var camY = FISH_WORLD.h <= vh ? FISH_WORLD.h / 2 : Math.max(vh / 2, Math.min(FISH_WORLD.h - vh / 2, fishBoatPos.y));
+    fishWorldEl.style.transform = 'translate(' + (vw / 2 - camX) + 'px,' + (vh / 2 - camY) + 'px)';
+  }
+  function enterFishing() {
+    sceneOutdoor.classList.remove('active');
+    sceneFish.classList.add('active');
+    fishWorldEl.style.width = FISH_WORLD.w + 'px'; fishWorldEl.style.height = FISH_WORLD.h + 'px';
+    fishBoatPos = { x: FISH_WORLD.w * 0.25, y: FISH_WORLD.h / 2 };
+    fishVel = { x: 0, y: 0 };
+    fishCaught = 0;
+    fishUpdateObjective();
+    fishSpawnAll();
+    fishRender();
+  }
+  function exitFishing() {
+    sceneFish.classList.remove('active');
+    sceneOutdoor.classList.add('active');
+    player.x = DOCK_POS.x - 30; player.y = POND.y;
+    dogPos = { x: player.x - 30, y: player.y };
+    prevDogX = dogPos.x; dogWanderTarget = { x: dogPos.x, y: dogPos.y }; dogCalled = false;
+    render(); renderDog();
+  }
+  document.getElementById('fish-exit-btn').addEventListener('click', exitFishing);
+
+  /* ================= Autospiel (Vollbild) ================= */
+  var sceneCar = document.getElementById('scene-car');
+  var CAR_ROAD_W = 380, CAR_LEN = 2600, CAR_GOAL_Y = 70;
+  var carWorldEl = document.getElementById('car-world');
+  var carLanesEl = document.getElementById('car-lanes');
+  var carObstaclesEl = document.getElementById('car-obstacles');
+  var carPlayerEl = document.getElementById('car-player');
+  var carGoalEl = document.getElementById('car-goal');
+  var carToastEl = document.getElementById('car-toast');
+  var carPos = { x: 0, y: 0 };
+  var carVel = { x: 0, y: 0 };
+  var carLives = 3;
+  var carObstacles = [];
+  var carInvulnUntil = 0;
+  function carToast(msg) {
+    carToastEl.textContent = msg;
+    carToastEl.classList.add('show');
+    clearTimeout(carToast._t);
+    carToast._t = setTimeout(function () { carToastEl.classList.remove('show'); }, 1600);
+  }
+  function carSpawnObstacles() {
+    carObstaclesEl.innerHTML = '';
+    carObstacles = [];
+    for (var y = CAR_LEN - 260; y > CAR_GOAL_Y + 80; y -= 130 + Math.random() * 60) {
+      var x = 40 + Math.random() * (CAR_ROAD_W - 80);
+      var el = document.createElement('div');
+      el.className = 'car-obstacle-sprite';
+      el.textContent = '🚙';
+      el.style.left = x + 'px'; el.style.top = y + 'px';
+      carObstaclesEl.appendChild(el);
+      carObstacles.push({ x: x, y: y });
+    }
+  }
+  function carPlaceDog(x, y) {
+    carPos = { x: x, y: y };
+    carVel = { x: 0, y: 0 };
+  }
+  function carRender() {
+    carPlayerEl.style.left = carPos.x + 'px'; carPlayerEl.style.top = carPos.y + 'px';
+    var vw = innerWidth, vh = innerHeight;
+    var camX = CAR_ROAD_W <= vw ? CAR_ROAD_W / 2 : Math.max(vw / 2, Math.min(CAR_ROAD_W - vw / 2, carPos.x));
+    var camY = Math.max(vh / 2, Math.min(CAR_LEN - vh / 2, carPos.y));
+    carWorldEl.style.transform = 'translate(' + (vw / 2 - camX) + 'px,' + (vh / 2 - camY) + 'px)';
+  }
+  function enterCarGame() {
+    sceneOutdoor.classList.remove('active');
+    sceneCar.classList.add('active');
+    carWorldEl.style.width = CAR_ROAD_W + 'px'; carWorldEl.style.height = CAR_LEN + 'px';
+    carGoalEl.style.left = (CAR_ROAD_W / 2) + 'px'; carGoalEl.style.top = CAR_GOAL_Y + 'px';
+    carLives = 3;
+    carInvulnUntil = 0;
+    carPlaceDog(CAR_ROAD_W / 2, CAR_LEN - 60);
+    carSpawnObstacles();
+    carRender();
+  }
+  function exitCarGame() {
+    sceneCar.classList.remove('active');
+    sceneOutdoor.classList.add('active');
+    player.x = GATE_POS.x; player.y = GATE_POS.y + 40;
+    dogPos = { x: player.x + 30, y: player.y };
+    prevDogX = dogPos.x; dogWanderTarget = { x: dogPos.x, y: dogPos.y }; dogCalled = false;
+    render(); renderDog();
+  }
+  document.getElementById('car-exit-btn').addEventListener('click', exitCarGame);
+
   /* ================= Spielschleife ================= */
   var lastT = performance.now();
   var distAccum = 0, lastStepAt = 0, lastFurAt = 0;
   function loop(t) {
     var dt = Math.min(0.05, (t - lastT) / 1000); lastT = t;
     if (sceneOutdoor.classList.contains('active')) {
-      if (!fetching && !miniGameOpen) {
+      if (!fetching) {
         var v = getMoveVector();
         if (v.x || v.y) {
           var speed = 230;
@@ -1706,14 +1695,13 @@
       } else if (!btnCleanEl.hidden) {
         btnCleanEl.hidden = true;
       }
-      btnFishEl.hidden = Math.hypot(player.x - FISH_SPOT.x, player.y - FISH_SPOT.y) > FISH_SPOT.r;
-      btnCarEl.hidden = Math.hypot(player.x - CAR_SPOT.x, player.y - CAR_SPOT.y) > CAR_SPOT.r;
-
       render();
-      if (!fetching && !miniGameOpen) {
+      if (!fetching) {
         if (Math.hypot(player.x - DOOR_ZONE.x, player.y - DOOR_ZONE.y) < DOOR_ZONE.r) enterHouse();
         else if (Math.hypot(player.x - CAVE_ENTRANCE.x, player.y - CAVE_ENTRANCE.y) < CAVE_ENTRANCE.r) enterCave();
         else if (Math.hypot(player.x - JDOOR_ZONE.x, player.y - JDOOR_ZONE.y) < JDOOR_ZONE.r) enterPlatform();
+        else if (Math.hypot(player.x - FISH_SPOT.x, player.y - FISH_SPOT.y) < FISH_SPOT.r) enterFishing();
+        else if (Math.hypot(player.x - CAR_SPOT.x, player.y - CAR_SPOT.y) < CAR_SPOT.r) enterCarGame();
       }
     } else if (sceneMaze.classList.contains('active')) {
       var mv = getMoveVector();
@@ -1745,15 +1733,19 @@
       mazeRender();
     } else if (scenePlatformActive) {
       var pv = getMoveVector();
-      var pAccel = 900, pMaxSpeed = 210;
-      if (pv.x) { platDog.vx += pv.x * pAccel * dt; platDog.vx = Math.max(-pMaxSpeed, Math.min(pMaxSpeed, platDog.vx)); }
-      else { var damp = 900 * dt; if (Math.abs(platDog.vx) <= damp) platDog.vx = 0; else platDog.vx -= Math.sign(platDog.vx) * damp; }
+      /* Automatischer Vorwärtslauf: man muss nur noch springen, nicht gleichzeitig steuern */
+      var pTargetVX = PLAT_FORWARD_SPEED + pv.x * 130;
+      var pAccel = 700;
+      var pDvx = pTargetVX - platDog.vx;
+      var pMaxDelta = pAccel * dt;
+      if (Math.abs(pDvx) <= pMaxDelta) platDog.vx = pTargetVX;
+      else platDog.vx += Math.sign(pDvx) * pMaxDelta;
       if (Math.abs(platDog.vx) > 4) { platFacing = platDog.vx < 0 ? -1 : 1; platDogVisualEl.classList.toggle('face-left', platFacing < 0); }
       if (platJumpQueued || keys[' '] || keys.ArrowUp || keys.w) {
-        if (platDog.onGround) { platDog.vy = -430; platDog.onGround = false; SFX.play('happy'); }
+        if (platDog.onGround) { platDog.vy = PLAT_JUMP_VY; platDog.onGround = false; SFX.play('happy'); }
         platJumpQueued = false;
       }
-      platDog.vy += 1100 * dt;
+      platDog.vy += PLAT_GRAVITY * dt;
       var pnx = platDog.x + platDog.vx * dt;
       if (!platBlocked(pnx, platDog.y - 14, 15, 14)) platDog.x = pnx;
       platDog.x = Math.max(15, Math.min(PLATFORM_W - 15, platDog.x));
@@ -1772,6 +1764,72 @@
         setTimeout(exitPlatform, 900);
       }
       platRender();
+    } else if (sceneFish.classList.contains('active')) {
+      var fv = getMoveVector();
+      var fDesVel = (fv.x || fv.y) ? { x: fv.x * 220, y: fv.y * 220 } : { x: 0, y: 0 };
+      accelerateTo(fishVel, fDesVel, 500, dt);
+      fishBoatPos.x = Math.max(20, Math.min(FISH_WORLD.w - 20, fishBoatPos.x + fishVel.x * dt));
+      fishBoatPos.y = Math.max(20, Math.min(FISH_WORLD.h - 20, fishBoatPos.y + fishVel.y * dt));
+      for (var fi = fishList.length - 1; fi >= 0; fi--) {
+        var f = fishList[fi];
+        if (f.caught) continue;
+        f.x += f.vx * dt; f.y += f.vy * dt;
+        if (f.x < 30 || f.x > FISH_WORLD.w - 30) f.vx *= -1;
+        if (f.y < 30 || f.y > FISH_WORLD.h - 30) f.vy *= -1;
+        f.el.style.left = (f.x - 13) + 'px'; f.el.style.top = (f.y - 13) + 'px';
+        if (Math.hypot(fishBoatPos.x - f.x, fishBoatPos.y - f.y) < 30) {
+          f.caught = true;
+          f.el.remove();
+          fishCaught++;
+          SFX.play('happy');
+          fishToast('Fisch gefangen! 🐟');
+          fishUpdateObjective();
+          if (fishCaught >= FISH_TARGET) {
+            stats.love = Math.min(100, stats.love + 12); saveStats();
+            bones = (bones || 0) + 1;
+            try { localStorage.setItem('mw-pet-bones', String(bones)); } catch (e) {}
+            fishToast('Geschafft! 🎉');
+            setTimeout(exitFishing, 1000);
+          }
+        }
+      }
+      fishRender();
+    } else if (sceneCar.classList.contains('active')) {
+      var cv = getMoveVector();
+      var cDesVel = { x: cv.x * 220, y: 0 };
+      accelerateTo(carVel, cDesVel, 700, dt);
+      carPos.x = Math.max(24, Math.min(CAR_ROAD_W - 24, carPos.x + carVel.x * dt));
+      carPos.y -= 130 * dt;
+      if (carPos.y < CAR_GOAL_Y) {
+        SFX.play('happy');
+        stats.love = Math.min(100, stats.love + 12); saveStats();
+        bones = (bones || 0) + 1;
+        try { localStorage.setItem('mw-pet-bones', String(bones)); } catch (e) {}
+        carToast('Ziel erreicht! 🎉');
+        setTimeout(exitCarGame, 1000);
+      } else {
+        var now = performance.now();
+        if (now > carInvulnUntil) {
+          for (var ci = 0; ci < carObstacles.length; ci++) {
+            var co = carObstacles[ci];
+            if (Math.abs(carPos.x - co.x) < 28 && Math.abs(carPos.y - co.y) < 28) {
+              carLives--;
+              carInvulnUntil = now + 1200;
+              SFX.play('drop');
+              if (carLives <= 0) {
+                carToast('Autsch! Nochmal von vorne.');
+                carLives = 3;
+                carPlaceDog(CAR_ROAD_W / 2, CAR_LEN - 60);
+              } else {
+                carToast('Autsch! Noch ' + carLives + ' Leben.');
+                carPos.y += 90;
+              }
+              break;
+            }
+          }
+        }
+      }
+      carRender();
     }
     requestAnimationFrame(loop);
   }
