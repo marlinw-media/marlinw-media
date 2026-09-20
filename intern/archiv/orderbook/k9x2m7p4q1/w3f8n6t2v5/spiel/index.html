@@ -157,6 +157,7 @@
     border-top: 6px solid #6fcf6b;
   }
   .platform-goal { position: absolute; font-size: 46px; z-index: 5; }
+  .platform-hazard { position: absolute; font-size: 28px; z-index: 4; transform: translateX(-50%); }
   .platform-jump-btn { position: fixed; right: 18px; bottom: 110px; z-index: 41; }
 
   /* ---------- Angeln (Vollbild) ---------- */
@@ -168,6 +169,7 @@
   }
   .fish-sprite { position: absolute; font-size: 26px; transition: none; }
   #fish-boat { font-size: 34px; z-index: 5; }
+  #fish-shark { font-size: 32px; z-index: 4; }
   #fish-fishes { position: absolute; top: 0; left: 0; }
 
   /* ---------- Autospiel (Vollbild) ---------- */
@@ -307,6 +309,7 @@
       <div id="platform-world">
         <div id="platform-bg"></div>
         <div id="platform-platforms"></div>
+        <div id="platform-hazards"></div>
         <div class="platform-goal" id="platform-goal">⛩️</div>
         <div class="sprite dog-sprite" id="platform-dog"><div class="dog-visual" id="platform-dog-visual"></div></div>
       </div>
@@ -322,6 +325,7 @@
       <div id="fish-world">
         <div id="fish-water"></div>
         <div id="fish-fishes"></div>
+        <div class="sprite" id="fish-shark">🦈</div>
         <div class="sprite" id="fish-boat">🚣</div>
       </div>
       <div class="toast" id="fish-toast"></div>
@@ -502,7 +506,7 @@
   var GATE_POS = { x: 420, y: 1264 };
   var DOCK_W = 150, DOCK_H = 36;
   var DOCK_POS = { x: POND.x - POND.rx - (DOCK_W - 90), y: POND.y - DOCK_H / 2 };
-  var FISH_SPOT = { x: POND.x - POND.rx - 8, y: POND.y, r: 45 };
+  var FISH_SPOT = { x: DOCK_POS.x + DOCK_W - 18, y: POND.y, r: 26 };
   var CAR_SPOT = { x: GATE_POS.x, y: GATE_POS.y - 20, r: 70 };
   var PLAYER_R = 15, DOG_R = 13;
 
@@ -958,6 +962,10 @@
     var dx = (x - POND.x) / (POND.rx + pad), dy = (y - POND.y) / (POND.ry + pad);
     return dx * dx + dy * dy < 1;
   }
+  function onDock(x, y, pad) {
+    pad = pad || 0;
+    return x > DOCK_POS.x - pad && x < DOCK_POS.x + DOCK_W + pad && y > DOCK_POS.y - pad && y < DOCK_POS.y + DOCK_H + pad;
+  }
   function inMud(x, y) {
     for (var i = 0; i < MUD_PUDDLES.length; i++) {
       var m = MUD_PUDDLES[i];
@@ -978,7 +986,7 @@
       var rk = ROCKS[j];
       if (Math.hypot(x - rk.x, y - rk.y) < rk.r + r * 0.7) return true;
     }
-    if (inPond(x, y, r * 0.5)) return true;
+    if (inPond(x, y, r * 0.5) && !onDock(x, y, 12)) return true;
     if (inCreek(x, y, r * 0.6)) return true;
     return false;
   }
@@ -1169,8 +1177,8 @@
   }
   var MAZE_CW = 16, MAZE_CH = 12, MAZE_TILE = 42;
   var MAZE_GW = MAZE_CW * 2 + 1, MAZE_GH = MAZE_CH * 2 + 1;
-  var mazeGrid = (function buildMazeGrid() {
-    var rng = mulberry32(1337);
+  function buildMazeGrid(seed) {
+    var rng = mulberry32(seed);
     var grid = [];
     for (var i = 0; i < MAZE_GH; i++) grid.push(new Array(MAZE_GW).fill(1));
     var visited = new Array(MAZE_CW * MAZE_CH).fill(false);
@@ -1208,7 +1216,9 @@
       }
     }
     return grid;
-  })();
+  }
+  var MAZE_LAYOUTS = [buildMazeGrid(1337), buildMazeGrid(9001)];
+  var mazeGrid = MAZE_LAYOUTS[0];
   var mazeStartCell = { gx: 1, gy: 1 };
   var mazeExitCell = { gx: MAZE_GW - 2, gy: MAZE_GH - 2 };
   var mazeDogPos = { x: 0, y: 0 };
@@ -1279,6 +1289,8 @@
   function enterCave() {
     sceneOutdoor.classList.remove('active');
     sceneMaze.classList.add('active');
+    mazeGrid = MAZE_LAYOUTS[(Math.random() * MAZE_LAYOUTS.length) | 0];
+    mazeBuildWalls();
     mazePlaceDog(mazeStartCell.gx, mazeStartCell.gy);
     mazeHasKey = false;
     mazeKeyEl.style.display = '';
@@ -1339,43 +1351,55 @@
     {
       blocks: [
         { x: 0, y: 560, w: 420, h: 80 },
-        { x: 500, y: 560, w: 240, h: 80 },
-        { x: 820, y: 500, w: 120, h: 26 },
-        { x: 1020, y: 560, w: 200, h: 80 },
-        { x: 1300, y: 500, w: 120, h: 26 },
-        { x: 1500, y: 440, w: 120, h: 26 },
-        { x: 1700, y: 500, w: 120, h: 26 },
-        { x: 1900, y: 560, w: 600, h: 80 }
+        { x: 480, y: 560, w: 240, h: 80 },
+        { x: 780, y: 500, w: 120, h: 26 },
+        { x: 960, y: 560, w: 200, h: 80 },
+        { x: 1220, y: 500, w: 120, h: 26 },
+        { x: 1400, y: 440, w: 120, h: 26 },
+        { x: 1580, y: 500, w: 120, h: 26 },
+        { x: 1760, y: 560, w: 740, h: 80 }
       ],
-      goal: { x: 2420, y: 560 }
+      goal: { x: 2420, y: 560 },
+      hazards: [
+        { baseX: 600, y: 542, range: 90, speed: 1.5 },
+        { baseX: 2000, y: 542, range: 160, speed: 1.1 }
+      ]
     },
     {
       blocks: [
         { x: 0, y: 560, w: 300, h: 80 },
-        { x: 420, y: 500, w: 110, h: 26 },
-        { x: 620, y: 560, w: 300, h: 80 },
-        { x: 1000, y: 500, w: 110, h: 26 },
-        { x: 1200, y: 440, w: 110, h: 26 },
-        { x: 1400, y: 500, w: 110, h: 26 },
-        { x: 1600, y: 560, w: 300, h: 80 },
-        { x: 1980, y: 500, w: 110, h: 26 },
-        { x: 2170, y: 560, w: 330, h: 80 }
+        { x: 360, y: 500, w: 110, h: 26 },
+        { x: 530, y: 560, w: 300, h: 80 },
+        { x: 890, y: 500, w: 110, h: 26 },
+        { x: 1060, y: 440, w: 110, h: 26 },
+        { x: 1230, y: 500, w: 110, h: 26 },
+        { x: 1400, y: 560, w: 300, h: 80 },
+        { x: 1760, y: 500, w: 110, h: 26 },
+        { x: 1930, y: 560, w: 570, h: 80 }
       ],
-      goal: { x: 2400, y: 560 }
+      goal: { x: 2400, y: 560 },
+      hazards: [
+        { baseX: 700, y: 542, range: 110, speed: 1.3 },
+        { baseX: 2150, y: 542, range: 150, speed: 1.4 }
+      ]
     },
     {
       blocks: [
         { x: 0, y: 560, w: 380, h: 80 },
-        { x: 480, y: 560, w: 200, h: 80 },
-        { x: 760, y: 500, w: 110, h: 26 },
-        { x: 950, y: 440, w: 110, h: 26 },
-        { x: 1140, y: 500, w: 110, h: 26 },
-        { x: 1330, y: 560, w: 300, h: 80 },
-        { x: 1710, y: 560, w: 160, h: 80 },
-        { x: 1950, y: 500, w: 120, h: 26 },
-        { x: 2150, y: 560, w: 350, h: 80 }
+        { x: 440, y: 560, w: 200, h: 80 },
+        { x: 700, y: 500, w: 110, h: 26 },
+        { x: 870, y: 440, w: 110, h: 26 },
+        { x: 1040, y: 500, w: 110, h: 26 },
+        { x: 1210, y: 560, w: 300, h: 80 },
+        { x: 1570, y: 560, w: 160, h: 80 },
+        { x: 1790, y: 500, w: 120, h: 26 },
+        { x: 1970, y: 560, w: 530, h: 80 }
       ],
-      goal: { x: 2440, y: 560 }
+      goal: { x: 2440, y: 560 },
+      hazards: [
+        { baseX: 520, y: 542, range: 90, speed: 1.4 },
+        { baseX: 1650, y: 542, range: 70, speed: 1.6 }
+      ]
     }
   ];
   var PLATFORM_BLOCKS = PLATFORM_LEVELS[0].blocks;
@@ -1395,6 +1419,9 @@
     clearTimeout(platToast._t);
     platToast._t = setTimeout(function () { platToastEl.classList.remove('show'); }, 1800);
   }
+  var platHazardsEl = document.getElementById('platform-hazards');
+  var platHazards = [];
+  var platHazardT = 0;
   function platBuild(levelIdx) {
     var lvl = PLATFORM_LEVELS[levelIdx || 0];
     PLATFORM_BLOCKS = lvl.blocks;
@@ -1410,6 +1437,15 @@
       platBlocksEl.appendChild(el);
     });
     platGoalEl.style.left = (PLATFORM_GOAL.x - 23) + 'px'; platGoalEl.style.top = (PLATFORM_GOAL.y - 60) + 'px';
+    platHazardsEl.innerHTML = '';
+    platHazardT = 0;
+    platHazards = (lvl.hazards || []).map(function (h) {
+      var el = document.createElement('div');
+      el.className = 'platform-hazard';
+      el.textContent = '👹';
+      platHazardsEl.appendChild(el);
+      return { baseX: h.baseX, y: h.y, range: h.range, speed: h.speed, el: el, x: h.baseX };
+    });
   }
   platBuild(0);
   function platGroundAt(x, yTop, yBottom, vy) {
@@ -1474,6 +1510,10 @@
   var fishVel = { x: 0, y: 0 };
   var fishCaught = 0;
   var fishList = [];
+  var fishSharkEl = document.getElementById('fish-shark');
+  var fishSharkPos = { x: 0, y: 0 };
+  var FISH_SHARK_SPEED = 195;
+  var fishInvulnUntil = 0;
   function fishToast(msg) {
     fishToastEl.textContent = msg;
     fishToastEl.classList.add('show');
@@ -1481,7 +1521,7 @@
     fishToast._t = setTimeout(function () { fishToastEl.classList.remove('show'); }, 1600);
   }
   function fishUpdateObjective() {
-    fishObjectiveEl.textContent = '🐟 Fange ' + FISH_TARGET + ' Fische! (' + fishCaught + '/' + FISH_TARGET + ')';
+    fishObjectiveEl.textContent = '🐟 Fange ' + FISH_TARGET + ' Fische, weiche dem Hai aus! (' + fishCaught + '/' + FISH_TARGET + ')';
   }
   function fishSpawnAll() {
     fishFishesEl.innerHTML = '';
@@ -1499,6 +1539,7 @@
   }
   function fishRender() {
     fishBoatEl.style.left = (fishBoatPos.x - 17) + 'px'; fishBoatEl.style.top = (fishBoatPos.y - 17) + 'px';
+    fishSharkEl.style.left = (fishSharkPos.x - 16) + 'px'; fishSharkEl.style.top = (fishSharkPos.y - 16) + 'px';
     var vw = innerWidth, vh = innerHeight;
     var camX = FISH_WORLD.w <= vw ? FISH_WORLD.w / 2 : Math.max(vw / 2, Math.min(FISH_WORLD.w - vw / 2, fishBoatPos.x));
     var camY = FISH_WORLD.h <= vh ? FISH_WORLD.h / 2 : Math.max(vh / 2, Math.min(FISH_WORLD.h - vh / 2, fishBoatPos.y));
@@ -1509,8 +1550,10 @@
     sceneFish.classList.add('active');
     fishWorldEl.style.width = FISH_WORLD.w + 'px'; fishWorldEl.style.height = FISH_WORLD.h + 'px';
     fishBoatPos = { x: FISH_WORLD.w * 0.25, y: FISH_WORLD.h / 2 };
+    fishSharkPos = { x: FISH_WORLD.w * 0.85, y: FISH_WORLD.h * 0.85 };
     fishVel = { x: 0, y: 0 };
     fishCaught = 0;
+    fishInvulnUntil = 0;
     fishUpdateObjective();
     fishSpawnAll();
     fishRender();
@@ -1545,17 +1588,30 @@
     clearTimeout(carToast._t);
     carToast._t = setTimeout(function () { carToastEl.classList.remove('show'); }, 1600);
   }
+  var CAR_EMOJIS = ['🚗', '🚙', '🚕', '🚓', '🚐', '🚌'];
   function carSpawnObstacles() {
     carObstaclesEl.innerHTML = '';
     carObstacles = [];
-    for (var y = CAR_LEN - 260; y > CAR_GOAL_Y + 80; y -= 130 + Math.random() * 60) {
-      var x = 40 + Math.random() * (CAR_ROAD_W - 80);
-      var el = document.createElement('div');
-      el.className = 'car-obstacle-sprite';
-      el.textContent = '🚙';
-      el.style.left = x + 'px'; el.style.top = y + 'px';
-      carObstaclesEl.appendChild(el);
-      carObstacles.push({ x: x, y: y });
+    var zoneW = CAR_ROAD_W / 3;
+    var totalLen = CAR_LEN - 260 - (CAR_GOAL_Y + 80);
+    var y = CAR_LEN - 260;
+    while (y > CAR_GOAL_Y + 80) {
+      var progress = 1 - Math.max(0, (y - (CAR_GOAL_Y + 80)) / totalLen); // 0 at start, 1 near goal
+      var zones = [0, 1, 2];
+      for (var i = zones.length - 1; i > 0; i--) { var j = (Math.random() * (i + 1)) | 0; var t = zones[i]; zones[i] = zones[j]; zones[j] = t; }
+      var count = Math.random() < (0.35 + progress * 0.45) ? 2 : 1;
+      var chosen = zones.slice(0, count);
+      chosen.forEach(function (z) {
+        var x = z * zoneW + zoneW * 0.3 + Math.random() * zoneW * 0.4;
+        var isPed = Math.random() < 0.2;
+        var el = document.createElement('div');
+        el.className = 'car-obstacle-sprite';
+        el.textContent = isPed ? (Math.random() < 0.5 ? '🚶' : '🧍') : CAR_EMOJIS[(Math.random() * CAR_EMOJIS.length) | 0];
+        el.style.left = x + 'px'; el.style.top = y + 'px';
+        carObstaclesEl.appendChild(el);
+        carObstacles.push({ x: x, y: y });
+      });
+      y -= 95 + Math.random() * 55 - progress * 25;
     }
   }
   function carPlaceDog(x, y) {
@@ -1583,7 +1639,7 @@
   function exitCarGame() {
     sceneCar.classList.remove('active');
     sceneOutdoor.classList.add('active');
-    player.x = GATE_POS.x; player.y = GATE_POS.y + 40;
+    player.x = GATE_POS.x; player.y = GATE_POS.y - 100;
     dogPos = { x: player.x + 30, y: player.y };
     prevDogX = dogPos.x; dogWanderTarget = { x: dogPos.x, y: dogPos.y }; dogCalled = false;
     render(); renderDog();
@@ -1754,6 +1810,15 @@
       if (landY !== null) { platDog.y = landY; platDog.vy = 0; platDog.onGround = true; }
       else { platDog.y = pny; platDog.onGround = false; }
       if (platDog.y > PLATFORM_H + 100) { platResetDog(); platToast('Autsch! Nochmal von vorne.'); }
+      platHazardT += dt;
+      platHazards.forEach(function (h) {
+        h.x = h.baseX + Math.sin(platHazardT * h.speed) * h.range;
+        h.el.style.left = h.x + 'px'; h.el.style.top = h.y + 'px';
+        if (Math.abs(platDog.x - h.x) < 24 && Math.abs(platDog.y - h.y) < 24) {
+          platResetDog();
+          platToast('Erwischt! Nochmal von vorne.');
+        }
+      });
       if (Math.hypot(platDog.x - PLATFORM_GOAL.x, platDog.y - PLATFORM_GOAL.y) < 40) {
         SFX.play('happy');
         stats.love = Math.min(100, stats.love + 12); saveStats();
@@ -1792,6 +1857,23 @@
             setTimeout(exitFishing, 1000);
           }
         }
+      }
+      var fsdx = fishBoatPos.x - fishSharkPos.x, fsdy = fishBoatPos.y - fishSharkPos.y;
+      var fsDist = Math.hypot(fsdx, fsdy);
+      if (fsDist > 1) {
+        var fsStep = Math.min(fsDist, FISH_SHARK_SPEED * dt);
+        fishSharkPos.x += (fsdx / fsDist) * fsStep;
+        fishSharkPos.y += (fsdy / fsDist) * fsStep;
+      }
+      var fishNow = performance.now();
+      if (fishNow > fishInvulnUntil && fsDist < 30) {
+        fishInvulnUntil = fishNow + 1400;
+        fishCaught = Math.max(0, fishCaught - 1);
+        SFX.play('drop');
+        fishToast('Der Hai hat dich erwischt! 🦈');
+        fishUpdateObjective();
+        fishBoatPos = { x: FISH_WORLD.w * 0.25, y: FISH_WORLD.h / 2 };
+        fishSharkPos = { x: FISH_WORLD.w * 0.85, y: FISH_WORLD.h * 0.85 };
       }
       fishRender();
     } else if (sceneCar.classList.contains('active')) {
