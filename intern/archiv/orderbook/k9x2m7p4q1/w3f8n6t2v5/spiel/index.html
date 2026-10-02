@@ -78,10 +78,10 @@
 
   .leash-svg { position: absolute; top: 0; left: 0; pointer-events: none; z-index: 4; overflow: visible; }
 
-  .sprite { position: absolute; transition: none; }
+  .sprite { position: absolute; left: 0; top: 0; transition: none; }
   .sprite svg { width: 100%; height: 100%; display: block; overflow: visible; }
-  .player-sprite { z-index: 6; }
-  .dog-sprite { z-index: 5; }
+  .player-sprite { z-index: 6; width: 36px; height: 46px; }
+  .dog-sprite { z-index: 5; width: 50px; height: 38px; }
   .dog-visual { width: 100%; height: 100%; transition: transform .25s ease; }
   .dog-visual svg { width: 100%; height: 100%; display: block; overflow: visible; }
   .dog-visual.face-left { transform: scaleX(-1); }
@@ -186,7 +186,7 @@
   #car-lanes { position: absolute; left: 50%; top: 0; bottom: 0; width: 4px; margin-left: -2px; background: repeating-linear-gradient(#fff 0 24px, transparent 24px 48px); opacity: .5; }
   .car-lane-div { position: absolute; top: 0; bottom: 0; width: 3px; background: repeating-linear-gradient(#fff 0 20px, transparent 20px 42px); opacity: .55; }
   .car-obstacle-sprite { position: absolute; font-size: 32px; transform: translateX(-50%); z-index: 4; }
-  #car-player { font-size: 32px; z-index: 5; transform: translateX(-50%); }
+  #car-player { font-size: 32px; z-index: 5; left: 0; top: 0; }
   .car-goal { position: absolute; font-size: 30px; z-index: 4; transform: translateX(-50%); }
 
   /* ---------- Haus-Innenraum ---------- */
@@ -578,6 +578,19 @@
     var uid = '_' + (++svgUidCounter);
     return html.replace(SVG_ID_RE, function (m, pre, id, post) { return pre + id + uid + post; });
   }
+  /* SVGs mit feTurbulence/feDisplacementMap (Teich, Bach, Kiesweg, Pfützen) werden als <img>
+     statt als Live-Inline-SVG eingebettet: der Browser rastert den Filter dann einmalig beim
+     Laden und behandelt das Ergebnis danach wie ein normales Bild. Ohne das rendern manche
+     Android-WebViews den Filter bei jeder Kamera-Bewegung (transform auf #world) neu, was auf
+     schwächeren Geräten zu massiven Frameraten-Einbrüchen führt. Optisch ist das Ergebnis identisch. */
+  function svgToImg(svgMarkup) {
+    /* Als eigenständige Bildressource braucht das SVG eine explizite xmlns-Deklaration,
+       sonst scheitert das Decodieren (Bild bleibt leer/kaputt) - inline per innerHTML war das nie nötig. */
+    if (svgMarkup.indexOf('xmlns=') === -1) {
+      svgMarkup = svgMarkup.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" ');
+    }
+    return '<img src="data:image/svg+xml,' + encodeURIComponent(svgMarkup) + '" style="display:block;width:100%;height:100%;" alt="">';
+  }
 
   function svgTree() {
     var oc = '#2e5a2a';
@@ -820,7 +833,7 @@
     var gravel = document.createElement('div');
     gravel.className = 'gravel-svg';
     gravel.style.left = gravelB.x + 'px'; gravel.style.top = gravelB.y + 'px';
-    gravel.innerHTML = svgGravelPath();
+    gravel.innerHTML = svgToImg(svgGravelPath());
     obstaclesEl.appendChild(gravel);
 
     var gate = document.createElement('div');
@@ -834,13 +847,13 @@
     var creek = document.createElement('div');
     creek.className = 'creek-svg';
     creek.style.left = creekB.x + 'px'; creek.style.top = creekB.y + 'px';
-    creek.innerHTML = svgCreek();
+    creek.innerHTML = svgToImg(svgCreek());
     obstaclesEl.appendChild(creek);
 
     var pond = document.createElement('div');
     pond.className = 'pond-svg';
     pond.style.left = (POND.x - POND.rx) + 'px'; pond.style.top = (POND.y - POND.ry) + 'px';
-    pond.innerHTML = svgPond();
+    pond.innerHTML = svgToImg(svgPond());
     obstaclesEl.appendChild(pond);
 
     var bridge = document.createElement('div');
@@ -902,7 +915,7 @@
       var el = document.createElement('div');
       el.className = 'puddle-svg';
       el.style.left = (m.x - m.r * 1.1) + 'px'; el.style.top = (m.y - m.r * 0.75) + 'px';
-      el.innerHTML = svgPuddle(m.r);
+      el.innerHTML = svgToImg(svgPuddle(m.r));
       obstaclesEl.appendChild(el);
     });
 
@@ -1014,9 +1027,8 @@
   }
 
   function placeSprite(el, x, y, w, h) {
-    el.style.left = (x - w / 2) + 'px';
-    el.style.top = (y - h * 0.82) + 'px';
-    el.style.width = w + 'px'; el.style.height = h + 'px';
+    /* transform statt left/top: vermeidet Reflow/Layout bei jedem Frame (wichtig für Android) */
+    el.style.transform = 'translate(' + (x - w / 2) + 'px,' + (y - h * 0.82) + 'px)';
   }
 
   function updateLeash() {
@@ -1301,8 +1313,7 @@
     mazeVel = { x: 0, y: 0 };
   }
   function mazeRender() {
-    mazeDogEl.style.left = (mazeDogPos.x - 25) + 'px'; mazeDogEl.style.top = (mazeDogPos.y - 20) + 'px';
-    mazeDogEl.style.width = '50px'; mazeDogEl.style.height = '38px';
+    mazeDogEl.style.transform = 'translate(' + (mazeDogPos.x - 25) + 'px,' + (mazeDogPos.y - 20) + 'px)';
     var vw = innerWidth, vh = innerHeight, ww = MAZE_GW * MAZE_TILE, wh = MAZE_GH * MAZE_TILE;
     mazeCamX = ww <= vw ? ww / 2 : Math.max(vw / 2, Math.min(ww - vw / 2, mazeDogPos.x));
     mazeCamY = wh <= vh ? wh / 2 : Math.max(vh / 2, Math.min(wh - vh / 2, mazeDogPos.y));
@@ -1491,8 +1502,7 @@
     platFacing = 1;
   }
   function platRender() {
-    platDogEl.style.left = (platDog.x - 25) + 'px'; platDogEl.style.top = (platDog.y - 30) + 'px';
-    platDogEl.style.width = '50px'; platDogEl.style.height = '38px';
+    platDogEl.style.transform = 'translate(' + (platDog.x - 25) + 'px,' + (platDog.y - 30) + 'px)';
     var vw = innerWidth, vh = innerHeight;
     var camX = Math.max(vw / 2, Math.min(PLATFORM_W - vw / 2, platDog.x));
     var camY = PLATFORM_H <= vh ? PLATFORM_H / 2 : Math.max(vh / 2, Math.min(PLATFORM_H - vh / 2, platDog.y));
@@ -1560,8 +1570,8 @@
     }
   }
   function fishRender() {
-    fishBoatEl.style.left = (fishBoatPos.x - 17) + 'px'; fishBoatEl.style.top = (fishBoatPos.y - 17) + 'px';
-    fishSharkEl.style.left = (fishSharkPos.x - 16) + 'px'; fishSharkEl.style.top = (fishSharkPos.y - 16) + 'px';
+    fishBoatEl.style.transform = 'translate(' + (fishBoatPos.x - 17) + 'px,' + (fishBoatPos.y - 17) + 'px)';
+    fishSharkEl.style.transform = 'translate(' + (fishSharkPos.x - 16) + 'px,' + (fishSharkPos.y - 16) + 'px)';
     var vw = innerWidth, vh = innerHeight;
     var camX = FISH_WORLD.w <= vw ? FISH_WORLD.w / 2 : Math.max(vw / 2, Math.min(FISH_WORLD.w - vw / 2, fishBoatPos.x));
     var camY = FISH_WORLD.h <= vh ? FISH_WORLD.h / 2 : Math.max(vh / 2, Math.min(FISH_WORLD.h - vh / 2, fishBoatPos.y));
@@ -1641,7 +1651,7 @@
     carVel = { x: 0, y: 0 };
   }
   function carRender() {
-    carPlayerEl.style.left = carPos.x + 'px'; carPlayerEl.style.top = carPos.y + 'px';
+    carPlayerEl.style.transform = 'translate(' + carPos.x + 'px,' + carPos.y + 'px) translateX(-50%)';
     var vw = innerWidth, vh = innerHeight;
     var camX = CAR_ROAD_W <= vw ? CAR_ROAD_W / 2 : Math.max(vw / 2, Math.min(CAR_ROAD_W - vw / 2, carPos.x));
     var camY = Math.max(vh / 2, Math.min(CAR_LEN - vh / 2, carPos.y));
