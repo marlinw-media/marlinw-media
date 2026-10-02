@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="robots" content="noindex, nofollow, noarchive">
+<meta name="theme-color" content="#1a2e1a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="../icon-180.png">
 <title>Hauptspiel</title>
 <style>
   :root {
@@ -43,7 +49,8 @@
 
   /* ---------- Außenwelt: freie Welt, kein Kachelraster ---------- */
   #outdoor-stage { position: fixed; inset: 0; overflow: hidden; }
-  #world { position: absolute; top: 0; left: 0; }
+  #world { position: absolute; top: 0; left: 0; will-change: transform; }
+  #maze-world, #platform-world, #fish-world, #car-world { will-change: transform; }
   #ground {
     position: absolute; top: 0; left: 0;
     background:
@@ -58,7 +65,7 @@
     content: "";
     position: absolute; inset: 0;
     opacity: .55; mix-blend-mode: multiply;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='280' height='280'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.32  0 0 0 0 0.55  0 0 0 0 0.27  0 0 0 0.4 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='280' height='280'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.32  0 0 0 0 0.55  0 0 0 0 0.27  0 0 0 0.4 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     background-size: 260px 260px;
   }
   .fence-edge { position: absolute; pointer-events: none; background-repeat: repeat; z-index: 2; }
@@ -561,19 +568,30 @@
     '<radialGradient id="gRock" cx="35%" cy="25%" r="80%"><stop offset="0%" stop-color="#b8b0a4"/><stop offset="100%" stop-color="#7c7468"/></radialGradient>' +
     '</defs>';
 
+  /* Jedes per innerHTML eingefügte SVG bekommt eigene, eindeutige IDs für Gradienten/Filter.
+     Duplizierte IDs über viele gleichzeitig im DOM liegende Inline-SVGs hinweg führen auf
+     manchen Android-WebViews dazu, dass url(#...)-Referenzen auf ein falsches/leeres Element
+     zeigen (Hund wird nur als Kontur ohne Füllfarbe gerendert). */
+  var svgUidCounter = 0;
+  var SVG_ID_RE = /(#|id=")(gCanopy|gTrunk|gRoof|gWall|gHair|gDress|gSkin|gFur|gRiver|gMud|gRock|pn|cn|gr|mn)(["')])/g;
+  function uidSvg(html) {
+    var uid = '_' + (++svgUidCounter);
+    return html.replace(SVG_ID_RE, function (m, pre, id, post) { return pre + id + uid + post; });
+  }
+
   function svgTree() {
     var oc = '#2e5a2a';
-    return '<svg viewBox="0 0 48 56">' + DEFS +
+    return uidSvg('<svg viewBox="0 0 48 56">' + DEFS +
       '<ellipse cx="24" cy="50" rx="10" ry="3" fill="rgba(0,0,0,.18)"/>' +
       '<rect x="20" y="30" width="8" height="18" rx="3" fill="url(#gTrunk)" stroke="#4a2f1a" stroke-width="1"/>' +
       '<circle cx="24" cy="20" r="16" fill="url(#gCanopy)" stroke="' + oc + '" stroke-width="1.4"/>' +
       '<circle cx="14" cy="26" r="10" fill="url(#gCanopy)" stroke="' + oc + '" stroke-width="1.2"/>' +
       '<circle cx="34" cy="26" r="10" fill="url(#gCanopy)" stroke="' + oc + '" stroke-width="1.2"/>' +
       '<circle cx="18" cy="14" r="4" fill="#fff" opacity=".25"/>' +
-      '</svg>';
+      '</svg>');
   }
   function svgHouse() {
-    return '<svg viewBox="0 0 100 100">' + DEFS +
+    return uidSvg('<svg viewBox="0 0 100 100">' + DEFS +
       '<polygon points="50,4 96,42 4,42" fill="url(#gRoof)"/>' +
       '<rect x="4" y="40" width="92" height="2" fill="#8a3a2f"/>' +
       '<rect x="16" y="40" width="68" height="54" fill="url(#gWall)"/>' +
@@ -583,10 +601,10 @@
       '<rect x="62" y="52" width="16" height="16" fill="#bfe8f5" stroke="#fff" stroke-width="3"/>' +
       '<rect x="76" y="10" width="8" height="16" fill="#8a5a3a"/>' +
       '<circle cx="24" cy="96" r="4" fill="#e07360" opacity=".8"/><circle cx="30" cy="96" r="4" fill="#e8639c" opacity=".8"/>' +
-      '</svg>';
+      '</svg>');
   }
   function svgJapaneseHouse() {
-    return '<svg viewBox="0 0 100 90">' + DEFS +
+    return uidSvg('<svg viewBox="0 0 100 90">' + DEFS +
       '<polygon points="50,2 94,30 82,30 82,36 18,36 18,30 6,30" fill="#8a2f2f" stroke="#5a1c1c" stroke-width="1.5"/>' +
       '<polygon points="50,10 82,30 18,30" fill="#a8403f"/>' +
       '<rect x="20" y="36" width="60" height="46" fill="#e8cfa0" stroke="#6b4226" stroke-width="1.5"/>' +
@@ -596,20 +614,20 @@
       '<line x1="34" y1="67" x2="66" y2="67" stroke="#8a5a3a" stroke-width="1.2"/>' +
       '<rect x="8" y="10" width="6" height="20" fill="#8a5a3a"/>' +
       '<circle cx="11" cy="8" r="4" fill="#a8403f"/>' +
-      '</svg>';
+      '</svg>');
   }
   function svgCaveMouth() {
-    return '<svg viewBox="0 0 140 110">' + DEFS +
+    return uidSvg('<svg viewBox="0 0 140 110">' + DEFS +
       '<ellipse cx="70" cy="104" rx="60" ry="6" fill="rgba(0,0,0,.25)"/>' +
       '<path d="M6 100C-2 60 18 14 70 10c52 4 72 50 64 90z" fill="url(#gRock)" stroke="#4a463c" stroke-width="2"/>' +
       '<ellipse cx="70" cy="76" rx="34" ry="40" fill="#120d0a"/>' +
       '<ellipse cx="70" cy="76" rx="34" ry="40" fill="none" stroke="#000" stroke-width="2" opacity=".5"/>' +
-      '</svg>';
+      '</svg>');
   }
   function svgPlayer() {
     /* Frau: Zopf, Kleid */
     var oc = '#5a3a1f', ow = 1.2;
-    return '<svg viewBox="0 0 40 50">' + DEFS +
+    return uidSvg('<svg viewBox="0 0 40 50">' + DEFS +
       '<ellipse cx="20" cy="46" rx="10" ry="3" fill="rgba(0,0,0,.2)"/>' +
       '<path d="M11 22c0 10 3 20 9 20s9-10 9-20z" fill="url(#gDress)" stroke="' + oc + '" stroke-width="' + ow + '"/>' +
       '<circle cx="20" cy="13" r="10.5" fill="url(#gSkin)" stroke="' + oc + '" stroke-width="' + ow + '"/>' +
@@ -618,10 +636,10 @@
       '<circle cx="16.5" cy="14" r="1.5" fill="#3a2a20"/><circle cx="23.5" cy="14" r="1.5" fill="#3a2a20"/>' +
       '<circle cx="14.5" cy="17" r="1.6" fill="#f4a6b0" opacity=".7"/><circle cx="25.5" cy="17" r="1.6" fill="#f4a6b0" opacity=".7"/>' +
       '<path d="M16.5 18.5c1.5 1.5 5.5 1.5 7 0" stroke="#a8583f" stroke-width="1.3" fill="none" stroke-linecap="round"/>' +
-      '</svg>';
+      '</svg>');
   }
   function svgCouch() {
-    return '<svg viewBox="0 0 190 90">' +
+    return uidSvg('<svg viewBox="0 0 190 90">' +
       '<ellipse cx="95" cy="82" rx="80" ry="6" fill="rgba(0,0,0,.15)"/>' +
       '<rect x="10" y="30" width="170" height="45" rx="16" fill="#c0596b" stroke="#7a2f3c" stroke-width="1.5"/>' +
       '<rect x="10" y="16" width="170" height="30" rx="14" fill="#d97088" stroke="#7a2f3c" stroke-width="1.5"/>' +
@@ -630,22 +648,22 @@
       '<rect x="4" y="40" width="14" height="40" rx="6" fill="#a84457" stroke="#7a2f3c" stroke-width="1.5"/>' +
       '<rect x="172" y="40" width="14" height="40" rx="6" fill="#a84457" stroke="#7a2f3c" stroke-width="1.5"/>' +
       '<rect x="14" y="76" width="10" height="10" fill="#6b4226"/><rect x="166" y="76" width="10" height="10" fill="#6b4226"/>' +
-      '</svg>';
+      '</svg>');
   }
   function svgBasket() {
-    return '<svg viewBox="0 0 130 90">' +
+    return uidSvg('<svg viewBox="0 0 130 90">' +
       '<ellipse cx="65" cy="82" rx="55" ry="6" fill="rgba(0,0,0,.15)"/>' +
       '<path d="M15 45h100l-10 35a8 8 0 0 1-8 6H33a8 8 0 0 1-8-6z" fill="#c9924f" stroke="#7a5a34" stroke-width="1.5"/>' +
       '<path d="M15 45c0-10 22-18 50-18s50 8 50 18" fill="none" stroke="#7a5a34" stroke-width="2"/>' +
       '<path d="M22 45c6-4 12-6 20-7M45 45c6-4 12-6 20-7M68 45c6-4 12-6 20-7M91 45c6-4 12-6 15-7" stroke="#7a5a34" stroke-width="1.2" fill="none" opacity=".6"/>' +
       '<ellipse cx="65" cy="52" rx="36" ry="9" fill="#e8c9a0"/>' +
       '<ellipse cx="65" cy="52" rx="36" ry="9" fill="none" stroke="#7a5a34" stroke-width="1.2"/>' +
-      '</svg>';
+      '</svg>');
   }
   function svgDog(dirty) {
     var speck = dirty ? '<circle cx="18" cy="30" r="2.4" fill="#7a5a34" opacity=".55"/><circle cx="34" cy="20" r="2" fill="#7a5a34" opacity=".5"/><circle cx="12" cy="22" r="1.8" fill="#7a5a34" opacity=".5"/>' : '';
     var oc = '#5a3a1f', ow = 1.4;
-    return '<svg viewBox="0 0 60 44">' + DEFS +
+    return uidSvg('<svg viewBox="0 0 60 44">' + DEFS +
       '<ellipse cx="30" cy="40" rx="16" ry="3" fill="rgba(0,0,0,.18)"/>' +
       '<ellipse cx="26" cy="26" rx="17" ry="13" fill="url(#gFur)" stroke="' + oc + '" stroke-width="' + ow + '"/>' +
       '<circle cx="46" cy="18" r="11" fill="url(#gFur)" stroke="' + oc + '" stroke-width="' + ow + '"/>' +
@@ -655,7 +673,7 @@
       '<ellipse cx="55" cy="21" rx="3" ry="2.2" fill="#3a2a20"/>' +
       '<path class="tail" d="M10 22c-6 1-8 6-4 9 3-2 6-4 8-6z" fill="url(#gFur)" stroke="' + oc + '" stroke-width="1"/>' +
       speck +
-      '</svg>';
+      '</svg>');
   }
   function svgPond() {
     /* unregelmäßiger, organischer Teich statt gerader Kanten */
@@ -666,11 +684,11 @@
       ' C ' + w * 1.08 + ' ' + h * 0.58 + ', ' + w * 0.9 + ' ' + h * 0.72 + ', ' + w * 0.78 + ' ' + h * 0.9 +
       ' C ' + w * 0.6 + ' ' + h * 1.06 + ', ' + w * 0.3 + ' ' + h * 1.02 + ', ' + w * 0.14 + ' ' + h * 0.86 +
       ' C ' + w * 0.0 + ' ' + h * 0.72 + ', ' + w * 0.06 + ' ' + h * 0.58 + ', ' + w * 0.02 + ' ' + h * 0.42 + ' Z';
-    return '<svg viewBox="' + (-w * 0.12) + ' ' + (-h * 0.12) + ' ' + (w * 1.24) + ' ' + (h * 1.24) + '" width="' + w + '" height="' + h + '" style="overflow:visible">' + DEFS +
+    return uidSvg('<svg viewBox="' + (-w * 0.12) + ' ' + (-h * 0.12) + ' ' + (w * 1.24) + ' ' + (h * 1.24) + '" width="' + w + '" height="' + h + '" style="overflow:visible">' + DEFS +
       '<filter id="pn" x="-30%" y="-30%" width="160%" height="160%"><feTurbulence type="fractalNoise" baseFrequency="0.025" numOctaves="2" result="t"/><feDisplacementMap in="SourceGraphic" in2="t" scale="16"/></filter>' +
       '<path d="' + path + '" fill="url(#gRiver)" stroke="#2f7a91" stroke-width="2" filter="url(#pn)"/>' +
       '<path d="' + path + '" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="4" filter="url(#pn)" transform="scale(.82) translate(' + w * 0.09 + ',' + h * 0.08 + ')"/>' +
-      '</svg>';
+      '</svg>');
   }
   function ptsToPath(pts, ox, oy) {
     var d = 'M ' + (pts[0].x - ox) + ' ' + (pts[0].y - oy);
@@ -688,16 +706,16 @@
   function svgCreek() {
     var b = boundsOf(CREEK_PTS, 40);
     var path = ptsToPath(CREEK_PTS, b.x, b.y);
-    return '<svg viewBox="0 0 ' + b.w + ' ' + b.h + '" width="' + b.w + '" height="' + b.h + '" style="overflow:visible">' + DEFS +
+    return uidSvg('<svg viewBox="0 0 ' + b.w + ' ' + b.h + '" width="' + b.w + '" height="' + b.h + '" style="overflow:visible">' + DEFS +
       '<filter id="cn" x="-40%" y="-10%" width="180%" height="120%"><feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" result="t"/><feDisplacementMap in="SourceGraphic" in2="t" scale="10"/></filter>' +
       '<path d="' + path + '" fill="none" stroke="url(#gRiver)" stroke-width="' + (CREEK_HALF * 2) + '" stroke-linecap="round" stroke-linejoin="round" filter="url(#cn)"/>' +
       '<path d="' + path + '" fill="none" stroke="#2f7a91" stroke-width="' + (CREEK_HALF * 2) + '" stroke-opacity=".25" stroke-linecap="round" stroke-linejoin="round" filter="url(#cn)"/>' +
       '<path d="' + path + '" fill="none" stroke="#fff" stroke-opacity=".4" stroke-width="6" stroke-linejoin="round" filter="url(#cn)"/>' +
-      '</svg>';
+      '</svg>');
   }
   function svgBridge() {
     var w = BRIDGE_W, h = BRIDGE_H;
-    return '<svg viewBox="0 0 ' + w + ' ' + h + '">' +
+    return uidSvg('<svg viewBox="0 0 ' + w + ' ' + h + '">' +
       '<ellipse cx="' + (w / 2) + '" cy="' + (h - 4) + '" rx="' + (w / 2 - 4) + '" ry="4" fill="rgba(0,0,0,.15)"/>' +
       '<rect x="3" y="' + (h * 0.34) + '" width="' + (w - 6) + '" height="' + (h * 0.38) + '" rx="3" fill="url(#gTrunk)" stroke="#4a2f1a" stroke-width="1.5"/>' +
       [10, 24, 38, 52, 66, 80].filter(function (x) { return x < w - 6; }).map(function (x) {
@@ -705,7 +723,7 @@
       }).join('') +
       '<rect x="3" y="' + (h * 0.18) + '" width="' + (w - 6) + '" height="4" rx="2" fill="#8a5a3a"/>' +
       '<rect x="3" y="' + (h * 0.72) + '" width="' + (w - 6) + '" height="4" rx="2" fill="#8a5a3a"/>' +
-      '</svg>';
+      '</svg>');
   }
   function svgGravelPath() {
     var b = boundsOf(GRAVEL_PTS, 30);
@@ -720,27 +738,27 @@
         specks += '<circle cx="' + sx.toFixed(1) + '" cy="' + sy.toFixed(1) + '" r="' + (2 + (k % 3)) + '" fill="#a8927a" opacity=".55"/>';
       }
     }
-    return '<svg viewBox="0 0 ' + b.w + ' ' + b.h + '" width="' + b.w + '" height="' + b.h + '" style="overflow:visible">' +
+    return uidSvg('<svg viewBox="0 0 ' + b.w + ' ' + b.h + '" width="' + b.w + '" height="' + b.h + '" style="overflow:visible">' +
       '<filter id="gr" x="-40%" y="-10%" width="180%" height="120%"><feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="1" result="t"/><feDisplacementMap in="SourceGraphic" in2="t" scale="5"/></filter>' +
       '<path d="' + path + '" fill="none" stroke="#cdb896" stroke-width="30" stroke-linecap="round" stroke-linejoin="round" filter="url(#gr)"/>' +
       '<path d="' + path + '" fill="none" stroke="#b8a17c" stroke-width="30" stroke-opacity=".3" stroke-linecap="round" stroke-linejoin="round" filter="url(#gr)"/>' +
       specks +
-      '</svg>';
+      '</svg>');
   }
   function svgGate() {
-    return '<svg viewBox="0 0 40 40">' +
+    return uidSvg('<svg viewBox="0 0 40 40">' +
       '<rect x="2" y="4" width="6" height="34" fill="url(#gTrunk)" stroke="#4a2f1a" stroke-width="1"/>' +
       '<rect x="32" y="4" width="6" height="34" fill="url(#gTrunk)" stroke="#4a2f1a" stroke-width="1"/>' +
       '<rect x="7" y="10" width="26" height="5" fill="#8a5a3a" stroke="#4a2f1a" stroke-width="1"/>' +
       '<rect x="7" y="24" width="26" height="5" fill="#8a5a3a" stroke="#4a2f1a" stroke-width="1"/>' +
       '<line x1="10" y1="10" x2="30" y2="29" stroke="#6b4226" stroke-width="3"/>' +
       '<line x1="30" y1="10" x2="10" y2="29" stroke="#6b4226" stroke-width="3"/>' +
-      '</svg>';
+      '</svg>');
   }
   function svgDock() {
     /* Gleicher Look wie die Brücke: flaches Bohlen-Deck mit Geländer */
     var w = DOCK_W, h = DOCK_H;
-    return '<svg viewBox="0 0 ' + w + ' ' + h + '">' +
+    return uidSvg('<svg viewBox="0 0 ' + w + ' ' + h + '">' +
       '<ellipse cx="' + (w / 2) + '" cy="' + (h - 4) + '" rx="' + (w / 2 - 4) + '" ry="4" fill="rgba(0,0,0,.15)"/>' +
       '<rect x="3" y="' + (h * 0.34) + '" width="' + (w - 6) + '" height="' + (h * 0.38) + '" rx="3" fill="url(#gTrunk)" stroke="#4a2f1a" stroke-width="1.5"/>' +
       [10, 30, 50, 70, 90, 110, 130].filter(function (x) { return x < w - 6; }).map(function (x) {
@@ -748,7 +766,7 @@
       }).join('') +
       '<rect x="3" y="' + (h * 0.18) + '" width="' + (w - 6) + '" height="4" rx="2" fill="#8a5a3a"/>' +
       '<rect x="3" y="' + (h * 0.72) + '" width="' + (w - 6) + '" height="4" rx="2" fill="#8a5a3a"/>' +
-      '</svg>';
+      '</svg>');
   }
   function svgPuddle(r) {
     var w = r * 2, h = r * 1.3;
@@ -757,19 +775,19 @@
       ' C ' + w * 0.8 + ' ' + h * 0.12 + ', ' + w * 1.03 + ' ' + h * 0.32 + ', ' + w * 0.97 + ' ' + h * 0.58 +
       ' C ' + w * 0.92 + ' ' + h * 0.85 + ', ' + w * 0.6 + ' ' + h * 1.05 + ', ' + w * 0.32 + ' ' + h * 0.94 +
       ' C ' + w * 0.1 + ' ' + h * 0.85 + ', ' + w * 0.06 + ' ' + h * 0.7 + ', ' + w * 0.03 + ' ' + h * 0.5 + ' Z';
-    return '<svg viewBox="' + (-w * 0.1) + ' ' + (-h * 0.15) + ' ' + (w * 1.2) + ' ' + (h * 1.3) + '" width="' + w + '" height="' + h + '" style="overflow:visible">' + DEFS +
+    return uidSvg('<svg viewBox="' + (-w * 0.1) + ' ' + (-h * 0.15) + ' ' + (w * 1.2) + ' ' + (h * 1.3) + '" width="' + w + '" height="' + h + '" style="overflow:visible">' + DEFS +
       '<filter id="mn" x="-30%" y="-30%" width="160%" height="160%"><feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="2" result="t"/><feDisplacementMap in="SourceGraphic" in2="t" scale="8"/></filter>' +
       '<ellipse cx="' + (w * 0.5) + '" cy="' + (h * 0.95) + '" rx="' + (w * 0.5) + '" ry="' + (h * 0.12) + '" fill="rgba(0,0,0,.15)"/>' +
       '<path d="' + path + '" fill="url(#gMud)" stroke="#3f2e18" stroke-width="1.5" opacity=".88" filter="url(#mn)"/>' +
       '<ellipse cx="' + (w * 0.4) + '" cy="' + (h * 0.35) + '" rx="' + (w * 0.14) + '" ry="' + (h * 0.08) + '" fill="#fff" opacity=".18"/>' +
-      '</svg>';
+      '</svg>');
   }
   function svgRock() {
-    return '<svg viewBox="0 0 40 32">' + DEFS +
+    return uidSvg('<svg viewBox="0 0 40 32">' + DEFS +
       '<ellipse cx="20" cy="29" rx="17" ry="3" fill="rgba(0,0,0,.2)"/>' +
       '<path d="M4 26c-2-8 3-16 12-18 7-2 14 2 18 8 3 5 1 12-4 14-8 4-22 3-26-4z" fill="url(#gRock)" stroke="#5a544a" stroke-width="1.3"/>' +
       '<path d="M12 12c3-3 8-4 12-2" stroke="#fff" stroke-opacity=".3" stroke-width="2" fill="none" stroke-linecap="round"/>' +
-      '</svg>';
+      '</svg>');
   }
 
   function buildWorld() {
@@ -888,7 +906,7 @@
       obstaclesEl.appendChild(el);
     });
 
-    for (var i = 0; i < 60; i++) {
+    for (var i = 0; i < 40; i++) {
       var fx = 60 + Math.random() * (WORLD.w - 120);
       var fy = 60 + Math.random() * (WORLD.h - 120);
       if (inRect(fx, fy, HOUSE) || inPond(fx, fy, 20)) continue;
@@ -901,7 +919,7 @@
     }
 
     /* Wildblumen-/Hochgras-Wiese unten rechts: dichter und höher */
-    for (var j = 0; j < 55; j++) {
+    for (var j = 0; j < 35; j++) {
       var mx = 680 + Math.random() * 620;
       var my = 940 + Math.random() * 300;
       if (inRect(mx, my, HOUSE)) continue;
@@ -932,6 +950,10 @@
   var dogVel = { x: 0, y: 0 };
   var playerMud = 0, dogMud = 0, dogWasDirty = false;
   function applyMud(el, lvl) {
+    /* nur schreiben, wenn sich der Wert sichtbar ändert - spart Style-Recalcs auf schwächeren Geräten */
+    var rounded = Math.round(lvl * 20);
+    if (el._mudStep === rounded) return;
+    el._mudStep = rounded;
     el.style.filter = lvl > 0.03 ? 'sepia(' + Math.min(1, lvl * 1.1).toFixed(2) + ') saturate(2) brightness(' + (1 - lvl * 0.15).toFixed(2) + ')' : '';
   }
 
