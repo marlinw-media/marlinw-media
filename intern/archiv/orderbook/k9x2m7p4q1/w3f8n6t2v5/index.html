@@ -199,6 +199,28 @@
       "note note"
       "btn  btn";
   }
+  .new-banner {
+    position: absolute;
+    top: 14px; right: -34px;
+    width: 140px;
+    padding: 5px 0;
+    text-align: center;
+    transform: rotate(40deg);
+    background: var(--grad);
+    background-size: 220% 220%;
+    color: #1a0f26;
+    font-weight: 800;
+    font-size: 12px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    box-shadow: 0 4px 14px rgba(0,0,0,.35);
+    animation: newBannerShine 3.5s ease-in-out infinite;
+    z-index: 2;
+  }
+  @keyframes newBannerShine {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
   .drink-card::before {
     content: "";
     position: absolute;
@@ -2270,6 +2292,19 @@ var SND = (function () {
       '</svg>';
   }
 
+  function iceCreamSVG() {
+    return '<svg viewBox="0 0 140 150" xmlns="http://www.w3.org/2000/svg">' +
+      '<path d="M50 88h40l-16 54a4 4 0 0 1-8 0z" fill="#e3b579"/>' +
+      '<path d="M54 96l4 10M64 92l0 12M74 94l4 10M84 98l-4 10" stroke="#c2924f" stroke-width="2.4" stroke-linecap="round"/>' +
+      '<path d="M50 88h40" stroke="#c2924f" stroke-width="2"/>' +
+      '<path d="M38 70c0-18 14-32 32-32s32 14 32 32c0 12-10 18-32 18s-32-6-32-18z" fill="#fff5ef"/>' +
+      '<path d="M44 58c0-15 12-26 26-26s26 11 26 26c0 10-9 15-26 15s-26-5-26-15z" fill="#f7a8c4"/>' +
+      '<circle cx="70" cy="30" r="9" fill="#f7a8c4"/>' +
+      '<circle cx="70" cy="22" r="6" fill="#c0304f"/>' +
+      '<path d="M70 22c3-5 1-10-3-11" stroke="#3f8f3a" stroke-width="2" fill="none" stroke-linecap="round"/>' +
+      '</svg>';
+  }
+
   var PRODUCTS = [
     { id: 'wasser-still', name: 'Stilles Wasser', art: bottleSVG('#bfe3f5', false) },
     { id: 'wasser-medium', name: 'Medium Wasser', art: bottleSVG('#6db8e0', true) },
@@ -2281,6 +2316,7 @@ var SND = (function () {
     { id: 'muesli', name: 'Müsli', art: muesliSVG() },
     { id: 'chips', name: 'Chips (Zufallssorte)', art: chipsSVG() },
     { id: 'popcorn', name: 'Popcorn', art: popcornSVG() },
+    { id: 'eis', name: 'Eis', art: iceCreamSVG(), isNew: true },
     {
       id: 'sandwich', name: 'Sandwich', art: sandwichSVG(),
       note: 'Achtung: erhöhte Bearbeitungszeit',
@@ -2312,9 +2348,10 @@ var SND = (function () {
 
   PRODUCTS.forEach(function (p, i) {
     var card = document.createElement('div');
-    card.className = 'drink-card' + (p.note ? ' has-note' : '');
+    card.className = 'drink-card' + (p.note ? ' has-note' : '') + (p.isNew ? ' is-new' : '');
     card.style.animationDelay = (i * 55) + 'ms';
     card.innerHTML =
+      (p.isNew ? '<div class="new-banner">Neu</div>' : '') +
       '<div class="drink-art">' + p.art + '</div>' +
       '<h3>' + p.name + '</h3>' +
       (p.note ? '<div class="drink-note">' + p.note + '</div>' : '') +
@@ -2416,7 +2453,7 @@ var SND = (function () {
      Glücksspielmodus
      ============================================================ */
   var DRINK_IDS = ['wasser-still', 'wasser-medium', 'cs-multivitamin', 'cs-fairydrink', 'cs-safarifruits', 'kaffee', 'kakao'];
-  var FOOD_IDS = ['muesli', 'chips', 'popcorn', 'sandwich'];
+  var FOOD_IDS = ['muesli', 'chips', 'popcorn', 'sandwich', 'eis'];
   function catList(cat) {
     var ids = cat === 'trinken' ? DRINK_IDS : FOOD_IDS;
     return ids.map(function (id) { return PRODUCTS.find(function (p) { return p.id === id; }); }).filter(Boolean);
@@ -2758,6 +2795,7 @@ var SND = (function () {
     muesli:  { time: 25, steps: ['Müsli wird abgefüllt', 'Milch wird in die Schüssel gegossen'] },
     chips:   { time: 15, steps: ['Tüte wird geöffnet', 'Zufallssorte wird gezogen'] },
     popcorn: { time: 60, steps: ['Popcorn poppt', 'Popcorn wird gewürzt', 'Tüte wird befüllt'] },
+    eis: { time: 35, steps: ['Eis wird aus der Kühltruhe geholt', 'Kugeln werden geformt', 'Waffel wird dazugereicht'] },
     sandwich: { time: 90, steps: ['Brot wird geschnitten', 'Belag wird aufgelegt', 'Sandwich wird zusammengeklappt', 'Wird in Folie eingepackt'] }
   };
   var WAIT_CAP = 300;
