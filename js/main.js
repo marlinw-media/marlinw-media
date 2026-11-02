@@ -1,852 +1,435 @@
-// ==========================================================================
-// MarlinW Media — Site JS
-// ==========================================================================
+/* MarlinW Media — Konzept 3 */
+(() => {
+  const html = document.documentElement;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const fine = matchMedia('(hover: hover) and (pointer: fine)').matches;
+  const hasGsap = typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined';
+  const $ = (s, c = document) => c.querySelector(s);
+  const $$ = (s, c = document) => [...c.querySelectorAll(s)];
+  if (hasGsap) gsap.registerPlugin(ScrollTrigger);
 
-(function () {
-  'use strict';
-
-  /* ---------- Theme toggle ---------- */
-  const root = document.documentElement;
-  const themeSwitches = document.querySelectorAll('.theme-switch');
-  const stored = localStorage.getItem('mw-theme');
-  const initialTheme = stored || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
-  root.setAttribute('data-theme', initialTheme);
-
-  function currentTheme() {
-    return root.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+  /* ------------------------------------------------------------------ */
+  /* Smooth Scroll (Lenis) – synchron mit GSAP                           */
+  /* ------------------------------------------------------------------ */
+  let lenis = null;
+  if (hasGsap && !reduce && typeof Lenis !== 'undefined') {
+    lenis = new Lenis({ duration: 1.1, easing: t => Math.min(1, 1.001 - Math.pow(2, -10 * t)), smoothWheel: true });
+    lenis.on('scroll', ScrollTrigger.update);
+    gsap.ticker.add(t => lenis.raf(t * 1000));
+    gsap.ticker.lagSmoothing(0);
   }
+  const scrollTo = target => lenis ? lenis.scrollTo(target, { offset: -60, duration: 1.4 }) : $(target)?.scrollIntoView({ behavior: 'smooth' });
+  $$('a[href^="#"]').forEach(a => a.addEventListener('click', e => {
+    const id = a.getAttribute('href');
+    if (id.length > 1 && $(id)) { e.preventDefault(); scrollTo(id); }
+  }));
 
-  function reflectSwitches() {
-    const isLight = currentTheme() === 'light';
-    themeSwitches.forEach((sw) => sw.setAttribute('aria-checked', String(isLight)));
-  }
-
-  function setTheme(theme) {
-    root.setAttribute('data-theme', theme);
-    localStorage.setItem('mw-theme', theme);
-    reflectSwitches();
-  }
-
-  reflectSwitches();
-  themeSwitches.forEach((sw) => {
-    sw.addEventListener('click', () => {
-      setTheme(currentTheme() === 'dark' ? 'light' : 'dark');
-    });
-  });
-
-  /* ---------- Accent color picker ---------- */
-  const ACCENTS = {
-    red: { accent: '#e11d2e', hover: '#ff2d40' },
-    pink: { accent: '#e0399b', hover: '#f062b3' },
-    blue: { accent: '#0ea5e9', hover: '#38bdf8' },
-    yellow: { accent: '#d97706', hover: '#f59e0b' },
+  /* ------------------------------------------------------------------ */
+  /* Videos: laufen dauerhaft im Loop, ohne Bedienelemente.              */
+  /* Laden erst kurz bevor sie ins Bild kommen (datensparsam);           */
+  /* außerhalb des Sichtbereichs ruhen sie unsichtbar, im Bild laufen sie */
+  /* immer — und starten sich bei jeder Unterbrechung selbst neu.        */
+  /* ------------------------------------------------------------------ */
+  const prep = v => {
+    v.muted = true; v.defaultMuted = true; v.loop = true; v.controls = false; v.playsInline = true;
+    v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
+    v.setAttribute('disablepictureinpicture', ''); v.setAttribute('disableremoteplayback', '');
+    v.setAttribute('controlslist', 'nodownload nofullscreen noremoteplayback noplaybackrate');
+    v.disablePictureInPicture = true;
   };
+  const tryPlay = v => { if (!v.src) return; const p = v.play(); if (p && p.catch) p.catch(() => {}); };
+  const loadVideo = v => {
+    if (v.dataset.loaded) return;
+    v.dataset.loaded = '1';
+    prep(v);
+    v.preload = 'auto';
+    v.src = v.dataset.src;
+    v.load();
+    ['loadeddata', 'canplay', 'canplaythrough'].forEach(ev => v.addEventListener(ev, () => { if (v.dataset.vis === '1') tryPlay(v); }));
+    v.addEventListener('pause', () => { if (v.dataset.vis === '1' && !document.hidden) setTimeout(() => tryPlay(v), 150); });
+    v.addEventListener('ended', () => { v.currentTime = 0; tryPlay(v); });
+    v.addEventListener('stalled', () => { if (v.dataset.vis === '1') tryPlay(v); });
+  };
+  const loopVideos = $$('video[data-src]:not([data-scrub])');
+  loopVideos.forEach(prep);
+  loopVideos.filter(v => v.hasAttribute('data-eager')).forEach(v => { v.dataset.vis = '1'; loadVideo(v); tryPlay(v); });
+  if ('IntersectionObserver' in window) {
+    const vio = new IntersectionObserver(entries => entries.forEach(e => {
+      const v = e.target;
+      if (e.isIntersecting) { v.dataset.vis = '1'; loadVideo(v); tryPlay(v); }
+      else if (v.dataset.loaded) { v.dataset.vis = '0'; v.pause(); }
+    }), { rootMargin: '700px 0px 700px 0px' });
+    loopVideos.forEach(v => vio.observe(v));
+  } else loopVideos.forEach(v => { v.dataset.vis = '1'; loadVideo(v); tryPlay(v); });
+  // iOS-Stromsparmodus u. ä.: beim ersten Kontakt alle sichtbaren Videos anstoßen
+  const kick = () => loopVideos.forEach(v => { if (v.dataset.vis === '1') tryPlay(v); });
+  ['touchstart', 'pointerdown', 'keydown', 'wheel'].forEach(ev => window.addEventListener(ev, kick, { passive: true }));
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) kick(); });
+  setInterval(kick, 2500);
 
-  function applyAccent(key) {
-    const preset = ACCENTS[key] || ACCENTS.red;
-    root.style.setProperty('--accent', preset.accent);
-    root.style.setProperty('--accent-hover', preset.hover);
-    document.querySelectorAll('.swatch').forEach((sw) => {
-      sw.classList.toggle('active', sw.dataset.accent === key);
-    });
-  }
-
-  const storedAccent = localStorage.getItem('mw-accent') || 'red';
-  applyAccent(storedAccent);
-
-  document.querySelectorAll('.swatch').forEach((sw) => {
-    sw.addEventListener('click', () => {
-      const key = sw.dataset.accent;
-      applyAccent(key);
-      localStorage.setItem('mw-accent', key);
-    });
-  });
-
-  document.querySelectorAll('.color-picker-btn').forEach((btn) => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const panel = btn.parentElement.querySelector('.color-swatches');
-      const isOpen = panel.classList.contains('open');
-      document.querySelectorAll('.color-swatches.open').forEach((p) => p.classList.remove('open'));
-      if (!isOpen) panel.classList.add('open');
-    });
-  });
-  document.addEventListener('click', () => {
-    document.querySelectorAll('.color-swatches.open').forEach((p) => p.classList.remove('open'));
-  });
-
-  /* ---------- Mobile nav ---------- */
-  const navToggle = document.querySelector('.nav-toggle');
-  const mobileNav = document.querySelector('.mobile-nav');
-  const mobileNavClose = document.querySelector('.mobile-nav-close');
-
-  function closeMobileNav() { mobileNav && mobileNav.classList.remove('open'); }
-
-  if (navToggle && mobileNav) {
-    navToggle.addEventListener('click', () => mobileNav.classList.add('open'));
-    mobileNavClose && mobileNavClose.addEventListener('click', closeMobileNav);
-    mobileNav.querySelectorAll('a').forEach((a) => a.addEventListener('click', closeMobileNav));
-  }
-
-  /* ---------- Reveal on scroll (progressive enhancement: elements are
-     visible by default; JS opts them into a fade-in if IO is available).
-     Siblings that share a parent (card grids, testimonial lists, ...) get
-     a small incremental transition-delay so they pop in one after another
-     instead of all at once. ---------- */
-  const revealEls = document.querySelectorAll('.reveal');
-  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  if (revealEls.length && !reduceMotion) {
-    const STAGGER_MS = 70;
-    const STAGGER_MAX = 6;
-    const groups = new Map();
-    revealEls.forEach((el) => {
-      const parent = el.parentElement;
-      if (!groups.has(parent)) groups.set(parent, []);
-      groups.get(parent).push(el);
-    });
-    groups.forEach((items) => {
-      if (items.length > 1) {
-        items.forEach((el, i) => {
-          el.style.transitionDelay = Math.min(i, STAGGER_MAX) * STAGGER_MS + 'ms';
-        });
-      }
-    });
-  }
-
-  if ('IntersectionObserver' in window && revealEls.length && !reduceMotion) {
-    const io = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('in');
-            io.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0, rootMargin: '0px 0px 18% 0px' }
-    );
-    revealEls.forEach((el) => {
-      const rect = el.getBoundingClientRect();
-      const alreadyVisible = rect.top < window.innerHeight && rect.bottom > 0;
-      if (alreadyVisible) return; // don't hide what's already on screen
-      el.classList.add('reveal-pending');
-      io.observe(el);
-    });
-  }
-
-  /* ---------- Portfolio filter ---------- */
-  const filterBtns = document.querySelectorAll('.filter-btn');
-  const portfolioGrid = document.querySelector('.portfolio-grid');
-
-  if (filterBtns.length && portfolioGrid) {
-    const cards = portfolioGrid.querySelectorAll('.p-card');
-    const initialActive = Array.from(filterBtns).find((b) => b.classList.contains('active'));
-    portfolioGrid.classList.toggle('collage', !initialActive || initialActive.dataset.filter === 'all');
-    filterBtns.forEach((btn) => {
-      btn.addEventListener('click', () => {
-        filterBtns.forEach((b) => b.classList.remove('active'));
-        btn.classList.add('active');
-        const cat = btn.dataset.filter;
-        let visible = 0;
-        cards.forEach((card) => {
-          const match = cat === 'all' || card.dataset.category === cat;
-          card.style.display = match ? '' : 'none';
-          if (match) visible++;
-        });
-        portfolioGrid.classList.toggle('list-empty', visible === 0);
-        portfolioGrid.classList.toggle('collage', cat === 'all');
-      });
-    });
-  }
-
-  /* Prefill contact form from a package "Anfragen" click */
-  const contactMessage = document.getElementById('field-message');
-  const contactService = document.getElementById('field-service');
-
-  document.querySelectorAll('[data-request-package]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const pkg = btn.dataset.requestPackage;
-      const price = btn.dataset.requestPrice || '';
-      if (contactMessage) {
-        contactMessage.value = `Ich interessiere mich für: ${pkg}${price ? ' (Schätzpreis ' + price + ')' : ''}.\n\nKurz zu meinem Projekt: `;
-      }
-      if (contactService) {
-        const opt = Array.from(contactService.options).find((o) => o.value === btn.dataset.requestCategory);
-        if (opt) contactService.value = opt.value;
-      }
-      const contactSection = document.getElementById('kontakt');
-      if (contactSection) {
-        contactSection.scrollIntoView({ behavior: 'smooth' });
-        setTimeout(() => contactMessage && contactMessage.focus(), 500);
-      }
-    });
-  });
-
-  /* ---------- Hourly calculator ---------- */
-  const RATES = { planning: 40, shooting: 90, editing: 55, km: 0.5 };
-
-  const rangePlanning = document.getElementById('range-planning');
-  const rangeShooting = document.getElementById('range-shooting');
-  const rangeEditing = document.getElementById('range-editing');
-  const rangeKm = document.getElementById('range-km');
-  const calcTotal = document.getElementById('calc-total');
-  const calcSendBtn = document.getElementById('calc-send');
-
-  function fmtEUR(n) {
-    return n.toLocaleString('de-DE', { maximumFractionDigits: 0 }) + ' €';
-  }
-
-  function updateRangeFill(el) {
-    const min = Number(el.min) || 0;
-    const max = Number(el.max) || 100;
-    const pct = ((Number(el.value) - min) / (max - min)) * 100;
-    el.style.background = `linear-gradient(to right, var(--text) 0%, var(--text) ${pct}%, var(--border-strong) ${pct}%, var(--border-strong) 100%)`;
-  }
-
-  function updateCalc() {
-    if (!rangePlanning) return;
-    const planning = Number(rangePlanning.value);
-    const shooting = Number(rangeShooting.value);
-    const editing = Number(rangeEditing.value);
-    const km = Number(rangeKm.value);
-
-    document.getElementById('val-planning').textContent = planning + ' Std.';
-    document.getElementById('val-shooting').textContent = shooting + ' Std.';
-    document.getElementById('val-editing').textContent = editing + ' Std.';
-    document.getElementById('val-km').textContent = km + ' km';
-
-    const total =
-      planning * RATES.planning +
-      shooting * RATES.shooting +
-      editing * RATES.editing +
-      km * RATES.km;
-
-    if (calcTotal) calcTotal.textContent = fmtEUR(total);
-  }
-
-  [rangePlanning, rangeShooting, rangeEditing, rangeKm].forEach((el) => {
-    if (el) {
-      el.addEventListener('input', () => {
-        updateCalc();
-        updateRangeFill(el);
-      });
-      updateRangeFill(el);
-    }
-  });
-  updateCalc();
-
-  if (calcSendBtn) {
-    calcSendBtn.addEventListener('click', () => {
-      if (contactMessage) {
-        const planning = rangePlanning.value;
-        const shooting = rangeShooting.value;
-        const editing = rangeEditing.value;
-        const km = rangeKm.value;
-        contactMessage.value =
-          `Individuelle Kalkulation:\n` +
-          `– Planung/Vorbereitung: ${planning} Std.\n` +
-          `– Shooting/Dreh: ${shooting} Std.\n` +
-          `– Editing: ${editing} Std.\n` +
-          `– Anfahrt: ${km} km\n` +
-          `– Geschätzter Gesamtpreis: ${calcTotal.textContent}\n\n` +
-          `Kurz zu meinem Projekt: `;
-      }
-      const contactSection = document.getElementById('kontakt');
-      if (contactSection) {
-        contactSection.scrollIntoView({ behavior: 'smooth' });
-        setTimeout(() => contactMessage && contactMessage.focus(), 500);
-      }
-    });
-  }
-
-  /* ---------- Easter-egg email check (hashed, not plaintext — this file is
-     public on GitHub, so the real address never appears in the source) ---------- */
-  const SPECIAL_EMAIL_HASH = '2938f999fc9046ea1191ea7c7e4575df1bdc3cebda2c5ebc1f0cb2c974e35c63';
-  async function isSpecialEmail(value) {
-    if (!value || !window.crypto?.subtle) return false;
-    const bytes = new TextEncoder().encode(value);
-    const digest = await crypto.subtle.digest('SHA-256', bytes);
-    const hex = Array.from(new Uint8Array(digest))
-      .map((b) => b.toString(16).padStart(2, '0'))
-      .join('');
-    return hex === SPECIAL_EMAIL_HASH;
-  }
-
-  /* ---------- Contact form submit (FormSubmit.co, no backend required) ---------- */
-  const form = document.getElementById('contact-form');
-  const formStatus = document.getElementById('form-status');
-
-  if (form) {
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const submitBtn = form.querySelector('button[type="submit"]');
-      const originalLabel = submitBtn.textContent;
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Wird gesendet …';
-      formStatus.className = 'form-status';
-
-      try {
-        const res = await fetch(form.action, {
-          method: 'POST',
-          body: new FormData(form),
-          headers: { Accept: 'application/json' },
-        });
-        if (res.ok) {
-          const emailField = form.querySelector('#field-email');
-          const emailVal = (emailField ? emailField.value : '').trim().toLowerCase();
-          formStatus.textContent = 'Danke! Deine Anfrage wurde gesendet — ich melde mich schnellstmöglich zurück.';
-          formStatus.classList.add('show', 'ok');
-          form.reset();
-          updateCalc();
-          if (await isSpecialEmail(emailVal)) {
-            fireHeartConfetti();
-          } else {
-            fireConfetti();
-          }
-        } else {
-          throw new Error('Request failed');
+  /* ------------------------------------------------------------------ */
+  /* Text in Wörter teilen                                               */
+  /* ------------------------------------------------------------------ */
+  const splitWords = (el, cls) => {
+    const out = [];
+    const walk = (node, wrapClass) => {
+      [...node.childNodes].forEach(n => {
+        if (n.nodeType === 3) {
+          const frag = document.createDocumentFragment();
+          n.textContent.split(/(\s+)/).forEach(part => {
+            if (!part) return;
+            if (/^\s+$/.test(part)) { frag.appendChild(document.createTextNode(' ')); return; }
+            const w = document.createElement('span'); w.className = cls;
+            const inner = document.createElement('span'); inner.textContent = part;
+            if (wrapClass) inner.className = wrapClass;
+            w.appendChild(inner); frag.appendChild(w); out.push(inner);
+          });
+          n.replaceWith(frag);
+        } else if (n.nodeType === 1 && n.tagName !== 'BR') {
+          const c = n.className; walk(n, c); n.replaceWith(...n.childNodes);
         }
-      } catch (err) {
-        formStatus.textContent =
-          'Da ist etwas schiefgelaufen. Schreib mir gerne direkt an marlinw.media@gmail.com.';
-        formStatus.classList.add('show', 'err');
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = originalLabel;
-      }
-    });
-  }
-
-  /* ---------- Footer year ---------- */
-  const yearEl = document.getElementById('year');
-  if (yearEl) yearEl.textContent = new Date().getFullYear();
-
-  /* ---------- Lightbox (click any marked image to view it larger) ---------- */
-  const lightboxTriggers = document.querySelectorAll('img[data-lightbox]');
-  if (lightboxTriggers.length) {
-    const overlay = document.createElement('div');
-    overlay.className = 'lightbox-overlay';
-    overlay.innerHTML =
-      '<button class="lightbox-close" type="button" aria-label="Schließen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' +
-      '<img alt="">';
-    document.body.appendChild(overlay);
-    const overlayImg = overlay.querySelector('img');
-    const closeBtn = overlay.querySelector('.lightbox-close');
-
-    function openLightbox(src, alt) {
-      overlayImg.src = src;
-      overlayImg.alt = alt || '';
-      overlay.classList.add('open');
-      document.body.style.overflow = 'hidden';
-    }
-    function closeLightbox() {
-      overlay.classList.remove('open');
-      document.body.style.overflow = '';
-    }
-
-    lightboxTriggers.forEach((img) => {
-      img.addEventListener('click', () => openLightbox(img.currentSrc || img.src, img.alt));
-    });
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) closeLightbox();
-    });
-    closeBtn.addEventListener('click', closeLightbox);
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') closeLightbox();
-    });
-  }
-
-  /* ---------- Confetti bursts (fire only after a confirmed successful form
-     submission — see the "Anfrage senden" handler above). Colors are derived
-     from whatever accent color is currently active, so it always matches
-     the picked theme. ---------- */
-  function resolveConfettiColor(expr) {
-    const probe = document.createElement('div');
-    probe.style.color = expr;
-    probe.style.position = 'absolute';
-    probe.style.opacity = '0';
-    document.body.appendChild(probe);
-    const rgb = getComputedStyle(probe).color;
-    probe.remove();
-    return rgb;
-  }
-
-  function getConfettiColors() {
-    const accent = resolveConfettiColor('var(--accent)');
-    return [
-      accent,
-      accent,
-      accent,
-      resolveConfettiColor('color-mix(in srgb, var(--accent) 55%, white)'),
-      resolveConfettiColor('color-mix(in srgb, var(--accent) 55%, black)'),
-      '#ffffff',
-      '#f5c518',
-    ];
-  }
-
-  function createConfettiCanvas() {
-    const canvas = document.createElement('canvas');
-    canvas.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:1000;';
-    document.body.appendChild(canvas);
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const W = window.innerWidth;
-    const H = window.innerHeight;
-    canvas.width = W * dpr;
-    canvas.height = H * dpr;
-    const ctx = canvas.getContext('2d');
-    ctx.scale(dpr, dpr);
-    return { canvas, ctx, W, H };
-  }
-
-  function drawParticle(ctx, p, opacity) {
-    ctx.save();
-    ctx.translate(p.x, p.y);
-    ctx.rotate((p.rotation * Math.PI) / 180);
-    ctx.globalAlpha = opacity;
-    ctx.fillStyle = p.color;
-    if (p.shape === 'rect') {
-      ctx.fillRect(-p.size / 2, -p.size / 3, p.size, p.size * 0.6);
-    } else {
-      ctx.beginPath();
-      ctx.arc(0, 0, p.size / 2, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.restore();
-  }
-
-  function fireConfetti() {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const colors = getConfettiColors();
-    const { canvas, ctx, W, H } = createConfettiCanvas();
-
-    const count = window.innerWidth < 640 ? 100 : 170;
-    const particles = [];
-    for (let i = 0; i < count; i++) {
-      particles.push({
-        x: W / 2 + (Math.random() - 0.5) * (W * 0.35),
-        y: H + 10,
-        vx: (Math.random() - 0.5) * 8,
-        vy: -(8 + Math.random() * 9),
-        size: 5 + Math.random() * 6,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        rotation: Math.random() * 360,
-        rotationSpeed: (Math.random() - 0.5) * 10,
-        shape: Math.random() < 0.55 ? 'rect' : 'circle',
-        gravity: 0.1 + Math.random() * 0.08,
-        drag: 0.992,
-        swaySpeed: 0.05 + Math.random() * 0.07,
-        swayAmp: 0.6 + Math.random() * 1,
-        life: 0,
-        maxLife: 260 + Math.random() * 120,
       });
-    }
-
-    let frame = 0;
-    function tick() {
-      frame++;
-      ctx.clearRect(0, 0, W, H);
-      let alive = 0;
-      particles.forEach((p) => {
-        if (p.life > p.maxLife) return;
-        p.life++;
-        p.vy += p.gravity;
-        p.vx *= p.drag;
-        p.vy *= p.drag;
-        p.x += p.vx + Math.sin(p.life * p.swaySpeed) * p.swayAmp;
-        p.y += p.vy;
-        p.rotation += p.rotationSpeed;
-        const fadeStart = p.maxLife * 0.75;
-        const opacity = p.life > fadeStart ? Math.max(0, 1 - (p.life - fadeStart) / (p.maxLife - fadeStart)) : 1;
-        if (opacity <= 0) return;
-        alive++;
-        drawParticle(ctx, p, opacity);
-      });
-      if (alive > 0 && frame < 500) {
-        requestAnimationFrame(tick);
-      } else {
-        canvas.remove();
-      }
-    }
-    requestAnimationFrame(tick);
-  }
-
-  /* Special easter-egg variant: bursts up then eases into a heart shape,
-     holds and shimmers for a moment, then falls away like normal confetti. */
-  function heartCurvePoint(t) {
-    const x = 16 * Math.pow(Math.sin(t), 3);
-    const y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
-    return { x, y };
-  }
-
-  function fireHeartConfetti() {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const colors = getConfettiColors();
-    const { canvas, ctx, W, H } = createConfettiCanvas();
-    const centerX = W / 2 + (Math.random() - 0.5) * W * 0.1;
-    const centerY = H * 0.4;
-
-    function spawnSparks(originX, originY, n, spread) {
-      const sparks = [];
-      for (let j = 0; j < n; j++) {
-        const angle = (j / n) * Math.PI * 2 + Math.random() * 0.25;
-        const speed = (2 + Math.random() * 2.6) * spread;
-        sparks.push({
-          x: originX,
-          y: originY,
-          prevX: originX,
-          prevY: originY,
-          vx: Math.cos(angle) * speed,
-          vy: Math.sin(angle) * speed,
-          color: colors[Math.floor(Math.random() * colors.length)],
-          size: 2 + Math.random() * 1.8,
-        });
-      }
-      return sparks;
-    }
-
-    /* ---- the hero rocket: arcs up (curved path), trailing orange fire,
-       then explodes — and the heart blooms out of that explosion. ---- */
-    const launchX = W * (0.4 + Math.random() * 0.2);
-    const arcControlX = launchX + (Math.random() - 0.5) * W * 0.35;
-    const hero = {
-      stage: 'rising',
-      p: 0,
-      speed: 0.0062 + Math.random() * 0.0018,
-      trail: [],
-      fromX: launchX,
-      fromY: H + 24,
-      toX: centerX,
-      toY: centerY,
-      ctrlX: arcControlX,
     };
+    walk(el, '');
+    return out;
+  };
+  $$('[data-split]').forEach(el => { el._words = splitWords(el, 'w'); });
 
-    /* ---- a few smaller, subtler background fireworks for ambience ---- */
-    function makeFirework(delay) {
-      const originX = W * (0.1 + Math.random() * 0.8);
-      const targetY = H * (0.12 + Math.random() * 0.4);
-      return {
-        stage: 'rising',
-        startFrame: delay,
-        x: originX,
-        y: H + 24,
-        targetY,
-        speed: 3.2 + Math.random() * 1.4,
-        trail: [],
-        sparks: null,
-        life: 0,
-        maxLife: 60 + Math.random() * 20,
-        drag: 0.963,
-        gravity: 0.045,
-      };
+  /* ------------------------------------------------------------------ */
+  /* Intro (erster Besuch) bzw. kurzer Vorhang (Seitenwechsel)           */
+  /* ------------------------------------------------------------------ */
+  const intro = $('.intro');
+  const heroWords = $$('[data-hero] [data-split]').flatMap(el => el._words || []);
+  const heroFades = $$('[data-hero] [data-hero-fade]');
+  if (hasGsap && !reduce) {
+    gsap.set(heroWords, { yPercent: 115 });
+    gsap.set(heroFades, { autoAlpha: 0, y: 24 });
+  }
+  const pageIn = () => {
+    html.classList.add('intro-done');
+    if (!hasGsap || reduce) return;
+    gsap.to(heroWords, { yPercent: 0, duration: 1.25, ease: 'expo.out', stagger: .055 });
+    gsap.to(heroFades, { autoAlpha: 1, y: 0, duration: 1.1, ease: 'expo.out', stagger: .08, delay: .35 });
+    ScrollTrigger.refresh();
+  };
+  if (intro && hasGsap && !reduce) {
+    lenis?.stop();
+    // Langes Logo-Intro nur beim Einstieg von außen — ohne Speicher im Browser (kein Cookie/Storage nötig)
+    let firstVisit = true;
+    try { firstVisit = !document.referrer || new URL(document.referrer).host !== location.host; } catch (e) {}
+    const markPaths = $$('.intro .lm path');
+    const letters = $$('.intro .lw path');
+    const tl = gsap.timeline({ onComplete: () => { lenis?.start(); pageIn(); } });
+    if (firstVisit) {
+      gsap.set(letters, { opacity: 0, y: 40 });
+      tl.to(markPaths, { strokeDashoffset: 0, duration: 1.1, ease: 'power2.inOut' })
+        .to('.intro-line i', { scaleX: 1, duration: 1.4, ease: 'power2.inOut' }, 0)
+        .to(markPaths, { fill: '#f5f5f7', strokeOpacity: 0, duration: .45, ease: 'power1.out' }, '-=.25')
+        .to(letters, { opacity: 1, y: 0, duration: .7, ease: 'expo.out', stagger: .035 }, '-=.45')
+        .to('.intro-logo', { scale: .92, autoAlpha: 0, duration: .55, ease: 'power3.in' }, '+=.25')
+        .to(intro, { yPercent: -100, duration: .9, ease: 'expo.inOut' }, '-=.15')
+        .from('.hero-frame', { scale: 1.2, duration: 1.8, ease: 'expo.out' }, '-=.75');
+    } else {
+      gsap.set(markPaths, { strokeDashoffset: 0, fill: '#f5f5f7', strokeOpacity: 0 });
+      gsap.set('.intro-line', { autoAlpha: 0 });
+      tl.to('.intro-logo', { autoAlpha: 0, scale: .94, duration: .35, ease: 'power2.in', delay: .1 })
+        .to(intro, { yPercent: -100, duration: .75, ease: 'expo.inOut' }, '-=.05');
     }
-    const fireworkCount = window.innerWidth < 640 ? 2 : 4;
-    const fireworks = [];
-    for (let i = 0; i < fireworkCount; i++) {
-      fireworks.push(makeFirework(30 + i * 55 + Math.floor(Math.random() * 30)));
-    }
+  } else pageIn();
 
-    /* ---- ambient drifting glitter, twinkling on and off throughout ---- */
-    const sparkleCount = window.innerWidth < 640 ? 30 : 54;
-    const sparkles = [];
-    for (let i = 0; i < sparkleCount; i++) {
-      sparkles.push({
-        x: W * (0.12 + Math.random() * 0.76),
-        y: H * (0.1 + Math.random() * 0.6),
-        size: 1.5 + Math.random() * 2.2,
-        color: Math.random() < 0.5 ? '#ffffff' : colors[Math.floor(Math.random() * colors.length)],
-        phase: Math.random() * Math.PI * 2,
-        speed: 0.04 + Math.random() * 0.07,
-        drift: 0.05 + Math.random() * 0.15,
-        startFrame: 60 + Math.floor(Math.random() * 60),
-        maxLife: 340 + Math.random() * 220,
-        life: 0,
+  // Seitenwechsel: Vorhang fährt hoch, dann Navigation
+  if (hasGsap && !reduce && intro) {
+    $$('a[href]').forEach(a => {
+      const href = a.getAttribute('href');
+      if (!href || href.startsWith('#') || a.target === '_blank' || /^(mailto|tel|https?):/i.test(href) || !/\.html(\?|#|$)/.test(href)) return;
+      a.addEventListener('click', e => {
+        if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+        e.preventDefault();
+        html.classList.remove('intro-done');
+        gsap.set('.intro-logo', { autoAlpha: 0 });
+        gsap.fromTo(intro, { yPercent: 100 }, { yPercent: 0, duration: .6, ease: 'expo.inOut', onComplete: () => { location.href = href; } });
       });
-    }
+    });
+    window.addEventListener('pageshow', e => { if (e.persisted) { gsap.set(intro, { yPercent: -100 }); html.classList.add('intro-done'); } });
+  }
 
-    /* ---- the heart itself: dots that bloom out from the rocket's burst
-       point, hold as a calm glowing heart (no pulsing), then drift and
-       fade slowly downward like falling glitter. ---- */
-    const count = window.innerWidth < 640 ? 110 : 190;
-    const scale = Math.min(W, H) * 0.017;
-    const particles = [];
-    for (let i = 0; i < count; i++) {
-      const t = (i / count) * Math.PI * 2 + (Math.random() - 0.5) * 0.05;
-      const hp = heartCurvePoint(t);
-      const jitter = 0.92 + Math.random() * 0.16;
-      particles.push({
-        x: centerX,
-        y: centerY,
-        targetX: centerX + hp.x * scale * jitter,
-        targetY: centerY - hp.y * scale * jitter,
-        size: 4 + Math.random() * 4,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        phase: 'wait',
-        t: 0,
-        explodeDur: 34 + Math.random() * 16,
-        holdDur: 130 + Math.random() * 40,
-        twinklePhase: Math.random() * Math.PI * 2,
-        vx: 0,
-        vy: 0,
-        gravity: 0.018 + Math.random() * 0.012,
-        drag: 0.996,
-        life: 0,
-        maxLife: 430 + Math.random() * 110,
-        fallSwayPhase: Math.random() * Math.PI * 2,
-        fallSwaySpeed: 0.025 + Math.random() * 0.05,
-        fallSwayAmp: 0.3 + Math.random() * 0.9,
-        fallDriftX: (Math.random() - 0.5) * 0.5,
-        fallStartVx: (Math.random() - 0.5) * 1.6,
-      });
-    }
+  /* ------------------------------------------------------------------ */
+  /* Navigation & Menü                                                  */
+  /* ------------------------------------------------------------------ */
+  const nav = $('.nav');
+  let lastY = 0;
+  const onScroll = y => {
+    if (!nav) return;
+    nav.classList.toggle('is-scrolled', y > 20);
+    if (!html.classList.contains('menu-open')) nav.classList.toggle('is-hidden', y > 300 && y > lastY + 2);
+    if (y < lastY - 2) nav.classList.remove('is-hidden');
+    lastY = y;
+  };
+  if (lenis) lenis.on('scroll', e => onScroll(e.scroll)); else window.addEventListener('scroll', () => onScroll(scrollY), { passive: true });
+  onScroll(scrollY);
+  $('.burger')?.addEventListener('click', () => {
+    const open = html.classList.toggle('menu-open');
+    $('.burger').setAttribute('aria-expanded', open);
+    open ? lenis?.stop() : lenis?.start();
+    if (open && hasGsap && !reduce) gsap.fromTo('.menu a.big', { yPercent: 60, autoAlpha: 0 }, { yPercent: 0, autoAlpha: 1, stagger: .05, duration: .8, ease: 'expo.out', delay: .15 });
+  });
+  $$('.menu a').forEach(a => a.addEventListener('click', () => { html.classList.remove('menu-open'); lenis?.start(); }));
 
-    let frame = 0;
-    let heartArmed = false;
+  /* ------------------------------------------------------------------ */
+  /* Cursor & magnetische Buttons (nur Maus)                             */
+  /* ------------------------------------------------------------------ */
+  if (fine && hasGsap && !reduce) {
+    const dot = document.createElement('div'); dot.className = 'cursor';
+    const ring = document.createElement('div'); ring.className = 'cursor-ring'; ring.innerHTML = '<span></span>';
+    document.body.append(dot, ring);
+    const dx = gsap.quickTo(dot, 'x', { duration: .08 }), dy = gsap.quickTo(dot, 'y', { duration: .08 });
+    const rx = gsap.quickTo(ring, 'x', { duration: .45, ease: 'power3' }), ry = gsap.quickTo(ring, 'y', { duration: .45, ease: 'power3' });
+    window.addEventListener('pointermove', e => { html.classList.add('has-cursor'); dx(e.clientX); dy(e.clientY); rx(e.clientX); ry(e.clientY); });
+    document.addEventListener('pointerleave', () => html.classList.remove('has-cursor'));
+    $$('[data-cursor]').forEach(el => {
+      el.addEventListener('pointerenter', () => { ring.classList.add('is-label'); ring.firstChild.textContent = el.dataset.cursor; });
+      el.addEventListener('pointerleave', () => ring.classList.remove('is-label'));
+    });
+    $$('a, button, summary, label').forEach(el => {
+      if (el.closest('[data-cursor]')) return;
+      el.addEventListener('pointerenter', () => ring.classList.add('is-hover'));
+      el.addEventListener('pointerleave', () => ring.classList.remove('is-hover'));
+    });
+    $$('.magnetic').forEach(el => {
+      const mx = gsap.quickTo(el, 'x', { duration: .6, ease: 'elastic.out(1,.4)' });
+      const my = gsap.quickTo(el, 'y', { duration: .6, ease: 'elastic.out(1,.4)' });
+      el.addEventListener('pointermove', e => { const r = el.getBoundingClientRect(); mx((e.clientX - r.left - r.width / 2) * .35); my((e.clientY - r.top - r.height / 2) * .45); });
+      el.addEventListener('pointerleave', () => { mx(0); my(0); });
+    });
+  }
 
-    function tick() {
-      frame++;
-      ctx.clearRect(0, 0, W, H);
-      let alive = 0;
+  if (!hasGsap || reduce) {
+    $$('[data-reveal]').forEach(el => { el.style.opacity = 1; el.style.transform = 'none'; });
+    initForms(); initPortfolio(); initFaq(); setYear();
+    return;
+  }
 
-      /* -- hero rocket -- */
-      if (hero.stage === 'rising') {
-        alive++;
-        hero.p = Math.min(1, hero.p + hero.speed);
-        const t = hero.p;
-        const x = (1 - t) * (1 - t) * hero.fromX + 2 * (1 - t) * t * hero.ctrlX + t * t * hero.toX;
-        const y = (1 - t) * (1 - t) * hero.fromY + 2 * (1 - t) * t * (hero.fromY * 0.35) + t * t * hero.toY;
-        hero.x = x;
-        hero.y = y;
-        hero.trail.push({ x, y });
-        if (hero.trail.length > 18) hero.trail.shift();
+  /* ------------------------------------------------------------------ */
+  /* Scroll-Animationen                                                  */
+  /* ------------------------------------------------------------------ */
+  // Fortschrittsbalken
+  gsap.to('.progress', { scaleX: 1, ease: 'none', scrollTrigger: { start: 0, end: 'max', scrub: .3 } });
 
-        ctx.save();
-        for (let i = 1; i < hero.trail.length; i++) {
-          const a = hero.trail[i - 1];
-          const b = hero.trail[i];
-          const tt = i / hero.trail.length;
-          ctx.globalAlpha = tt * 0.75;
-          ctx.strokeStyle = `rgba(255, ${120 + Math.round(tt * 70)}, 40, 1)`;
-          ctx.lineWidth = 2 + tt * 2.6;
-          ctx.lineCap = 'round';
-          ctx.beginPath();
-          ctx.moveTo(a.x, a.y);
-          ctx.lineTo(b.x, b.y);
-          ctx.stroke();
-        }
-        ctx.globalAlpha = 1;
-        ctx.fillStyle = '#ffd8a3';
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = '#ff9a3d';
-        ctx.beginPath();
-        ctx.arc(hero.x, hero.y, 3, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
+  // Einblenden
+  ScrollTrigger.batch('[data-reveal]', {
+    start: 'top 88%', once: true,
+    onEnter: b => gsap.to(b, { opacity: 1, y: 0, scale: 1, duration: 1.15, ease: 'expo.out', stagger: .09, overwrite: true })
+  });
 
-        if (hero.p >= 1) {
-          hero.stage = 'exploded';
-          hero.sparks = spawnSparks(hero.x, hero.y, 34, 1.3);
-          hero.life = 0;
-          hero.maxLife = 70;
-          heartArmed = true;
-        }
-      } else {
-        hero.life++;
-        if (hero.life <= hero.maxLife) {
-          const fadeStart = hero.maxLife * 0.5;
-          const opacity = hero.life > fadeStart ? Math.max(0, 1 - (hero.life - fadeStart) / (hero.maxLife - fadeStart)) : 1;
-          if (opacity > 0) {
-            alive++;
-            hero.sparks.forEach((s) => {
-              s.prevX = s.x;
-              s.prevY = s.y;
-              s.vy += 0.05;
-              s.vx *= 0.96;
-              s.vy *= 0.96;
-              s.x += s.vx;
-              s.y += s.vy;
-              ctx.save();
-              ctx.globalAlpha = opacity;
-              ctx.strokeStyle = s.color;
-              ctx.lineWidth = s.size;
-              ctx.lineCap = 'round';
-              ctx.beginPath();
-              ctx.moveTo(s.prevX, s.prevY);
-              ctx.lineTo(s.x, s.y);
-              ctx.stroke();
-              ctx.restore();
-            });
-          }
-        }
+  // Überschriften Wort für Wort (außer Hero, das macht das Intro)
+  $$('[data-split]').filter(el => !el.closest('[data-hero]')).forEach(el => {
+    gsap.from(el._words, { yPercent: 115, duration: 1.15, ease: 'expo.out', stagger: .045, scrollTrigger: { trigger: el, start: 'top 88%', once: true } });
+  });
+
+  // Statement: Wörter leuchten nacheinander auf
+  $$('[data-highlight]').forEach(el => {
+    const golds = (el.dataset.highlight || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+    const words = splitWords(el, 'word-w').map(s => { const w = s.parentNode; w.classList.add('word'); if (golds.includes(s.textContent.replace(/[.,—–]/g, '').toLowerCase())) w.classList.add('gold'); return w; });
+    gsap.to(words, { opacity: 1, ease: 'none', stagger: .1, scrollTrigger: { trigger: el, start: 'top 78%', end: 'bottom 42%', scrub: true } });
+  });
+
+  // Bild-Parallax in Medien
+  $$('.media .parallax').forEach(img => {
+    gsap.fromTo(img, { yPercent: -9 }, { yPercent: 9, ease: 'none', scrollTrigger: { trigger: img.parentNode, start: 'top bottom', end: 'bottom top', scrub: true } });
+  });
+  $$('[data-speed]').forEach(el => {
+    gsap.to(el, { yPercent: -parseFloat(el.dataset.speed) * 12, ease: 'none', scrollTrigger: { trigger: el, start: 'top bottom', end: 'bottom top', scrub: true } });
+  });
+
+  const mm = gsap.matchMedia();
+
+  // Home-Hero: Vollbild-Showreel schrumpft beim Scrollen zur gerahmten Karte
+  const hero = $('.hero');
+  if (hero) {
+    mm.add({ wide: '(min-width: 761px)', narrow: '(max-width: 760px)' }, ctx => {
+      const inset = ctx.conditions.wide ? 'inset(13% 9% 13% 9% round 34px)' : 'inset(16% 5% 16% 5% round 24px)';
+      const tl = gsap.timeline({ scrollTrigger: { trigger: hero, start: 'top top', end: '+=110%', scrub: .6, pin: true, anticipatePin: 1 } });
+      tl.fromTo('.hero-frame', { clipPath: 'inset(0% 0% 0% 0% round 0px)' }, { clipPath: inset, ease: 'none' }, 0)
+        .to('.hero-frame video', { scale: 1.12, ease: 'none' }, 0)
+        .to('.hero-content', { yPercent: -18, autoAlpha: 0, scale: .94, ease: 'none' }, 0)
+        .to('.hero-foot', { autoAlpha: 0, ease: 'none', duration: .3 }, 0);
+    });
+  }
+
+  // Hintergrund-Wagen (Startseite): erscheint nach dem Hero, fährt langsam mit dem Scrollen
+  const bgCar = $('.bg-car');
+  if (bgCar) {
+    const v = $('video', bgCar);
+    prep(v);
+    let ready = false, target = 0, current = 0;
+    v.addEventListener('loadedmetadata', () => { ready = true; ScrollTrigger.refresh(); });
+    const start = () => { if (!v.src) { v.src = v.dataset.src; v.load(); } };
+    ScrollTrigger.create({
+      trigger: hero || document.body, start: hero ? 'bottom 60%' : 'top top', endTrigger: 'body', end: 'bottom bottom',
+      onEnter: () => { start(); bgCar.classList.add('is-on'); },
+      onEnterBack: () => bgCar.classList.add('is-on'),
+      onLeaveBack: () => bgCar.classList.remove('is-on'),
+      onUpdate: self => { target = self.progress; }
+    });
+    setTimeout(start, 3500);
+    gsap.ticker.add(() => {
+      if (!ready || !v.duration) return;
+      current += (target - current) * .08;
+      const t = Math.min(v.duration - .05, current * v.duration);
+      if (Math.abs(v.currentTime - t) > .015) v.currentTime = t;
+    });
+  }
+
+  // Laufband: dauerhaft in Bewegung, Tempo/Richtung/Neigung folgen dem Scrollen
+  $$('.marquee').forEach(m => {
+    const track = $('.marquee-track', m);
+    const loop = gsap.to(track, { xPercent: -50, duration: 32, ease: 'none', repeat: -1 });
+    const skew = gsap.quickTo(track, 'skewX', { duration: .5, ease: 'power3' });
+    ScrollTrigger.create({
+      trigger: m, start: 'top bottom', end: 'bottom top',
+      onUpdate: self => {
+        const vel = self.getVelocity();
+        gsap.to(loop, { timeScale: (self.direction || 1) * (1 + Math.min(Math.abs(vel) / 250, 6)), duration: .25, overwrite: true });
+        gsap.to(loop, { timeScale: self.direction || 1, duration: 1.2, delay: .25, overwrite: false });
+        skew(gsap.utils.clamp(-8, 8, vel / -180));
       }
+    });
+  });
 
-      /* -- background fireworks -- */
-      fireworks.forEach((fw) => {
-        if (frame < fw.startFrame) {
-          alive++;
-          return;
-        }
-        if (fw.stage === 'rising') {
-          alive++;
-          fw.y -= fw.speed;
-          fw.trail.push({ x: fw.x, y: fw.y });
-          if (fw.trail.length > 12) fw.trail.shift();
-          ctx.save();
-          for (let i = 1; i < fw.trail.length; i++) {
-            const a = fw.trail[i - 1];
-            const b = fw.trail[i];
-            const tt = i / fw.trail.length;
-            ctx.globalAlpha = tt * 0.6;
-            ctx.strokeStyle = `rgba(255, ${120 + Math.round(tt * 60)}, 40, 1)`;
-            ctx.lineWidth = 1.3 + tt * 1.6;
-            ctx.lineCap = 'round';
-            ctx.beginPath();
-            ctx.moveTo(a.x, a.y);
-            ctx.lineTo(b.x, b.y);
-            ctx.stroke();
-          }
-          ctx.globalAlpha = 1;
-          ctx.fillStyle = '#ffcf8a';
-          ctx.beginPath();
-          ctx.arc(fw.x, fw.y, 1.8, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.restore();
-          if (fw.y <= fw.targetY) {
-            fw.stage = 'exploded';
-            fw.sparks = spawnSparks(fw.x, fw.y, 18, 1);
-          }
-          return;
-        }
-        fw.life++;
-        if (fw.life > fw.maxLife) return;
-        const fadeStart = fw.maxLife * 0.55;
-        const opacity = fw.life > fadeStart ? Math.max(0, 1 - (fw.life - fadeStart) / (fw.maxLife - fadeStart)) : 1;
-        if (opacity <= 0) return;
-        alive++;
-        fw.sparks.forEach((s) => {
-          s.prevX = s.x;
-          s.prevY = s.y;
-          s.vy += fw.gravity;
-          s.vx *= fw.drag;
-          s.vy *= fw.drag;
-          s.x += s.vx;
-          s.y += s.vy;
-          ctx.save();
-          ctx.globalAlpha = opacity;
-          ctx.strokeStyle = s.color;
-          ctx.lineWidth = s.size;
-          ctx.lineCap = 'round';
-          ctx.beginPath();
-          ctx.moveTo(s.prevX, s.prevY);
-          ctx.lineTo(s.x, s.y);
-          ctx.stroke();
-          ctx.beginPath();
-          ctx.fillStyle = s.color;
-          ctx.arc(s.x, s.y, s.size / 2, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.restore();
-        });
+  // Gestapelte Säulen-Karten: vorherige Karte tritt zurück, sobald die nächste kommt
+  const cards = $$('.stack-card');
+  cards.forEach((card, i) => {
+    const next = cards[i + 1];
+    if (!next) return;
+    gsap.fromTo(card, { scale: 1, filter: 'brightness(1)' }, { scale: .9, filter: 'brightness(.4)', ease: 'none', immediateRender: false, scrollTrigger: { trigger: next, start: 'top bottom', end: 'top 20%', scrub: true } });
+  });
+
+  // Horizontale Galerie (Desktop): vertikales Scrollen schiebt die Arbeiten seitlich
+  $$('.hgal').forEach(sec => {
+    const track = $('.hgal-track', sec);
+    mm.add('(min-width: 768px)', () => {
+      const dist = () => track.scrollWidth - innerWidth;
+      const tween = gsap.to(track, { x: () => -dist(), ease: 'none', scrollTrigger: { trigger: sec, start: 'top top', end: () => '+=' + dist(), scrub: .8, pin: true, anticipatePin: 1, invalidateOnRefresh: true } });
+      $$('.hgal-item .media > *', sec).forEach(m => {
+        gsap.set(m, { width: '118%', left: '-9%' });
+        gsap.fromTo(m, { xPercent: 6 }, { xPercent: -6, ease: 'none', scrollTrigger: { trigger: m.closest('.hgal-item'), containerAnimation: tween, start: 'left right', end: 'right left', scrub: true } });
       });
-
-      /* -- ambient glitter twinkle -- */
-      sparkles.forEach((sp) => {
-        if (frame < sp.startFrame) {
-          alive++;
-          return;
-        }
-        sp.life++;
-        if (sp.life > sp.maxLife) return;
-        alive++;
-        const fadeStart = sp.maxLife * 0.8;
-        const envelope = sp.life > fadeStart ? Math.max(0, 1 - (sp.life - fadeStart) / (sp.maxLife - fadeStart)) : 1;
-        const twinkle = (Math.sin(sp.life * sp.speed + sp.phase) + 1) / 2;
-        const opacity = twinkle * twinkle * envelope;
-        sp.y += sp.drift;
-        if (opacity <= 0.04) return;
-        ctx.save();
-        ctx.globalAlpha = opacity;
-        ctx.fillStyle = sp.color;
-        ctx.shadowBlur = 6;
-        ctx.shadowColor = sp.color;
-        const s = sp.size * (0.7 + twinkle * 0.6);
-        ctx.beginPath();
-        ctx.moveTo(sp.x, sp.y - s);
-        ctx.lineTo(sp.x + s * 0.28, sp.y - s * 0.28);
-        ctx.lineTo(sp.x + s, sp.y);
-        ctx.lineTo(sp.x + s * 0.28, sp.y + s * 0.28);
-        ctx.lineTo(sp.x, sp.y + s);
-        ctx.lineTo(sp.x - s * 0.28, sp.y + s * 0.28);
-        ctx.lineTo(sp.x - s, sp.y);
-        ctx.lineTo(sp.x - s * 0.28, sp.y - s * 0.28);
-        ctx.closePath();
-        ctx.fill();
-        ctx.restore();
+      $$('.hgal-item', sec).forEach(item => {
+        gsap.from(item, { rotate: 4, y: 60, ease: 'none', scrollTrigger: { trigger: item, containerAnimation: tween, start: 'left 105%', end: 'left 60%', scrub: true } });
       });
+    });
+  });
 
-      /* -- the heart -- */
-      particles.forEach((p) => {
-        if (p.life > p.maxLife) return;
-        p.life++;
+  // Unterseiten-Hero: gerahmtes Video weitet sich beim Scrollen auf volle Breite
+  $$('.expand').forEach(ex => {
+    const frame = $('.expand-frame', ex);
+    mm.add({ wide: '(min-width: 761px)', narrow: '(max-width: 760px)' }, ctx => {
+      gsap.fromTo(frame, { clipPath: ctx.conditions.wide ? 'inset(0% 12% 0% 12% round 32px)' : 'inset(0% 5% 0% 5% round 24px)' },
+        { clipPath: 'inset(0% 0% 0% 0% round 0px)', ease: 'none', scrollTrigger: { trigger: ex, start: 'top 80%', end: 'top 10%', scrub: .5 } });
+      gsap.fromTo($$('video, img', frame), { scale: 1.18 }, { scale: 1, ease: 'none', scrollTrigger: { trigger: ex, start: 'top bottom', end: 'bottom top', scrub: true } });
+    });
+  });
 
-        if (p.phase === 'wait') {
-          alive++;
-          if (heartArmed) {
-            p.phase = 'explode';
-            p.t = 0;
-          }
-          return;
-        }
+  // Zahlen hochzählen
+  $$('[data-count]').forEach(el => {
+    const to = parseFloat(el.dataset.count), dec = (el.dataset.count.split('.')[1] || '').length, suf = el.dataset.suffix || '';
+    const o = { v: 0 };
+    ScrollTrigger.create({ trigger: el, start: 'top 90%', once: true, onEnter: () => gsap.to(o, { v: to, duration: 2, ease: 'power3.out', onUpdate: () => { el.textContent = o.v.toFixed(dec).replace('.', ',') + suf; } }) });
+  });
 
-        if (p.phase === 'explode') {
-          p.t++;
-          const progress = Math.min(1, p.t / p.explodeDur);
-          const eased = 1 - Math.pow(1 - progress, 3);
-          p.x = centerX + (p.targetX - centerX) * eased;
-          p.y = centerY + (p.targetY - centerY) * eased;
-          if (progress >= 1) {
-            p.phase = 'hold';
-            p.t = 0;
-          }
-        } else if (p.phase === 'hold') {
-          p.t++;
-          p.x = p.targetX;
-          p.y = p.targetY;
-          if (p.t > p.holdDur) {
-            p.phase = 'fall';
-            p.vx = p.fallStartVx;
-          }
-        } else {
-          p.vy += p.gravity;
-          p.vx *= p.drag;
-          p.vy *= p.drag;
-          p.x += p.vx + Math.sin(p.life * p.fallSwaySpeed + p.fallSwayPhase) * p.fallSwayAmp + p.fallDriftX;
-          p.y += p.vy;
-        }
+  // Prozess: Linie füllt sich, Schritte leuchten auf
+  $$('.steps').forEach(s => {
+    gsap.to($('.steps-line i', s), { scaleY: 1, ease: 'none', scrollTrigger: { trigger: s, start: 'top 60%', end: 'bottom 60%', scrub: true } });
+    $$('.step', s).forEach(st => ScrollTrigger.create({ trigger: st, start: 'top 62%', onEnter: () => st.classList.add('is-on'), onLeaveBack: () => st.classList.remove('is-on') }));
+  });
 
-        const fadeStart = p.maxLife * 0.8;
-        const opacity = p.life > fadeStart ? Math.max(0, 1 - (p.life - fadeStart) / (p.maxLife - fadeStart)) : 1;
-        if (opacity <= 0) return;
-        alive++;
-        const twinkle = p.phase === 'hold' ? 0.78 + 0.22 * ((Math.sin(p.life * 0.12 + p.twinklePhase) + 1) / 2) : 1;
-        ctx.save();
-        ctx.globalAlpha = opacity * twinkle;
-        ctx.fillStyle = p.color;
-        if (p.phase !== 'fall') {
-          ctx.shadowBlur = 11;
-          ctx.shadowColor = p.color;
-        }
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size / 2, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
+  // Footer-Logo
+  $$('.footer-big svg path').forEach((p, i) => gsap.from(p, { yPercent: 80, opacity: 0, duration: 1.2, ease: 'expo.out', delay: i * .04, scrollTrigger: { trigger: '.footer-big', start: 'top 95%', once: true } }));
+
+  initForms(); initPortfolio(); initFaq(); setYear();
+  window.addEventListener('load', () => ScrollTrigger.refresh());
+  setTimeout(() => ScrollTrigger.refresh(), 1500);
+
+  /* ------------------------------------------------------------------ */
+  /* Hilfsfunktionen                                                     */
+  /* ------------------------------------------------------------------ */
+  function setYear() { $$('[data-year]').forEach(el => el.textContent = new Date().getFullYear()); }
+
+  function initFaq() {
+    $$('.faq details').forEach(d => {
+      const sum = $('summary', d), ans = $('.ans', d);
+      sum.addEventListener('click', e => {
+        if (typeof gsap === 'undefined' || reduce) return;
+        e.preventDefault();
+        if (d.open) gsap.to(ans, { height: 0, duration: .5, ease: 'power3.inOut', onComplete: () => { d.open = false; gsap.set(ans, { clearProps: 'height' }); window.ScrollTrigger?.refresh(); } });
+        else { d.open = true; gsap.from(ans, { height: 0, duration: .6, ease: 'power3.out', onComplete: () => window.ScrollTrigger?.refresh() }); }
       });
+    });
+  }
 
-      if (alive > 0 && frame < 900) {
-        requestAnimationFrame(tick);
-      } else {
-        canvas.remove();
+  function initForms() {
+    const form = $('#booking-form');
+    if (!form) return;
+    const q = new URLSearchParams(location.search);
+    const key = q.get('leistung') || q.get('typ');
+    if (key) { const r = $(`input[name="Leistung"][data-key="${CSS.escape(key)}"]`); if (r) r.checked = true; }
+    const status = $('#form-status'), sent = $('#form-sent'), btn = $('button[type="submit"]', form);
+    form.addEventListener('submit', async e => {
+      if (!window.fetch || !sent) return;           // ohne JS/fetch: klassischer Versand
+      e.preventDefault();
+      status.textContent = 'Wird gesendet …'; btn.disabled = true;
+      try {
+        const res = await fetch(form.action.replace('formsubmit.co/', 'formsubmit.co/ajax/'), { method: 'POST', body: new FormData(form), headers: { Accept: 'application/json' } });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || String(data.success) === 'false') throw new Error(data.message || res.status);
+        showSent();
+      } catch (err) {
+        btn.disabled = false;
+        status.innerHTML = 'Das hat leider nicht geklappt. Bitte schreibt mir direkt per <a href="https://wa.me/4915231036109">WhatsApp</a> oder <a href="mailto:marlinw.media@gmail.com">E-Mail</a>.';
       }
+    });
+    function showSent() {
+      const name = ($('#f-name').value || '').trim().split(/\s+/)[0];
+      $('[data-sent-name]', sent).textContent = name ? ', ' + name : '';
+      const reveal = () => { form.hidden = true; sent.hidden = false; sent.focus({ preventScroll: true }); lenis ? lenis.scrollTo(sent, { offset: -120 }) : sent.scrollIntoView({ behavior: 'smooth', block: 'center' }); };
+      if (!window.gsap || matchMedia('(prefers-reduced-motion: reduce)').matches) return reveal();
+      gsap.to(form, { autoAlpha: 0, y: -20, duration: .45, ease: 'power2.in', onComplete: () => {
+        reveal();
+        gsap.timeline()
+          .fromTo(sent, { autoAlpha: 0, scale: .96 }, { autoAlpha: 1, scale: 1, duration: .7, ease: 'expo.out' })
+          .fromTo('.sent-check circle', { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: .8, ease: 'power2.inOut' }, '-=.4')
+          .fromTo('.sent-check path', { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: .45, ease: 'power2.out' }, '-=.15')
+          .from($$('h2, .lead', sent), { y: 24, autoAlpha: 0, duration: .7, ease: 'expo.out', stagger: .08 }, '-=.3')
+          .from($$('.sent-steps li', sent), { x: -30, autoAlpha: 0, duration: .7, ease: 'expo.out', stagger: .14 }, '-=.4')
+          .from($$('.btn', sent), { y: 16, autoAlpha: 0, duration: .5, ease: 'power2.out', stagger: .08 }, '-=.3');
+      } });
     }
-    requestAnimationFrame(tick);
+  }
+
+  function initPortfolio() {
+    const btns = $$('.filters button'), items = $$('.pitem');
+    if (!items.length) return;
+    btns.forEach(b => b.addEventListener('click', () => {
+      btns.forEach(x => x.classList.toggle('is-on', x === b));
+      const f = b.dataset.filter;
+      items.forEach(it => it.classList.toggle('is-hidden', f !== 'all' && !it.dataset.cat.split(' ').includes(f)));
+      if (typeof ScrollTrigger !== 'undefined') ScrollTrigger.refresh();
+      if (typeof gsap !== 'undefined' && !reduce) gsap.fromTo(items.filter(i => !i.classList.contains('is-hidden')), { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: .8, ease: 'expo.out', stagger: .03 });
+    }));
+    const lb = $('.lightbox'), box = $('.lb-media', lb), cap = $('.lb-cap', lb);
+    const close = () => { lb.classList.remove('is-open'); lenis?.start(); setTimeout(() => { box.innerHTML = ''; }, 500); };
+    items.forEach(it => it.addEventListener('click', () => {
+      const src = it.dataset.full, isVid = /\.mp4$/.test(src);
+      box.innerHTML = '';
+      const el = document.createElement(isVid ? 'video' : 'img');
+      if (isVid) { prep(el); el.autoplay = true; el.src = src; el.addEventListener('pause', () => { if (lb.classList.contains('is-open')) tryPlay(el); }); }
+      else { el.src = src; el.alt = it.querySelector('figcaption b')?.textContent || ''; }
+      box.appendChild(el); if (isVid) tryPlay(el);
+      cap.textContent = it.querySelector('figcaption')?.textContent.trim().replace(/\s+/g, ' · ') || '';
+      lb.classList.add('is-open'); lenis?.stop();
+    }));
+    $('.lb-close', lb).addEventListener('click', close);
+    lb.addEventListener('click', e => { if (e.target === lb) close(); });
+    window.addEventListener('keydown', e => { if (e.key === 'Escape' && lb.classList.contains('is-open')) close(); });
   }
 })();
