@@ -26,9 +26,10 @@
 
   /* ------------------------------------------------------------------ */
   /* Videos: laufen dauerhaft im Loop, ohne Bedienelemente.              */
-  /* Laden erst kurz bevor sie ins Bild kommen (datensparsam);           */
-  /* außerhalb des Sichtbereichs ruhen sie unsichtbar, im Bild laufen sie */
-  /* immer — und starten sich bei jeder Unterbrechung selbst neu.        */
+  /* Standbilder (Poster) kommen sofort, danach lädt eine Warteschlange  */
+  /* die Videos einzeln in Seitenreihenfolge vor — das erste schon       */
+  /* während des Logo-Intros. Was ins Bild kommt, springt nach vorne.    */
+  /* Im Bild laufen sie immer, außerhalb ruhen sie.                      */
   /* ------------------------------------------------------------------ */
   const prep = v => {
     v.muted = true; v.defaultMuted = true; v.loop = true; v.controls = false; v.playsInline = true;
@@ -38,29 +39,60 @@
     v.disablePictureInPicture = true;
   };
   const tryPlay = v => { if (!v.src) return; const p = v.play(); if (p && p.catch) p.catch(() => {}); };
-  const loadVideo = v => {
-    if (v.dataset.loaded) return;
+  // Lädt ein Video und meldet, sobald es flüssig abspielbar ist (oder nach Timeout)
+  const loadVideo = v => v._ready || (v._ready = new Promise(resolve => {
     v.dataset.loaded = '1';
     prep(v);
+    let done = false;
+    const finish = () => { if (!done) { done = true; resolve(); } };
+    v.addEventListener('canplaythrough', finish, { once: true });
+    v.addEventListener('error', finish, { once: true });
+    setTimeout(finish, 9000);
+    if (!v.hasAttribute('data-scrub')) {
+      ['loadeddata', 'canplay', 'canplaythrough'].forEach(ev => v.addEventListener(ev, () => { if (v.dataset.vis === '1') tryPlay(v); }));
+      v.addEventListener('pause', () => { if (v.dataset.vis === '1' && !document.hidden) setTimeout(() => tryPlay(v), 150); });
+      v.addEventListener('ended', () => { v.currentTime = 0; tryPlay(v); });
+      v.addEventListener('stalled', () => { if (v.dataset.vis === '1') tryPlay(v); });
+    }
     v.preload = 'auto';
     v.src = v.dataset.src;
     v.load();
-    ['loadeddata', 'canplay', 'canplaythrough'].forEach(ev => v.addEventListener(ev, () => { if (v.dataset.vis === '1') tryPlay(v); }));
-    v.addEventListener('pause', () => { if (v.dataset.vis === '1' && !document.hidden) setTimeout(() => tryPlay(v), 150); });
-    v.addEventListener('ended', () => { v.currentTime = 0; tryPlay(v); });
-    v.addEventListener('stalled', () => { if (v.dataset.vis === '1') tryPlay(v); });
-  };
+    if (v.dataset.vis === '1' || v.hasAttribute('data-scrub')) { if (v.dataset.vis === '1') tryPlay(v); return; }
+    // iOS lädt ruhende Videos sonst nicht vor: kurz stumm anspielen, sofort anhalten → Puffer füllt sich
+    const p = v.play(); if (p && p.then) p.then(() => { if (v.dataset.vis !== '1') v.pause(); }).catch(() => {});
+  }));
   const loopVideos = $$('video[data-src]:not([data-scrub])');
+  const scrubVideo = $('video[data-scrub]');
   loopVideos.forEach(prep);
-  loopVideos.filter(v => v.hasAttribute('data-eager')).forEach(v => { v.dataset.vis = '1'; loadVideo(v); tryPlay(v); });
+  // Reihenfolge: Hero-Video(s), dann Hintergrund-Wagen, dann alle übrigen von oben nach unten
+  const queue = [...loopVideos.filter(v => v.hasAttribute('data-eager')), scrubVideo,
+                 ...loopVideos.filter(v => !v.hasAttribute('data-eager'))].filter(Boolean);
+  const conn = navigator.connection || {};
+  const saveData = conn.saveData || /(^|-)2g$/.test(conn.effectiveType || '');
+  let running = false;
+  const runQueue = async () => {
+    if (running) return; running = true;
+    while (queue.length) {
+      const v = queue.shift();
+      await loadVideo(v);
+    }
+    running = false;
+  };
+  const prioritize = v => { const i = queue.indexOf(v); if (i > -1) queue.splice(i, 1); loadVideo(v); };
+  queue.filter(v => v.hasAttribute('data-eager')).forEach(v => { v.dataset.vis = '1'; });
+  if (saveData) queue.filter(v => v.hasAttribute('data-eager')).forEach(prioritize);  // Datensparmodus: nur bei Bedarf
+  else runQueue();
   if ('IntersectionObserver' in window) {
-    const vio = new IntersectionObserver(entries => entries.forEach(e => {
+    // knapp vor dem Bild: vorziehen, falls die Warteschlange noch nicht so weit ist
+    const near = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) prioritize(e.target); }), { rootMargin: '400px 0px 400px 0px' });
+    // im Bild: abspielen, sonst ruhen
+    const vio = new IntersectionObserver(es => es.forEach(e => {
       const v = e.target;
-      if (e.isIntersecting) { v.dataset.vis = '1'; loadVideo(v); tryPlay(v); }
-      else if (v.dataset.loaded) { v.dataset.vis = '0'; v.pause(); }
-    }), { rootMargin: '700px 0px 700px 0px' });
-    loopVideos.forEach(v => vio.observe(v));
-  } else loopVideos.forEach(v => { v.dataset.vis = '1'; loadVideo(v); tryPlay(v); });
+      if (e.isIntersecting) { v.dataset.vis = '1'; prioritize(v); tryPlay(v); }
+      else { v.dataset.vis = '0'; if (v.dataset.loaded) v.pause(); }
+    }), { rootMargin: '60px 0px 60px 0px' });
+    loopVideos.forEach(v => { near.observe(v); vio.observe(v); });
+  } else loopVideos.forEach(v => { v.dataset.vis = '1'; prioritize(v); });
   // iOS-Stromsparmodus u. ä.: beim ersten Kontakt alle sichtbaren Videos anstoßen
   const kick = () => loopVideos.forEach(v => { if (v.dataset.vis === '1') tryPlay(v); });
   ['touchstart', 'pointerdown', 'keydown', 'wheel'].forEach(ev => window.addEventListener(ev, kick, { passive: true }));
@@ -263,7 +295,7 @@
     prep(v);
     let ready = false, target = 0, current = 0;
     v.addEventListener('loadedmetadata', () => { ready = true; ScrollTrigger.refresh(); });
-    const start = () => { if (!v.src) { v.src = v.dataset.src; v.load(); } };
+    const start = () => prioritize(v);
     ScrollTrigger.create({
       trigger: hero || document.body, start: hero ? 'bottom 60%' : 'top top', endTrigger: 'body', end: 'bottom bottom',
       onEnter: () => { start(); bgCar.classList.add('is-on'); },
@@ -271,7 +303,6 @@
       onLeaveBack: () => bgCar.classList.remove('is-on'),
       onUpdate: self => { target = self.progress; }
     });
-    setTimeout(start, 3500);
     gsap.ticker.add(() => {
       if (!ready || !v.duration) return;
       current += (target - current) * .08;
