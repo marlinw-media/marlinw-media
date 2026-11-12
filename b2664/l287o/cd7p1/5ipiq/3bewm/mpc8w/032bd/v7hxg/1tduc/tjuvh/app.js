@@ -224,7 +224,7 @@
   function chapterList() {
     var html = '', part = '';
     O.meta.forEach(function (m) { if (m.part !== part) { part = m.part; html += (html ? '</div>' : '') + '<div class="part-label">' + esc(part) + '</div><div class="chapters">'; } html += chapterRow(m); });
-    html += '</div><div class="part-label">Demnächst</div><div class="chapters">' + O.soon.map(function (s) { return '<div class="ch locked"><div class="num" style="background:#3a3f6b">' + s.n + '</div><div class="meta"><b>' + esc(s.title) + '</b><small>wird ergänzt</small></div></div>'; }).join('') + '</div>';
+    html += '</div>' + (O.soon.length ? '<div class="part-label">Demnächst</div><div class="chapters">' : '<div>') + O.soon.map(function (s) { return '<div class="ch locked"><div class="num" style="background:#3a3f6b">' + s.n + '</div><div class="meta"><b>' + esc(s.title) + '</b><small>wird ergänzt</small></div></div>'; }).join('') + '</div>';
     return html;
   }
   function viewChapters() { app.innerHTML = topBar() + '<div class="sec-title"><h2>Kapitel</h2></div>' + chapterList(); }
@@ -285,7 +285,7 @@
       (tm || S.voice === 'geraet' ? '' : '<div class="audio-missing">🔈 Für diese Stimme fehlt die Aufnahme noch – es wird die Sprachausgabe deines Geräts verwendet.</div>') +
       '<div class="scrub"><input type="range" id="seek" min="0" max="1000" value="0" aria-label="Position"><div class="times"><span id="tcur">0:00</span><span id="ttot">' + (tm ? fmt(tm.d) : '') + '</span></div></div>' +
       '<div class="controls"><button class="c" id="back15">−15</button><button class="c play" id="play" aria-label="Abspielen">▶</button><button class="c" id="fwd15">+15</button></div>' +
-      '<div class="prow"><button class="btn sm" id="voice">' + voiceInfo(S.voice)[2] + ' ' + voiceInfo(S.voice)[1] + '</button><button class="btn sm" id="speed">1×</button><button class="btn sm" id="text">📄 Text</button><a class="btn sm" href="#/k/' + n + '/quiz/' + tid + '">🎯 Quiz</a>' + (next ? '<a class="btn sm" href="#/k/' + n + '/lernen/' + next.id + '">Weiter ›</a>' : '') + '</div>' +
+      '<div class="prow' + (next ? '' : ' four') + '"><button class="btn sm tile" id="voice"><i>' + voiceInfo(S.voice)[2] + '</i><span>' + voiceInfo(S.voice)[1] + '</span></button><button class="btn sm tile" id="speed"><i>⏩</i><span>1×</span></button><button class="btn sm tile" id="text"><i>📄</i><span>Text</span></button><a class="btn sm tile" href="#/k/' + n + '/quiz/' + tid + '"><i>🎯</i><span>Quiz</span></a>' + (next ? '<a class="btn sm tile" href="#/k/' + n + '/lernen/' + next.id + '"><i>⏭️</i><span>Weiter</span></a>' : '') + '</div>' +
       '<div class="segs" id="segs">' + t.segs.map(function (s, i) { return '<button data-i="' + i + '">' + (i + 1) + '. ' + esc(s.h) + '</button>'; }).join('') + '</div></div>' +
       '<div class="sheet" id="sheet"><div class="panel"><div class="grab"></div><div class="article" id="art"></div></div></div>';
     var svg = $('.vis'), segh = $('#segh'), cap = $('#cap'), seek = $('#seek'), playB = $('#play');
@@ -359,7 +359,7 @@
     seek.addEventListener('input', function () { P.seeking = true; if (tm) $('#tcur').textContent = fmt(seek.value / 1000 * tm.d); });
     seek.addEventListener('change', function () { P.seeking = false; if (tm) P.audio.currentTime = seek.value / 1000 * tm.d; else speakFrom(Math.floor(seek.value / 1000 * t.segs.length)); });
     var speeds = [1, 1.25, 1.5, 1.75, 2, .75];
-    $('#speed').onclick = function () { P.speed = speeds[(speeds.indexOf(P.speed) + 1) % speeds.length]; this.textContent = P.speed + '×'; if (P.audio) { P.audio.playbackRate = P.speed; } };
+    $('#speed').onclick = function () { P.speed = speeds[(speeds.indexOf(P.speed) + 1) % speeds.length]; this.querySelector('span').textContent = P.speed + '×'; if (P.audio) { P.audio.playbackRate = P.speed; } };
     $$('#segs button').forEach(function (b) { b.onclick = function () { var i = +b.dataset.i; if (tm) { P.audio.currentTime = tm.s[i] + .01; if (P.audio.paused) P.audio.play(); } else speakFrom(i); }; });
     $('#voice').onclick = function () {
       var cur = P.shownSeg || 0;
@@ -378,6 +378,18 @@
     s = String(s).replace(/```[\s\S]*?```/g, ' ').replace(/[`*]/g, '').replace(/\s+/g, ' ').trim();
     var list = s.match(/[^.!?]+(?:[.!?]+(?=\s|$)|$)/g) || [s], merged = [];
     list.forEach(function (x) { x = x.trim(); if (!x) return; if (merged.length && (merged[merged.length - 1].length < 28 || /\b(z|d|u|bzw|ca|Nr)\.$/.test(merged[merged.length - 1]))) merged[merged.length - 1] += ' ' + x; else merged.push(x); });
+    // lange Sätze für Untertitel in Häppchen (≤ 90 Zeichen) teilen – passt in zwei Zeilen
+    var MAXC = 90, parts = [];
+    merged.forEach(function (x) {
+      if (x.length <= MAXC) { parts.push(x); return; }
+      var bits = x.split(/([,;:–]\s+)/), cur = '';
+      var pieces = []; for (var i = 0; i < bits.length; i += 2) pieces.push(bits[i] + (bits[i + 1] || ''));
+      var words = [];
+      pieces.forEach(function (pc) { if (pc.length > MAXC) words = words.concat(pc.split(' ').map(function (w) { return w + ' '; })); else words.push(pc); });
+      words.forEach(function (w) { if (cur && (cur + w).trim().length > MAXC) { parts.push(cur.trim()); cur = ''; } cur += w; });
+      if (cur.trim()) parts.push(cur.trim());
+    });
+    merged = parts;
     var cum = [], tot = 0; merged.forEach(function (x) { cum.push(tot); tot += x.length + 12; });
     return { list: merged, cum: cum, total: tot };
   }

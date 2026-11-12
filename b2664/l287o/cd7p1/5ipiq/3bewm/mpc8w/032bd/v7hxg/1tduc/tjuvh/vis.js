@@ -171,10 +171,12 @@
   V.table = function (v, p) {
     var cols = v.cols, rows = v.rows, n = rows.length, out = '', cw = (W - 20) / cols.length, rh = Math.min(30, (H - 50) / n);
     cols.forEach(function (c, i) { out += R(10 + i * cw + 2, 8, cw - 4, 26, { fill: PAL[[0, 3, 1][i] || i], rx: 8 }) + T(10 + i * cw + cw / 2, 26, c, { size: 11, w: 900, fill: '#fff' }); });
+    var slot = {}, idx = rows.map(function (r) { slot[r[0]] = (slot[r[0]] || 0) + 1; return slot[r[0]] - 1; });
+    if (v.cmp) rh = Math.min(42, (H - 50) / Math.max.apply(null, idx.map(function (x) { return x + 1; })));
     rows.forEach(function (r, i) {
-      var a = ap(p, i, n, .3), y = 40 + i * rh, c = r[0];
+      var a = ap(p, i, n, .3), y = 40 + (v.cmp ? idx[i] : i) * rh, c = r[0];
       out += '<g opacity="' + a + '">' + R(10 + c * cw + 4, y, cw - 8, rh - 4, { fill: 'rgba(255,255,255,.07)', stroke: 'rgba(255,255,255,.14)', rx: 6 }) + TW(10 + c * cw + cw / 2, y + rh / 2 + (wrap(r[1], 22).length > 1 ? -3 : 2), r[1], 22, { size: 9.5, w: 700 }) + '</g>';
-      if (i > 0 && a > .5 && rows[i - 1][0] !== c) out += L(10 + rows[i - 1][0] * cw + cw / 2, y - 4, 10 + c * cw + cw / 2, y + 2, { stroke: '#ffb347', sw: 1.5, arrow: true, op: a });
+      if (!v.cmp && i > 0 && a > .5 && rows[i - 1][0] !== c) out += L(10 + rows[i - 1][0] * cw + cw / 2, y - 4, 10 + c * cw + cw / 2, y + 2, { stroke: '#ffb347', sw: 1.5, arrow: true, op: a });
     });
     return out;
   };
@@ -186,15 +188,15 @@
       var ok = v.va < v.bounds, steps = [ease(p * 4), ease(p * 4 - 1), ease(p * 4 - 2), ease(p * 4 - 3)];
       out += T(W / 2, 26, 'Base & Bounds (dynamische Relokation)', { size: 14, w: 900 });
       out += '<g opacity="' + steps[0] + '">' + R(20, 60, 110, 52, { fill: '#2a2f5e', stroke: '#4cc9ff', rx: 12 }) + T(75, 82, 'virtuelle Adresse', { size: 10, fill: '#9ad8ff' }) + T(75, 102, v.va, { size: 17, w: 900, mono: true }) + '</g>';
-      out += '<g opacity="' + steps[1] + '">' + R(150, 50, 100, 30, { fill: '#1d2246', stroke: '#ffb347', rx: 8 }) + T(200, 70, 'Bounds = ' + v.bounds, { size: 11, mono: true, fill: '#ffd9a8' }) +
+      out += '<g opacity="' + steps[1] + '">' + R(138, 50, 124, 30, { fill: '#1d2246', stroke: '#ffb347', rx: 8 }) + T(200, 70, 'Bounds = ' + v.bounds, { size: 10, mono: true, fill: '#ffd9a8' }) +
         T(200, 98, v.va + ' < ' + v.bounds + ' ?', { size: 12, w: 900, mono: true }) + T(200, 118, ok ? '✓ ja, erlaubt' : '✗ nein → Ausnahme!', { size: 12, w: 900, fill: ok ? '#2fd17c' : '#ff5d6c' }) + '</g>';
-      out += L(130, 86, 148, 86, { arrow: true, op: steps[1] });
+      out += L(130, 86, 136, 86, { arrow: true, op: steps[1] });
       if (ok) {
-        out += '<g opacity="' + steps[2] + '">' + R(150, 140, 100, 30, { fill: '#1d2246', stroke: '#ff5fa2', rx: 8 }) + T(200, 160, '+ Base = ' + v.base, { size: 11, mono: true, fill: '#ffb3d1' }) + '</g>';
+        out += '<g opacity="' + steps[2] + '">' + R(138, 140, 124, 30, { fill: '#1d2246', stroke: '#ff5fa2', rx: 8 }) + T(200, 160, '+ Base = ' + v.base, { size: 10, mono: true, fill: '#ffb3d1' }) + '</g>';
         out += L(200, 124, 200, 138, { arrow: true, op: steps[2] });
         out += '<g opacity="' + steps[3] + '">' + R(270, 130, 115, 52, { fill: '#173b2a', stroke: '#2fd17c', rx: 12 }) + T(327, 152, 'physische Adresse', { size: 10, fill: '#9df0c4' }) + T(327, 172, v.va + v.base, { size: 17, w: 900, mono: true }) + '</g>';
-        out += L(250, 155, 268, 155, { arrow: true, op: steps[3] });
-      } else out += '<g opacity="' + steps[2] + '">' + R(150, 140, 100, 40, { fill: '#3d1520', stroke: '#ff5d6c', rx: 10 }) + T(200, 165, 'OS: Prozess beenden', { size: 11, w: 900, fill: '#ffb3bd' }) + '</g>';
+        out += L(262, 155, 269, 155, { arrow: true, op: steps[3] });
+      } else out += '<g opacity="' + steps[2] + '">' + R(134, 140, 132, 40, { fill: '#3d1520', stroke: '#ff5d6c', rx: 10 }) + T(200, 165, 'OS: Prozess beenden', { size: 11, w: 900, fill: '#ffb3bd' }) + '</g>';
       out += T(W / 2, 236, 'physisch = virtuell + Base (falls virtuell < Bounds)', { size: 12, fill: '#c9c3ff', op: steps[3] || steps[2] });
       return out;
     }
@@ -215,7 +217,7 @@
 
   /* ---------- TLB: Zugriff auf ein Array ---------- */
   V.tlb = function (v, p) {
-    var n = v.n || 10, per = v.per || 4, off = v.off || 1, out = '', cell = 34, x0 = 30, y0 = 70, shown = Math.floor(ease(p * 1.05) * n + .0001), hits = 0, miss = 0, seen = {};
+    var n = v.n || 10, per = v.per || 4, off = v.off || 1, out = '', cell = Math.min(34, (W - 40) / (Math.ceil((n + off) / per) * per)), x0 = 20, fsz = Math.min(9, cell * .36), y0 = 70, shown = Math.floor(ease(p * 1.05) * n + .0001), hits = 0, miss = 0, seen = {};
     out += T(W / 2, 24, 'Array a[' + n + '] über ' + Math.ceil((n + off) / per) + ' Seiten', { size: 14, w: 900 });
     var pages = Math.ceil((n + off) / per);
     for (var pg = 0; pg < pages; pg++) {
@@ -225,8 +227,8 @@
       var slot = i + off, pgI = Math.floor(slot / per), hit = !!seen[pgI], x = x0 + slot * cell;
       if (i < shown) { seen[pgI] = 1; if (hit) hits++; else miss++; }
       var col = i < shown ? (hit ? '#2fd17c' : '#ff5d6c') : '#232848';
-      out += R(x, y0, cell - 6, 30, { fill: col, rx: 6 }) + T(x + (cell - 6) / 2, y0 + 20, 'a[' + i + ']', { size: 9, w: 800, mono: true, fill: i < shown ? '#0b0d1c' : '#9aa0d6' });
-      if (i < shown) out += T(x + (cell - 6) / 2, y0 + 48, hit ? 'Hit' : 'Miss', { size: 9, w: 900, fill: hit ? '#2fd17c' : '#ff8a95' });
+      out += R(x, y0, cell - 6, 30, { fill: col, rx: 6 }) + T(x + (cell - 6) / 2, y0 + 20, cell < 28 ? String(i) : 'a[' + i + ']', { size: cell < 28 ? 10 : fsz, w: 800, mono: true, fill: i < shown ? '#0b0d1c' : '#9aa0d6' });
+      if (i < shown) out += T(x + (cell - 6) / 2, y0 + 48, hit ? 'Hit' : 'Miss', { size: fsz, w: 900, fill: hit ? '#2fd17c' : '#ff8a95' });
     }
     out += T(W / 2, 190, 'Hits: ' + hits + '   Misses: ' + miss, { size: 15, w: 900 });
     if (shown === n) out += T(W / 2, 216, 'Trefferquote: ' + Math.round(hits / n * 100) + ' % – dank räumlicher Lokalität', { size: 12.5, w: 900, fill: '#ffd166' });
@@ -242,10 +244,10 @@
     fr.blocks.forEach(function (b, i) {
       var bw = b[1] * sc, used = b[0] !== '';
       out += R(x + 1, y, bw - 2, 56, { fill: used ? PAL[(b[0].charCodeAt(0) - 65) % 8] : 'rgba(255,255,255,.05)', stroke: used ? 'none' : '#4a4f80', rx: 6, extra: used ? '' : ' stroke-dasharray="4 3"' });
-      out += T(x + bw / 2, y + 26, used ? b[0] : 'frei', { size: bw < 30 ? 9 : 12, w: 900, fill: used ? '#fff' : '#9aa0d6' }) + T(x + bw / 2, y + 44, b[1], { size: 10, mono: true, fill: used ? '#f0f0ff' : '#9aa0d6' });
+      out += T(x + bw / 2, y + 26, used ? b[0] : 'frei', { size: bw < 30 ? 9 : 12, w: 900, fill: used ? '#fff' : '#9aa0d6' }) + T(x + bw / 2, y + 44, b[2] != null ? b[2] : b[1], { size: 10, mono: true, fill: used ? '#f0f0ff' : '#9aa0d6' });
       x += bw;
     });
-    var fl = fr.blocks.filter(function (b) { return b[0] === ''; }).map(function (b) { return b[1]; });
+    var fl = fr.blocks.filter(function (b) { return b[0] === ''; }).map(function (b) { return b[2] != null ? b[2] : b[1]; });
     out += T(20, 196, 'Freie Liste:', { size: 12, w: 900, anchor: 'start', fill: '#c9c3ff' });
     var lx = 104;
     fl.forEach(function (s, i) { out += R(lx, 182, 46, 22, { fill: '#1d2246', stroke: '#7c5cff', rx: 6 }) + T(lx + 23, 197, s, { size: 11, w: 900, mono: true }) + (i < fl.length - 1 ? L(lx + 46, 193, lx + 58, 193, { arrow: true }) : T(lx + 62, 197, 'NULL', { size: 10, mono: true, anchor: 'start', fill: '#6f7399' })); lx += 58; });

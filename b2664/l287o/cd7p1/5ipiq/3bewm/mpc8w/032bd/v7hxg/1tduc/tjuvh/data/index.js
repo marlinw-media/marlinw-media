@@ -21,13 +21,9 @@ window.OSTEP = {
     { n: 15, part: 'Virtualisierung: Speicher', title: 'Adressübersetzung', short: 'Base & Bounds, dynamische Relokation', color: '#ff5fa2' },
     { n: 17, part: 'Virtualisierung: Speicher', title: 'Freispeicherverwaltung', short: 'Splitting, Coalescing, Fit-Strategien', color: '#ff5fa2' },
     { n: 18, part: 'Virtualisierung: Speicher', title: 'Paging: Einführung', short: 'Seiten, Frames und Page Tables', color: '#ff5fa2' },
-    { n: 19, part: 'Virtualisierung: Speicher', title: 'TLBs', short: 'Schnellere Übersetzungen', color: '#ff5fa2' },
-    { n: 20, part: 'Virtualisierung: Speicher', title: 'Kleinere Page Tables', short: 'Mehrstufige und invertierte Tabellen', color: '#ff5fa2' },
-    { n: 21, part: 'Virtualisierung: Speicher', title: 'Swapping: Mechanismen', short: 'Present-Bit, Page Fault, Swap Space', color: '#ff5fa2' }
+    { n: 19, part: 'Virtualisierung: Speicher', title: 'TLBs', short: 'Schnellere Übersetzungen', color: '#ff5fa2' }
   ],
-  soon: [
-    { n: 22, title: 'Swapping: Policies' }, { n: 23, title: 'Komplette VM-Systeme' }, { n: 26, title: 'Nebenläufigkeit & Threads' }, { n: 28, title: 'Locks' }
-  ],
+  soon: [],
   add: function (ch) { this.chapters[ch.n] = ch; }
 };
 /* Hilfen für Rechenaufgaben (r = Zufallsgenerator 0…1) */
