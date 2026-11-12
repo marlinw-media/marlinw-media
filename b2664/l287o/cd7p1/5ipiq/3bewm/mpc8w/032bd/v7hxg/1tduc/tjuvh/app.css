@@ -79,6 +79,8 @@ body.immersive #app { padding-bottom: calc(24px + var(--safe-b)); }
 .back { display: inline-flex; align-items: center; gap: 6px; color: var(--dim); font-weight: 800; font-size: 15px; padding: 6px 2px; margin-bottom: 8px; }
 .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 5px; border-radius: 18px; background: var(--bg2); border: 1px solid var(--line); margin: 14px 0; }
 .seg.three { grid-template-columns: 1fr 1fr 1fr; }
+.seg.four { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+.seg.four button { font-size: 13px; padding: 0 2px; letter-spacing: -.01em; }
 .seg button { min-height: 46px; border-radius: 14px; font-weight: 900; font-size: 16px; color: var(--dim); }
 .seg button.on { background: var(--card2); color: var(--text); box-shadow: 0 4px 14px rgba(0,0,0,.3); }
 .topics { display: grid; gap: 10px; }
@@ -306,4 +308,15 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px;
 .numrow:has(input.right) { border-color: var(--ok); background: rgba(47,209,124,.14); }
 .numrow:has(input.wrong) { border-color: var(--bad); background: rgba(255,93,108,.12); }
 .numrow:has(input.err) { border-color: var(--a3); }
+/* ---------- Merksätze ---------- */
+.merk-lead { color: var(--dim); font-size: 14px; margin: 2px 2px 12px; }
+.merks { display: grid; gap: 10px; }
+.merk { border-radius: 18px; background: var(--card); border: 1px solid var(--line); overflow: hidden; }
+.merk[open] { border-color: rgba(255,209,102,.45); background: linear-gradient(160deg, rgba(255,209,102,.08), var(--card) 60%); }
+.merk summary { list-style: none; display: flex; gap: 12px; align-items: flex-start; padding: 14px; cursor: pointer; }
+.merk summary::-webkit-details-marker { display: none; }
+.merk .mn { flex: none; width: 28px; height: 28px; border-radius: 9px; display: grid; place-items: center; font-weight: 900; font-size: 14px; background: rgba(255,209,102,.18); color: var(--gold); }
+.merk .ms { font-weight: 800; font-size: 15.5px; line-height: 1.45; }
+.merk .mx { padding: 0 16px 14px 54px; color: #dcdcf2; font-size: 15px; line-height: 1.6; -webkit-user-select: text; user-select: text; }
+.merk .mx p { margin: 0 0 8px; }
 

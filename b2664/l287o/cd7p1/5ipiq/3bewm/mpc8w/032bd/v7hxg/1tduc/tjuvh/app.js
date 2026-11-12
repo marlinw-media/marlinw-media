@@ -259,15 +259,16 @@
     var pr = chapterProgress(n);
     var html = '<a class="back" href="#/">‹ Übersicht</a>' +
       '<div class="hero" style="background:linear-gradient(140deg,' + m.color + '55,#1a1e38 70%)"><div class="row" style="display:flex;gap:14px;align-items:center"><div style="flex:1"><div style="font-size:13px;font-weight:900;color:#d8d5f5;letter-spacing:.1em">KAPITEL ' + n + '</div><h1>' + esc(m.title) + '</h1><p>' + esc(m.short) + '</p></div>' + ring(pr, 78, 8, '#ffd166') + '</div></div>' +
-      '<div class="seg' + (TERMS(n) ? ' three' : '') + '"><button data-tab="lernen" class="' + (tab === 'lernen' ? 'on' : '') + '">🎧 Lernen</button>' + (TERMS(n) ? '<button data-tab="begriffe" class="' + (tab === 'begriffe' ? 'on' : '') + '">📖 Begriffe</button>' : '') + '<button data-tab="quiz" class="' + (tab === 'quiz' ? 'on' : '') + '">🎯 Quiz</button></div><div class="topics">';
-    if (tab === 'begriffe' && !TERMS(n)) tab = 'lernen';
-    if (tab !== 'begriffe') ch.topics.forEach(function (t, i) {
+      '<div class="seg' + (TERMS(n) && MERK(n) ? ' four' : TERMS(n) || MERK(n) ? ' three' : '') + '"><button data-tab="lernen" class="' + (tab === 'lernen' ? 'on' : '') + '">🎧 Lernen</button>' + (TERMS(n) ? '<button data-tab="begriffe" class="' + (tab === 'begriffe' ? 'on' : '') + '">📖 Begriffe</button>' : '') + (MERK(n) ? '<button data-tab="merken" class="' + (tab === 'merken' ? 'on' : '') + '">💡 Merken</button>' : '') + '<button data-tab="quiz" class="' + (tab === 'quiz' ? 'on' : '') + '">🎯 Quiz</button></div><div class="topics">';
+    if ((tab === 'begriffe' && !TERMS(n)) || (tab === 'merken' && !MERK(n))) tab = 'lernen';
+    if (tab !== 'begriffe' && tab !== 'merken') ch.topics.forEach(function (t, i) {
       var ma = mastery(n, t.id), li = listenOf(n, t.id), dur = (tmOf(S.voice, kid(n) + '-' + t.id) || tmOf('thorsten', kid(n) + '-' + t.id) || {}).d;
       if (tab === 'lernen') html += '<a class="topic" href="#/k/' + n + '/lernen/' + t.id + '"><div class="ic">' + t.icon + '</div><div class="meta"><b>' + esc(t.title) + '</b><small>' + (dur ? '🎧 ' + fmt(dur) + ' · ' : '') + t.segs.length + ' Abschnitte' + (li >= .9 ? ' · ✓ gehört' : '') + '</small><div class="mini-bar listen"><i style="width:' + Math.min(100, li * 100) + '%"></i></div></div><span style="font-size:22px">' + (li >= .9 ? '✅' : '▶️') + '</span></a>';
       else html += '<a class="topic" href="#/k/' + n + '/quiz/' + t.id + '"><div class="ic">' + t.icon + '</div><div class="meta"><b>' + esc(t.title) + '</b><small>' + Math.round(ma * 100) + ' % gemeistert · ' + seenCount(n, t.id) + '/' + pool(n, t.id).length + ' Fragen gesehen</small><div class="mini-bar"><i style="width:' + ma * 100 + '%"></i></div></div><span style="font-size:22px">' + (ma >= .9 ? '👑' : '🎯') + '</span></a>';
     });
     html += '</div>';
     if (tab === 'begriffe') html += termCards(n);
+    if (tab === 'merken') html += merkCards(n);
     if (tab === 'quiz') {
       var tot = ch.topics.reduce(function (a, t) { return a + pool(n, t.id).length; }, 0);
       html += '<a class="big-quiz" href="#/k/' + n + '/quiz/alle"><div class="ic">🏆</div><div style="flex:1"><b style="font-size:17px">Großes Kapitel-Quiz</b><div style="color:#d8d5f5;font-size:13px;font-weight:600">20 Fragen aus allen ' + tot + ' Fragen des Kapitels</div></div><span style="font-size:22px">›</span></a>';
@@ -277,6 +278,15 @@
     if (tab === 'begriffe') animateTerms(n);
   }
   /* ---------- Fachbegriffe: Grafik in Endlosschleife (wie ein GIF) + Text ---------- */
+  function MERK(n) { return (O.merk || {})[n] || null; }
+  function merkCards(n) {
+    var ch = O.chapters[n];
+    return '<p class="merk-lead">Die wichtigsten Merksätze aus Kapitel ' + n + ' – ideal zum Wiederholen nach dem Lernen. Tippe auf einen Satz für die Erklärung.</p><div class="merks">' + MERK(n).map(function (m, i) {
+      var t = ch.topics.filter(function (x) { return x.id === m[2]; })[0];
+      return '<details class="merk"' + (i === 0 ? ' open' : '') + '><summary><span class="mn">' + (i + 1) + '</span><span class="ms">' + md(m[0]).replace(/^<p>|<\/p>$/g, '') + '</span></summary>' +
+        '<div class="mx">' + md(m[1]) + '<a class="tlink" href="#/k/' + n + '/text/' + m[2] + '/' + (m[3] || 0) + '">📄 ' + esc(t ? t.title : 'Lerntext') + ' nachlesen ›</a></div></details>';
+    }).join('') + '</div>';
+  }
   function TERMS(n) { return (O.terms || {})[n] || null; }
   var TERM_RAF = 0, TERM_OBS = null;
   function stopTerms() { cancelAnimationFrame(TERM_RAF); TERM_RAF = 0; if (TERM_OBS) { TERM_OBS.disconnect(); TERM_OBS = null; } }
