@@ -23,6 +23,7 @@ window.OSTEP = {
     { n: 18, part: 'Virtualisierung: Speicher', title: 'Paging: Einführung', short: 'Seiten, Frames und Page Tables', color: '#ff5fa2' },
     { n: 19, part: 'Virtualisierung: Speicher', title: 'TLBs', short: 'Schnellere Übersetzungen', color: '#ff5fa2' },
     { n: 20, part: 'Virtualisierung: Speicher', title: 'Kleinere Page Tables', short: 'Mehrstufige und invertierte Tabellen', color: '#ff5fa2' },
+    { n: 21, part: 'Virtualisierung: Speicher', title: 'Swapping: Mechanismen', short: 'Present-Bit, Page Fault, Swap Space', color: '#ff5fa2' }
   ],
   soon: [],
   add: function (ch) { this.chapters[ch.n] = ch; }
