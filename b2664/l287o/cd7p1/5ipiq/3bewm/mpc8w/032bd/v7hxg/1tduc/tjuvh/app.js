@@ -99,16 +99,26 @@
     return s / ch.topics.length;
   }
   function seenCount(n, tid) { return pool(n, tid).filter(function (it) { return box(it.id) >= 0; }).length; }
-  /* Auswahl: erst Ungesehenes, dann Falsches, dann Wackeliges – so kommt jede Frage einmal dran */
+  /* Auswahl (gilt für Themen-Tests und das große Kapitel-Quiz):
+     - Vorrang: noch nie gefragte UND zuletzt falsch beantwortete Fragen (gleichberechtigt, zufällig gemischt)
+     - richtig beantwortete Fragen nur selten: pro Platz 10 % Chance, höchstens 10 % des Tests
+     - nur wenn keine offenen Fragen mehr übrig sind, wird mit gefestigten Fragen aufgefüllt */
+  function shuffle(a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), x = a[i]; a[i] = a[j]; a[j] = x; } return a; }
   function pick(items, k) {
-    var now = Date.now();
-    var scored = items.map(function (it) {
-      var r = S.q[it.id], tier = !r ? 0 : r.b === 0 ? 1 : r.b === 1 ? 2 : r.b === 2 ? 3 : 4;
-      var recent = r && now - r.t < 10 * 60 * 1000 ? 2 : 0;
-      return { it: it, s: tier + recent + Math.random() * .9 };
+    var now = Date.now(), open = [], known = [];
+    items.forEach(function (it) {
+      var r = S.q[it.id];
+      if (!r || r.b === 0) open.push({ it: it, s: Math.random() + (r && now - r.t < 3 * 60 * 1000 ? .6 : 0) });
+      else known.push({ it: it, s: r.b + Math.random() * 1.5 - Math.min(1, (now - r.t) / (3 * 864e5)) });
     });
-    scored.sort(function (a, b) { return a.s - b.s; });
-    return scored.slice(0, k).map(function (x) { return x.it; });
+    open.sort(function (a, b) { return a.s - b.s; });
+    known.sort(function (a, b) { return a.s - b.s; });
+    var cap = Math.max(1, Math.floor(k * .1)), nKnown = 0;
+    for (var i = 0; i < k; i++) if (nKnown < cap && Math.random() < .1) nKnown++;
+    nKnown = Math.min(nKnown, known.length);
+    var nOpen = Math.min(open.length, k - nKnown);
+    nKnown = Math.min(known.length, k - nOpen);   // auffüllen, falls nicht genug offene Fragen da sind
+    return shuffle(open.slice(0, nOpen).concat(known.slice(0, nKnown)).map(function (x) { return x.it; }));
   }
 
   /* ================= Sound, Konfetti, Toast ================= */
