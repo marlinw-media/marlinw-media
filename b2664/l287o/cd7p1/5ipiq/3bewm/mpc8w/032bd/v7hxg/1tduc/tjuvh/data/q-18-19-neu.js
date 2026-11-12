@@ -65,8 +65,8 @@
   /* Varianten ausdünnen: weniger Wiederholungen derselben Aufgabe */
   [18, 19].forEach(function (n) {
     OSTEP.chapters[n].topics.forEach(function (t) {
-      if (t.st) t.st.n = 9;
-      (t.gen || []).forEach(function (g) { g.n = Math.max(3, Math.ceil(g.n / 2)); });
+      if (t.st) t.st.n = 4;                                                        // 4 Aussagen-Varianten
+      (t.gen || []).forEach(function (g) { g.n = Math.min(4, Math.max(2, Math.round(g.n / 3))); });   // 2–4 Varianten pro Aufgabe
     });
   });
 })();
