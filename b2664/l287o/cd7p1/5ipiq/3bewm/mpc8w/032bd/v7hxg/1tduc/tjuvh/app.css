@@ -311,6 +311,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px;
 /* ---------- Merksätze ---------- */
 .merk-lead { color: var(--dim); font-size: 14px; margin: 2px 2px 12px; }
 .merks { display: grid; gap: 10px; }
+.merk-btn { background: linear-gradient(135deg, rgba(255,209,102,.22), rgba(255,140,60,.14)); border-color: rgba(255,209,102,.4); }
 .merk { border-radius: 18px; background: var(--card); border: 1px solid var(--line); overflow: hidden; }
 .merk[open] { border-color: rgba(255,209,102,.45); background: linear-gradient(160deg, rgba(255,209,102,.08), var(--card) 60%); }
 .merk summary { list-style: none; display: flex; gap: 12px; align-items: flex-start; padding: 14px; cursor: pointer; }
