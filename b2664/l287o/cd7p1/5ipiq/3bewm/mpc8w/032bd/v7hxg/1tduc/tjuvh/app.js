@@ -35,6 +35,8 @@
   if (TIMING.ki && S.voice === 'geraet') S.voice = 'ki';
   function voiceInfo(id) { return VOICES.filter(function (v) { return v[0] === id; })[0] || VOICES[0]; }
   function tmOf(voice, key) { return voice === 'geraet' ? null : (TIMING[voice] || {})[key] || null; }
+  if (S.theme) applyThemeEarly(S.theme);
+  function applyThemeEarly(t) { document.documentElement.setAttribute('data-theme', t); }
   var GAP = (function () { var l = S.lastVisit; S.lastVisit = Date.now(); return l ? Math.floor((Date.now() - l) / 864e5) : 0; })();
   function addTime(n, tid, kind, sec) {
     if (!(sec > 0)) return;
@@ -185,9 +187,9 @@
       : mood === 'strong' ? '<path d="M8 36 q-8 -10 2 -16" stroke="#ffb347" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M56 36 q8 -10 -2 -16" stroke="#ffb347" stroke-width="5" fill="none" stroke-linecap="round"/>'
       : mood === 'think' ? '<circle cx="54" cy="10" r="3" fill="#c9c3ff"/><circle cx="60" cy="2" r="4.5" fill="#c9c3ff"/>'
       : mood === 'sleep' ? '<text x="48" y="10" font-size="12" font-weight="900" fill="#c9c3ff">z</text><text x="55" y="2" font-size="9" font-weight="900" fill="#c9c3ff">z</text>' : '';
-    var pins = ''; for (var i = 0; i < 4; i++) { var o = 16 + i * 10.7; pins += '<rect x="' + o + '" y="2" width="4" height="7" rx="1.5" fill="#b9a8ff"/><rect x="' + o + '" y="55" width="4" height="7" rx="1.5" fill="#b9a8ff"/><rect x="2" y="' + o + '" width="7" height="4" rx="1.5" fill="#b9a8ff"/><rect x="55" y="' + o + '" width="7" height="4" rx="1.5" fill="#b9a8ff"/>'; }
+    var pins = ''; for (var i = 0; i < 4; i++) { var o = 16 + i * 10.7; pins += '<rect x="' + o + '" y="2" width="4" height="7" rx="1.5" style="fill:var(--cpin)"/><rect x="' + o + '" y="55" width="4" height="7" rx="1.5" style="fill:var(--cpin)"/><rect x="2" y="' + o + '" width="7" height="4" rx="1.5" style="fill:var(--cpin)"/><rect x="55" y="' + o + '" width="7" height="4" rx="1.5" style="fill:var(--cpin)"/>'; }
     return '<svg class="chippy ' + mood + '" width="' + size + '" height="' + size + '" viewBox="-6 -14 76 80" aria-hidden="true">' + pins +
-      '<rect x="8" y="8" width="48" height="48" rx="12" fill="url(#chipg)" stroke="#d9d0ff" stroke-width="1.5"/>' +
+      '<rect x="8" y="8" width="48" height="48" rx="12" fill="url(#chipg)" style="stroke:var(--soft)" stroke-width="1.5"/>' +
       '<circle cx="18" cy="38" r="3.4" fill="#ff8fb8" opacity=".55"/><circle cx="46" cy="38" r="3.4" fill="#ff8fb8" opacity=".55"/>' + eyes + mouth + extra + '</svg>';
   }
   var pepT = 0, pepLast = 0;
@@ -334,7 +336,7 @@
     tab = tab || sessionStorage.getItem('ostep-tab') || 'lernen';
     var pr = chapterProgress(n);
     var html = '<a class="back" href="#/">‹ Übersicht</a>' +
-      '<div class="hero" style="background:linear-gradient(140deg,' + m.color + '55,#1a1e38 70%)"><div class="row" style="display:flex;gap:14px;align-items:center"><div style="flex:1"><div style="font-size:13px;font-weight:900;color:#d8d5f5;letter-spacing:.1em">KAPITEL ' + n + '</div><h1>' + esc(m.title) + '</h1><p>' + esc(m.short) + '</p></div>' + ring(pr, 78, 8, '#ffd166') + '</div></div>' +
+      '<div class="hero" style="background:linear-gradient(140deg,' + m.color + '55,var(--card) 70%)"><div class="row" style="display:flex;gap:14px;align-items:center"><div style="flex:1"><div style="font-size:13px;font-weight:900;color:#d8d5f5;letter-spacing:.1em">KAPITEL ' + n + '</div><h1>' + esc(m.title) + '</h1><p>' + esc(m.short) + '</p></div>' + ring(pr, 78, 8, '#ffd166') + '</div></div>' +
       '<div class="seg' + (TERMS(n) ? ' three' : '') + '"><button data-tab="lernen" class="' + (tab === 'lernen' ? 'on' : '') + '">🎧 Lernen</button>' + (TERMS(n) ? '<button data-tab="begriffe" class="' + (tab === 'begriffe' ? 'on' : '') + '">📖 Begriffe</button>' : '') + '<button data-tab="quiz" class="' + (tab === 'quiz' ? 'on' : '') + '">🎯 Quiz</button></div><div class="topics">';
     if ((tab === 'begriffe' && !TERMS(n)) || tab === 'merken') tab = 'lernen';
     if (tab !== 'begriffe') ch.topics.forEach(function (t, i) {
@@ -425,7 +427,7 @@
       '<a href="#/profil/stats"><span>📊</span><div><b>Fortschritt & Analytics</b><small>Lernzeit, Noten, Zeit pro Thema und Kapitel</small></div>›</a>' +
       '<a href="#/profil/erfolge"><span>🏆</span><div><b>Erfolge</b><small>' + got + ' von ' + BADGES.length + ' Abzeichen</small></div>›</a>' +
       '<a href="#/profil/erinnerungen"><span>🔔</span><div><b>Erinnerungen</b><small>Lernzeiten, Streak-Warnung, Kalender</small></div>›</a>' +
-      '<a href="#/profil/einstellungen"><span>⚙️</span><div><b>Einstellungen</b><small>Tagesziel, Stimme, Töne</small></div>›</a></div>';
+      '<a href="#/profil/einstellungen"><span>⚙️</span><div><b>Einstellungen & Farbstil</b><small>5 Farbstile, Tagesziel, Stimme, Töne</small></div>›</a></div>';
     $('#psave').onclick = function () { var v = $('#pname').value.trim().slice(0, 24); S.name = v || null; save(); sfx('win'); toast(v ? '👋 Hallo ' + esc(v) + '! Chippy merkt sich deinen Namen.' : 'Name entfernt'); viewProfile(); };
     $('#pname').onkeydown = function (e) { if (e.key === 'Enter') $('#psave').click(); };
   }
@@ -485,12 +487,26 @@
   }
   function settingsHtml() {
     var sel = 'style="font:inherit;background:var(--card2);color:var(--text);border:1px solid var(--line2);border-radius:10px;padding:6px 8px"';
-    return '<div class="sec-title"><h2>⚙️ Einstellungen</h2></div><div class="card" style="display:grid;gap:12px">' +
+    return themeHtml() + '<div class="sec-title"><h2>⚙️ Einstellungen</h2></div><div class="card" style="display:grid;gap:12px">' +
       '<label style="display:flex;justify-content:space-between;align-items:center;font-weight:700">Tagesziel <select id="goal" ' + sel + '>' + [50, 100, 200, 300].map(function (g) { return '<option value="' + g + '"' + (S.goal === g ? ' selected' : '') + '>' + g + ' XP</option>'; }).join('') + '</select></label>' +
       '<label style="display:flex;justify-content:space-between;align-items:center;font-weight:700">Podcast-Stimme <select id="vc" ' + sel + '>' + VOICES.map(function (v) { return '<option value="' + v[0] + '"' + (S.voice === v[0] ? ' selected' : '') + '>' + v[2] + ' ' + v[1] + '</option>'; }).join('') + '</select></label>' +
-      '<label style="display:flex;justify-content:space-between;align-items:center;font-weight:700">Soundeffekte <input type="checkbox" id="snd" ' + (S.sound ? 'checked' : '') + ' style="width:22px;height:22px;accent-color:#ff5fa2"></label></div>';
+      '<label style="display:flex;justify-content:space-between;align-items:center;font-weight:700">Soundeffekte <input type="checkbox" id="snd" ' + (S.sound ? 'checked' : '') + ' style="width:22px;height:22px;accent-color:var(--a2)"></label></div>';
+  }
+  var THEMES = [['', 'Violett', 'Standard'], ['ozean', 'Ozean', 'Blau & Türkis'], ['sunset', 'Sunset', 'Orange & Gold'], ['gold', 'Midnight Gold', 'Schwarz & Gold'], ['sakura', 'Kirschblüte', 'Pink & Lila']];
+  var THEME_SW = { '': ['#7c5cff', '#ff5fa2', '#ffb347', '#0d0f1f'], ozean: ['#2f7bff', '#22c3e6', '#8fb8ff', '#06121f'], sunset: ['#ff8a3d', '#ffb03d', '#ffd76a', '#170d10'], gold: ['#c9a227', '#e8c66a', '#f5e0a0', '#0c0c0f'], sakura: ['#ff4fa3', '#c86bff', '#ffa8d4', '#160c18'] };
+  function applyTheme(t) {
+    if (t) document.documentElement.setAttribute('data-theme', t); else document.documentElement.removeAttribute('data-theme');
+    var m = document.querySelector('meta[name=theme-color]'); if (m) m.setAttribute('content', THEME_SW[t || ''][3]);
+    try { localStorage.setItem('ostep-theme', t || ''); } catch (e) {}
+  }
+  function themeHtml() {
+    return '<div class="sec-title"><h2>🎨 Farbstil</h2></div><div class="themes">' + THEMES.map(function (t) {
+      var c = THEME_SW[t[0]];
+      return '<button class="theme' + ((S.theme || '') === t[0] ? ' on' : '') + '" data-th="' + t[0] + '"><i style="background:linear-gradient(135deg,' + c[0] + ',' + c[1] + ' 55%,' + c[2] + ');box-shadow:inset 0 0 0 3px ' + c[3] + '"></i><b>' + t[1] + '</b><small>' + t[2] + '</small></button>';
+    }).join('') + '</div><div style="font-size:12.5px;color:var(--dim);margin:8px 2px 0">✅ Richtige Antworten bleiben in jedem Stil grün, ❌ falsche rot.</div>';
   }
   function bindSettings() {
+    $$('.theme').forEach(function (b) { b.onclick = function () { S.theme = b.dataset.th; save(); applyTheme(S.theme); sfx('tap'); $$('.theme').forEach(function (x) { x.classList.toggle('on', x === b); }); }; });
     $('#goal').onchange = function () { S.goal = +this.value; save(); };
     $('#snd').onchange = function () { S.sound = this.checked; save(); };
     $('#vc').onchange = function () { S.voice = this.value; save(); toast('🗣️ Stimme: ' + voiceInfo(S.voice)[1]); };
@@ -503,7 +519,7 @@
       '<div class="sec-title"><h2>Einstellungen</h2></div><div class="card" style="display:grid;gap:10px">' +
       '<label style="display:flex;justify-content:space-between;align-items:center;font-weight:700">Tagesziel <select id="goal" style="font:inherit;background:var(--card2);color:var(--text);border:1px solid var(--line2);border-radius:10px;padding:6px 8px">' + [50, 100, 200, 300].map(function (g) { return '<option ' + (S.goal === g ? 'selected' : '') + ' value="' + g + '">' + g + ' XP</option>'; }).join('') + '</select></label>' +
       '<label style="display:flex;justify-content:space-between;align-items:center;font-weight:700">Podcast-Stimme <select id="vc" style="font:inherit;background:var(--card2);color:var(--text);border:1px solid var(--line2);border-radius:10px;padding:6px 8px">' + VOICES.map(function (v) { return '<option ' + (S.voice === v[0] ? 'selected' : '') + ' value="' + v[0] + '">' + v[2] + ' ' + v[1] + '</option>'; }).join('') + '</select></label>' +
-      '<label style="display:flex;justify-content:space-between;align-items:center;font-weight:700">Soundeffekte <input type="checkbox" id="snd" ' + (S.sound ? 'checked' : '') + ' style="width:22px;height:22px;accent-color:#ff5fa2"></label></div>' + remSection();
+      '<label style="display:flex;justify-content:space-between;align-items:center;font-weight:700">Soundeffekte <input type="checkbox" id="snd" ' + (S.sound ? 'checked' : '') + ' style="width:22px;height:22px;accent-color:var(--a2)"></label></div>' + remSection();
     app.innerHTML = html;
     bindRem();
     $('#goal').onchange = function () { S.goal = +this.value; save(); };
@@ -738,7 +754,7 @@
     $('#voice').onclick = function () {
       var cur = P.shownSeg || 0;
       openSheetHtml('<h1 style="font-size:20px">🗣️ Stimme wählen</h1><p class="lead">Wer soll dir den Podcast vorlesen?</p><div style="display:grid;gap:8px">' + VOICES.map(function (v) {
-        return '<button class="topic" data-v="' + v[0] + '" style="text-align:left;' + (v[0] === S.voice ? 'border-color:#ff5fa2;background:rgba(255,95,162,.12)' : '') + '"><div class="ic">' + v[2] + '</div><div class="meta"><b>' + v[1] + '</b><small>' + v[3] + '</small></div>' + (v[0] === S.voice ? '✓' : '') + '</button>';
+        return '<button class="topic" data-v="' + v[0] + '" style="text-align:left;' + (v[0] === S.voice ? 'border-color:var(--a2);background:rgba(var(--a2r),.12)' : '') + '"><div class="ic">' + v[2] + '</div><div class="meta"><b>' + v[1] + '</b><small>' + v[3] + '</small></div>' + (v[0] === S.voice ? '✓' : '') + '</button>';
       }).join('') + '</div>', function (box) {
         $$('[data-v]', box).forEach(function (b) { b.onclick = function () { S.voice = b.dataset.v; save(); sfx('tap'); closeSheets(); stopPlayer(); viewLearn(n, tid, cur); }; });
       });
@@ -986,7 +1002,7 @@
   }
   window.addEventListener('hashchange', route);
   document.addEventListener('touchstart', function () { audioCtx(); }, { once: true, passive: true });
-  document.body.insertAdjacentHTML('beforeend', '<svg width="0" height="0" style="position:absolute"><defs><linearGradient id="rg" x1="0" x2="1"><stop offset="0" stop-color="#7c5cff"/><stop offset="1" stop-color="#ff5fa2"/></linearGradient><linearGradient id="chipg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a48bff"/><stop offset="1" stop-color="#6a4cf0"/></linearGradient></defs></svg>');
+  document.body.insertAdjacentHTML('beforeend', '<svg width="0" height="0" style="position:absolute"><defs><linearGradient id="rg" x1="0" x2="1"><stop offset="0" style="stop-color:var(--a1)"/><stop offset="1" style="stop-color:var(--a2)"/></linearGradient><linearGradient id="chipg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--c1)"/><stop offset="1" style="stop-color:var(--c2)"/></linearGradient></defs></svg>');
   window.OSTEP_APP = { pool: pool };
   route();
   (function () {
