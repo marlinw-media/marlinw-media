@@ -71,7 +71,7 @@
     var key = n + '-' + tid; if (poolCache[key]) return poolCache[key];
     var ch = O.chapters[n], t = ch.topics.filter(function (x) { return x.id === tid; })[0], items = [];
     var EX = (O.ex || {})[key] || [];
-    (t.q || []).forEach(function (q, i) { var x = EX[i]; items.push({ id: key + '-q' + i, n: n, t: tid, q: q[0], a: q[1], e: x ? x[0] : q[2], w: x ? x[1] : null, s: q[3] || 0, m: q[4] || '' }); });
+    (t.q || []).forEach(function (q, i) { var x = EX[i]; items.push({ id: key + '-q' + i + (q[5] ? '-' + q[5] : ''), n: n, t: tid, q: q[0], a: q[1], e: x ? x[0] : q[2], w: x ? x[1] : null, s: q[3] || 0, m: q[4] || '' }); });
     if (t.st && t.st.T.length >= 3 && t.st.F.length >= 3) {
       var cnt = t.st.n || Math.min(18, Math.min(t.st.T.length, t.st.F.length) * 3);
       for (var v = 0; v < cnt; v++) {
@@ -137,6 +137,10 @@
     });
     open.sort(function (a, b) { return a.s - b.s; });
     known.sort(function (a, b) { return a.s - b.s; });
+    /* höchstens 2 Varianten derselben Rechenaufgabe bzw. Aussagen-Frage pro Test */
+    var fam = {}, famOf = function (id) { var m = id.match(/^(.*-(?:g\d+|s))(?:-?\d+)$/); return m ? m[1] : id; };
+    var spread = function (list) { var a = [], b = []; list.forEach(function (x) { var f = famOf(x.it.id); if ((fam[f] || 0) < 2) { fam[f] = (fam[f] || 0) + 1; a.push(x); } else b.push(x); }); return a.concat(b); };
+    open = spread(open); known = spread(known);
     var cap = Math.max(1, Math.floor(k * .1)), nKnown = 0;
     for (var i = 0; i < k; i++) if (nKnown < cap && Math.random() < .1) nKnown++;
     nKnown = Math.min(nKnown, known.length);
