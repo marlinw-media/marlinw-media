@@ -45,5 +45,7 @@ OSTEP.u = {
   },
   bin: function (n, bits) { return n.toString(2).padStart(bits, '0'); },
   hex: function (n) { return '0x' + n.toString(16).toUpperCase(); },
+  /* Begründungen für falsche Optionen: [[Wert, 'warum falsch'], …] → { 'Optionstext': Begründung } */
+  W: function (pairs) { var m = {}; pairs.forEach(function (p) { m[typeof p[0] === 'number' ? OSTEP.u.num(p[0]) : p[0]] = p[1]; }); return m; },
   kb: function (b) { return b >= 1048576 && b % 1048576 === 0 ? (b / 1048576) + ' MB' : b >= 1024 && b % 1024 === 0 ? (b / 1024) + ' KB' : b + ' Byte'; }
 };

@@ -40,7 +40,7 @@
       F: [['Der TLB speichert die Daten der Seiten.', 'Er speichert nur Übersetzungen.', 0], ['Bei einem Hit wird zusätzlich die Page Table gelesen.', 'Genau das spart ein Hit.', 1], ['Nach einem Miss läuft die nächste Instruktion weiter.', 'Dieselbe Instruktion wird wiederholt.', 2], ['Räumliche Lokalität heißt: dieselbe Adresse wieder.', 'Das ist zeitliche Lokalität.', 3], ['Große Caches sind genauso schnell wie kleine.', 'Schnelle Caches müssen klein sein.', 3], ['Der TLB liegt im Hauptspeicher.', 'Er ist Hardware in der MMU.', 0]] },
     gen: [{ n: 10, f: function (r) {
       var tot = u.pick(r, [10, 20, 50, 100, 1000]), h = u.ri(r, 5, 19) * 5, hits = tot * h / 100;
-      return { q: 'Ein Programm macht ' + tot + ' Speicherzugriffe; davon sind ' + hits + ' TLB-Hits. Wie hoch ist die **Trefferquote**?', a: u.opts(h + ' %', [(100 - h) + ' %', Math.round(hits / tot * 10) + ' %', Math.min(99, h + 10) + ' %']), e: hits + ' / ' + tot + ' = ' + h + ' %.', s: 2 };
+      return { q: 'Ein Programm macht ' + tot + ' Speicherzugriffe; davon sind ' + hits + ' TLB-Hits. Wie hoch ist die **Trefferquote**?', a: u.opts(h + ' %', [(100 - h) + ' %', Math.round(hits / tot * 10) + ' %', Math.min(99, h + 10) + ' %']), wr: u.W([[(100 - h) + ' %', 'Das ist die **Miss**-Rate (Misses / Zugriffe).'], [Math.round(hits / tot * 10) + ' %', 'Rechenfehler: Hits / Zugriffe · **100** ergibt Prozent.'], [Math.min(99, h + 10) + ' %', 'Hits / Zugriffe nachrechnen: ' + hits + ' / ' + tot + '.']]), e: hits + ' / ' + tot + ' = ' + h + ' %.', s: 2 };
     } }]
   },
   {
@@ -82,7 +82,7 @@
     gen: [{ n: 16, f: function (r) {
       var ps = u.pick(r, [16, 32, 64]), es = u.pick(r, [4, 8]), n = u.ri(r, 6, 20), start = u.ri(r, 0, ps / es - 1) * es + u.ri(r, 1, 8) * ps;
       var first = Math.floor(start / ps), last = Math.floor((start + (n - 1) * es) / ps), miss = last - first + 1, hit = n - miss;
-      return { q: 'Ein Array aus ' + n + ' Elementen à ' + es + ' Bytes beginnt bei der virtuellen Adresse ' + start + '. Seitengröße ' + ps + ' Bytes, der TLB ist anfangs leer und groß genug. Wie viele **TLB-Misses** und **Hits** gibt es beim einmaligen Durchlaufen?', a: u.opts(miss + ' Misses, ' + hit + ' Hits', [hit + ' Misses, ' + miss + ' Hits', (miss + 1) + ' Misses, ' + (hit - 1) + ' Hits', n + ' Misses, 0 Hits']), e: 'Erstes Element auf Seite ' + first + ', letztes (Adresse ' + (start + (n - 1) * es) + ') auf Seite ' + last + ' → ' + miss + ' Seiten = ' + miss + ' Misses, ' + n + ' − ' + miss + ' = ' + hit + ' Hits.', s: 1 };
+      return { q: 'Ein Array aus ' + n + ' Elementen à ' + es + ' Bytes beginnt bei der virtuellen Adresse ' + start + '. Seitengröße ' + ps + ' Bytes, der TLB ist anfangs leer und groß genug. Wie viele **TLB-Misses** und **Hits** gibt es beim einmaligen Durchlaufen?', a: u.opts(miss + ' Misses, ' + hit + ' Hits', [hit + ' Misses, ' + miss + ' Hits', (miss + 1) + ' Misses, ' + (hit - 1) + ' Hits', n + ' Misses, 0 Hits']), wr: u.W([[hit + ' Misses, ' + miss + ' Hits', 'Vertauscht: Misses gibt es nur einmal **pro Seite**.'], [(miss + 1) + ' Misses, ' + (hit - 1) + ' Hits', 'Eine Seite zu viel gezählt – prüfe, auf welcher Seite das **letzte** Element liegt.'], [n + ' Misses, 0 Hits', 'Ohne räumliche Lokalität wäre das so – aber Elemente derselben Seite treffen im TLB.']]), e: 'Erstes Element auf Seite ' + first + ', letztes (Adresse ' + (start + (n - 1) * es) + ') auf Seite ' + last + ' → ' + miss + ' Seiten = ' + miss + ' Misses, ' + n + ' − ' + miss + ' = ' + hit + ' Hits.', s: 1 };
     } }]
   },
   {
@@ -123,7 +123,7 @@
       F: [['x86 nutzt einen softwareverwalteten TLB.', 'x86 ist hardwareverwaltet.', 0], ['Nach einem TLB-Miss geht es mit der nächsten Instruktion weiter.', 'Die auslösende wird wiederholt.', 2], ['Der Miss-Handler darf beliebig TLB-Misses verursachen.', 'Das würde eine Endlosschleife erzeugen.', 2], ['Softwareverwaltete TLBs brauchen ein festes Page-Table-Format.', 'Gerade nicht – das OS ist frei.', 3], ['Beim Software-TLB durchläuft die Hardware die Page Table.', 'Das macht der OS-Handler.', 1], ['Der Handler schreibt den TLB mit normalen Instruktionen.', 'Mit privilegierten Instruktionen.', 1]] },
     gen: [{ n: 8, f: function (r) {
       var acc = u.pick(r, [1000, 10000, 100000]), mr = u.pick(r, [1, 2, 5, 10]), cost = u.pick(r, [20, 50, 100]), miss = acc * mr / 100, tot = miss * cost;
-      return { q: 'Ein Programm macht ' + acc + ' Speicherzugriffe, die TLB-Missrate ist ' + mr + ' %. Jeder Miss kostet beim softwareverwalteten TLB zusätzlich ' + cost + ' Takte (Trap + Handler). Wie viele **zusätzliche Takte** entstehen durch Misses?', a: u.opts(tot, [acc * cost, miss, tot / 10]), e: acc + ' · ' + mr + ' % = ' + miss + ' Misses; ' + miss + ' · ' + cost + ' = ' + tot + ' Takte.', s: 3 };
+      return { q: 'Ein Programm macht ' + acc + ' Speicherzugriffe, die TLB-Missrate ist ' + mr + ' %. Jeder Miss kostet beim softwareverwalteten TLB zusätzlich ' + cost + ' Takte (Trap + Handler). Wie viele **zusätzliche Takte** entstehen durch Misses?', a: u.opts(tot, [acc * cost, miss, tot / 10]), wr: u.W([[acc * cost, 'Nur die **Misses** kosten extra, nicht alle Zugriffe.'], [miss, 'Das ist die Zahl der Misses – noch mit den Kosten pro Miss multiplizieren.'], [tot / 10, 'Rechenfehler bei der Missrate: ' + mr + ' % von ' + acc + ' sind ' + miss + '.']]), e: acc + ' · ' + mr + ' % = ' + miss + ' Misses; ' + miss + ' · ' + cost + ' = ' + tot + ' Takte.', s: 3 };
     } }]
   },
   {
@@ -164,10 +164,10 @@
       F: [['Ein TLB hat typischerweise Millionen Einträge.', 'Eher 32 bis 128.', 0], ['ASIDs sind genauso lang wie PIDs.', 'Meist nur 8 Bit.', 2], ['LRU ist immer optimal.', 'Bei Schleifen über n+1 Seiten versagt es.', 3], ['Das TLB-Valid-Bit entspricht dem Page-Table-Valid-Bit.', 'Es zeigt nur, ob der Eintrag gültig ist.', 0], ['Ein Flush ist beim Kontextwechsel kostenlos.', 'Danach gibt es viele Misses.', 1], ['Der MIPS R4000 hat 20 VPN-Bits.', 'Es sind 19 – der Kernel nutzt die andere Hälfte.', 3]] },
     gen: [{ n: 10, f: function (r) {
       var ent = u.pick(r, [32, 64, 128, 256, 512]), ps = u.pick(r, [4096, 8192, 16384, 2097152]), cov = ent * ps;
-      return { q: 'Ein TLB hat ' + ent + ' Einträge, die Seitengröße ist ' + u.kb(ps) + '. Wie groß ist die **TLB-Abdeckung** (wie viel Speicher ohne Miss erreichbar ist)?', a: u.opts(u.kb(cov), [u.kb(cov / 2), u.kb(cov * 2), u.kb(ent * 1024)]), e: ent + ' · ' + u.kb(ps) + ' = ' + u.kb(cov) + '. Arbeitet ein Programm auf mehr Speicher, häufen sich Misses.', s: 3 };
+      return { q: 'Ein TLB hat ' + ent + ' Einträge, die Seitengröße ist ' + u.kb(ps) + '. Wie groß ist die **TLB-Abdeckung** (wie viel Speicher ohne Miss erreichbar ist)?', a: u.opts(u.kb(cov), [u.kb(cov / 2), u.kb(cov * 2), u.kb(ent * 1024)]), wr: u.W([[u.kb(cov / 2), 'Halb zu klein – Einträge · Seitengröße nachrechnen.'], [u.kb(cov * 2), 'Doppelt zu groß – Einträge · Seitengröße nachrechnen.'], [u.kb(ent * 1024), 'Hier wurde mit 1-KB-Seiten gerechnet statt mit ' + u.kb(ps) + '.']]), e: ent + ' · ' + u.kb(ps) + ' = ' + u.kb(cov) + '. Arbeitet ein Programm auf mehr Speicher, häufen sich Misses.', s: 3 };
     } }, { n: 6, f: function (r) {
       var b = u.pick(r, [6, 8, 10, 12]);
-      return { q: 'Ein TLB nutzt ASIDs mit ' + b + ' Bit. Wie viele Adressräume kann er gleichzeitig unterscheiden?', a: u.opts(Math.pow(2, b), [b, b * 2, Math.pow(2, b - 1)]), e: '2^' + b + ' = ' + Math.pow(2, b) + ' verschiedene ASIDs.', s: 2 };
+      return { q: 'Ein TLB nutzt ASIDs mit ' + b + ' Bit. Wie viele Adressräume kann er gleichzeitig unterscheiden?', a: u.opts(Math.pow(2, b), [b, b * 2, Math.pow(2, b - 1)]), wr: u.W([[b, 'Das ist die Zahl der Bits – unterscheidbar sind 2^' + b + ' Werte.'], [b * 2, 'Nicht 2 · Bits, sondern 2 **hoch** Bits.'], [Math.pow(2, b - 1), 'Ein Bit zu wenig: 2^' + b + ', nicht 2^' + (b - 1) + '.']]), e: '2^' + b + ' = ' + Math.pow(2, b) + ' verschiedene ASIDs.', s: 2 };
     } }]
   }
   ] });

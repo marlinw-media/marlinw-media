@@ -31,7 +31,8 @@
   var S;
   try { S = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
   S = Object.assign({ voice: 'thorsten', xp: 0, q: {}, listen: {}, badges: {}, days: {}, answered: 0, correct: 0, tests: 0, perfect: 0, bestCombo: 0, goal: 100, last: null, sound: true }, S || {});
-  var VOICES = [['thorsten', 'Thorsten', '🧔', 'männlich, warm'], ['karlsson', 'Karlsson', '👨', 'männlich, sachlich'], ['kerstin', 'Kerstin', '👩', 'weiblich, ruhig'], ['ramona', 'Ramona', '👩‍🦰', 'weiblich, klar'], ['eva', 'Eva', '👱‍♀️', 'weiblich, hell'], ['geraet', 'Gerätestimme', '📱', 'Sprachausgabe deines Handys']];
+  var VOICES = [['thorsten', 'Thorsten', '🧔', 'männlich, warm'], ['karlsson', 'Karlsson', '👨', 'männlich, sachlich'], ['kerstin', 'Kerstin', '👩', 'weiblich, ruhig'], ['ramona', 'Ramona', '👩‍🦰', 'weiblich, klar'], ['eva', 'Eva', '👱‍♀️', 'weiblich, hell'], (TIMING.ki ? ['ki', 'KI-Stimme', '✨', 'neu & natürlich – bisher Kapitel 18 und 19'] : ['geraet', 'Gerätestimme', '📱', 'Sprachausgabe deines Handys'])];
+  if (TIMING.ki && S.voice === 'geraet') S.voice = 'ki';
   function voiceInfo(id) { return VOICES.filter(function (v) { return v[0] === id; })[0] || VOICES[0]; }
   function tmOf(voice, key) { return voice === 'geraet' ? null : (TIMING[voice] || {})[key] || null; }
   function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
@@ -59,7 +60,8 @@
   function pool(n, tid) {
     var key = n + '-' + tid; if (poolCache[key]) return poolCache[key];
     var ch = O.chapters[n], t = ch.topics.filter(function (x) { return x.id === tid; })[0], items = [];
-    (t.q || []).forEach(function (q, i) { items.push({ id: key + '-q' + i, n: n, t: tid, q: q[0], a: q[1], e: q[2], s: q[3] || 0, m: q[4] || '' }); });
+    var EX = (O.ex || {})[key] || [];
+    (t.q || []).forEach(function (q, i) { var x = EX[i]; items.push({ id: key + '-q' + i, n: n, t: tid, q: q[0], a: q[1], e: x ? x[0] : q[2], w: x ? x[1] : null, s: q[3] || 0, m: q[4] || '' }); });
     if (t.st && t.st.T.length >= 3 && t.st.F.length >= 3) {
       var cnt = t.st.n || Math.min(18, Math.min(t.st.T.length, t.st.F.length) * 3);
       for (var v = 0; v < cnt; v++) {
@@ -68,11 +70,13 @@
         if (!neg) {
           var tr = T[0], fs = F.slice(0, 3);
           item = { q: 'Welche Aussage zum Thema „' + t.st.about + '“ ist **richtig**?', a: [tr[0]].concat(fs.map(function (f) { return f[0]; })),
-            e: '✔ ' + tr[0] + '\n\nDie anderen Aussagen sind falsch:\n' + fs.map(function (f) { return '✘ „' + f[0] + '“ – ' + f[1]; }).join('\n'), s: tr[1] || 0, m: '' };
+            e: '✔ ' + tr[0] + '\n\nDie anderen Aussagen sind falsch:\n' + fs.map(function (f) { return '✘ „' + f[0] + '“ – ' + f[1]; }).join('\n'), s: tr[1] || 0, m: '', wr: {} };
+          fs.forEach(function (f) { item.wr[f[0]] = 'Diese Aussage ist falsch: ' + f[1]; });
         } else {
           var fl = F[0], ts = T.slice(0, 3);
           item = { q: 'Welche Aussage zum Thema „' + t.st.about + '“ ist **falsch**?', a: [fl[0]].concat(ts.map(function (x) { return x[0]; })),
-            e: '✘ Falsch ist: „' + fl[0] + '“\n\nRichtig wäre: ' + fl[1], s: fl[2] || 0, m: '' };
+            e: '✘ Falsch ist: „' + fl[0] + '“\n\nRichtig wäre: ' + fl[1], s: fl[2] || 0, m: '', wr: {} };
+          ts.forEach(function (x) { item.wr[x[0]] = 'Diese Aussage **stimmt** – gesucht war aber die **falsche** Aussage.'; });
         }
         item.id = key + '-s' + v; item.n = n; item.t = tid; items.push(item);
       }
@@ -81,10 +85,20 @@
       for (var v = 0; v < (g.n || 5); v++) {
         var r = rng(hash(key + 'g' + gi + '-' + v)), x;
         try { x = g.f(r, v); } catch (e) { continue; }
-        items.push({ id: key + '-g' + gi + '-' + v, n: n, t: tid, q: x.q, a: x.a, e: x.e, s: x.s || 0, m: x.m || '' });
+        var it0 = { id: key + '-g' + gi + '-' + v, n: n, t: tid, q: x.q, a: x.a, e: x.e, wr: x.wr || null, s: x.s || 0, m: x.m || '' };
+        if (x.num != null) { it0.num = x.num; it0.unit = x.unit || ''; it0.hint = x.hint || ''; it0.a = [fmtNum(x.num) + (x.unit ? ' ' + x.unit : '')]; }
+        items.push(it0);
       }
     });
     return (poolCache[key] = items);
+  }
+  function fmtNum(x) { var s = String(Math.round(x * 1000) / 1000).replace('.', ','); return /^\d{5,}$/.test(s) ? s.replace(/\B(?=(\d{3})+$)/g, '.') : s; }
+  function parseNum(s) {
+    s = String(s).trim().replace(/[\s'’%]/g, '');
+    if (/^0x[0-9a-f]+$/i.test(s)) return parseInt(s, 16);
+    if (/^-?\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, '');
+    s = s.replace(',', '.');
+    return /^-?\d+(\.\d+)?$/.test(s) ? parseFloat(s) : NaN;
   }
   function box(id) { var r = S.q[id]; return r ? r.b : -1; }
   function mastery(n, tid) {
@@ -245,19 +259,49 @@
     var pr = chapterProgress(n);
     var html = '<a class="back" href="#/">‹ Übersicht</a>' +
       '<div class="hero" style="background:linear-gradient(140deg,' + m.color + '55,#1a1e38 70%)"><div class="row" style="display:flex;gap:14px;align-items:center"><div style="flex:1"><div style="font-size:13px;font-weight:900;color:#d8d5f5;letter-spacing:.1em">KAPITEL ' + n + '</div><h1>' + esc(m.title) + '</h1><p>' + esc(m.short) + '</p></div>' + ring(pr, 78, 8, '#ffd166') + '</div></div>' +
-      '<div class="seg"><button data-tab="lernen" class="' + (tab === 'lernen' ? 'on' : '') + '">🎧 Lernen</button><button data-tab="quiz" class="' + (tab === 'quiz' ? 'on' : '') + '">🎯 Quiz</button></div><div class="topics">';
-    ch.topics.forEach(function (t, i) {
+      '<div class="seg' + (TERMS(n) ? ' three' : '') + '"><button data-tab="lernen" class="' + (tab === 'lernen' ? 'on' : '') + '">🎧 Lernen</button>' + (TERMS(n) ? '<button data-tab="begriffe" class="' + (tab === 'begriffe' ? 'on' : '') + '">📖 Begriffe</button>' : '') + '<button data-tab="quiz" class="' + (tab === 'quiz' ? 'on' : '') + '">🎯 Quiz</button></div><div class="topics">';
+    if (tab === 'begriffe' && !TERMS(n)) tab = 'lernen';
+    if (tab !== 'begriffe') ch.topics.forEach(function (t, i) {
       var ma = mastery(n, t.id), li = listenOf(n, t.id), dur = (tmOf(S.voice, kid(n) + '-' + t.id) || tmOf('thorsten', kid(n) + '-' + t.id) || {}).d;
       if (tab === 'lernen') html += '<a class="topic" href="#/k/' + n + '/lernen/' + t.id + '"><div class="ic">' + t.icon + '</div><div class="meta"><b>' + esc(t.title) + '</b><small>' + (dur ? '🎧 ' + fmt(dur) + ' · ' : '') + t.segs.length + ' Abschnitte' + (li >= .9 ? ' · ✓ gehört' : '') + '</small><div class="mini-bar listen"><i style="width:' + Math.min(100, li * 100) + '%"></i></div></div><span style="font-size:22px">' + (li >= .9 ? '✅' : '▶️') + '</span></a>';
       else html += '<a class="topic" href="#/k/' + n + '/quiz/' + t.id + '"><div class="ic">' + t.icon + '</div><div class="meta"><b>' + esc(t.title) + '</b><small>' + Math.round(ma * 100) + ' % gemeistert · ' + seenCount(n, t.id) + '/' + pool(n, t.id).length + ' Fragen gesehen</small><div class="mini-bar"><i style="width:' + ma * 100 + '%"></i></div></div><span style="font-size:22px">' + (ma >= .9 ? '👑' : '🎯') + '</span></a>';
     });
     html += '</div>';
+    if (tab === 'begriffe') html += termCards(n);
     if (tab === 'quiz') {
       var tot = ch.topics.reduce(function (a, t) { return a + pool(n, t.id).length; }, 0);
       html += '<a class="big-quiz" href="#/k/' + n + '/quiz/alle"><div class="ic">🏆</div><div style="flex:1"><b style="font-size:17px">Großes Kapitel-Quiz</b><div style="color:#d8d5f5;font-size:13px;font-weight:600">20 Fragen aus allen ' + tot + ' Fragen des Kapitels</div></div><span style="font-size:22px">›</span></a>';
-    } else html += '<p style="color:var(--dim);font-size:13px;text-align:center;margin-top:16px">Tipp: Erst den Podcast hören, dann im Quiz festigen. 🎧 → 🎯</p>';
+    } else if (tab === 'lernen') html += '<p style="color:var(--dim);font-size:13px;text-align:center;margin-top:16px">Tipp: Erst den Podcast hören, dann im Quiz festigen. 🎧 → 🎯</p>';
     app.innerHTML = html;
     $$('.seg button').forEach(function (b) { b.onclick = function () { sessionStorage.setItem('ostep-tab', b.dataset.tab); sfx('tap'); viewChapter(n, b.dataset.tab); }; });
+    if (tab === 'begriffe') animateTerms(n);
+  }
+  /* ---------- Fachbegriffe: Grafik in Endlosschleife (wie ein GIF) + Text ---------- */
+  function TERMS(n) { return (O.terms || {})[n] || null; }
+  var TERM_RAF = 0, TERM_OBS = null;
+  function stopTerms() { cancelAnimationFrame(TERM_RAF); TERM_RAF = 0; if (TERM_OBS) { TERM_OBS.disconnect(); TERM_OBS = null; } }
+  function termCards(n) {
+    return '<div class="terms">' + TERMS(n).map(function (x, i) {
+      return '<article class="term" id="term-' + i + '"><div class="tstage"><svg class="vis" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid meet" data-i="' + i + '"></svg></div>' +
+        '<div class="tbody"><h3>' + esc(x.t) + '</h3><small>' + esc(x.d) + '</small><div class="ttext">' + md(x.e) + '</div>' +
+        '<a class="tlink" href="#/k/' + n + '/text/' + x.k + '/' + (x.s || 0) + '">📄 Im Lerntext nachlesen ›</a></div></article>';
+    }).join('') + '</div>';
+  }
+  function animateTerms(n) {
+    stopTerms();
+    var list = TERMS(n), svgs = $$('.term svg.vis'), vis = {}, t0 = performance.now();
+    svgs.forEach(function (s) { OSTEP_VIS.render(s, list[+s.dataset.i].v, 1, 0); });
+    if ('IntersectionObserver' in window) {
+      TERM_OBS = new IntersectionObserver(function (es) { es.forEach(function (e) { vis[e.target.dataset.i] = e.isIntersecting; }); }, { rootMargin: '60px' });
+      svgs.forEach(function (s) { TERM_OBS.observe(s); });
+    } else svgs.forEach(function (s) { vis[s.dataset.i] = true; });
+    var LOOP = 6200, PLAY = 4300, last = 0;
+    (function frame(now) {
+      TERM_RAF = requestAnimationFrame(frame);
+      if (now - last < 33) return; last = now;
+      var tt = (now - t0) % LOOP, p = Math.min(1, tt / PLAY);
+      svgs.forEach(function (s) { if (vis[s.dataset.i]) OSTEP_VIS.render(s, list[+s.dataset.i].v, p, (now - t0) / 1000); });
+    })(t0);
   }
   function viewBadges() {
     var L = lvlInfo(S.xp), got = BADGES.filter(function (b) { return S.badges[b[0]]; }).length;
@@ -292,7 +336,7 @@
     app.innerHTML = '<a class="back" href="#/k/' + n + '">‹ Kapitel ' + n + '</a><div class="player">' +
       '<div class="stage-wrap"><div class="stage"><svg class="vis" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid meet"></svg></div><div class="subs" id="cap"></div></div>' +
       '<div class="ptitle"><small>Kapitel ' + n + ' · Thema ' + (idx + 1) + '/' + ch.topics.length + '</small><h1>' + t.icon + ' ' + esc(t.title) + '</h1><div class="segnow" id="segh"></div></div>' +
-      (tm || S.voice === 'geraet' ? '' : '<div class="audio-missing">🔈 Für diese Stimme fehlt die Aufnahme noch – es wird die Sprachausgabe deines Geräts verwendet.</div>') +
+      (tm ? '' : '<div class="audio-missing">🔈 ' + (S.voice === 'ki' ? 'Die KI-Stimme gibt es bisher nur für Kapitel 18 und 19 – hier liest die Sprachausgabe deines Geräts.' : 'Für diese Stimme fehlt die Aufnahme noch – es wird die Sprachausgabe deines Geräts verwendet.') + '</div>') +
       '<div class="scrub"><input type="range" id="seek" min="0" max="1000" value="0" aria-label="Position"><div class="times"><span id="tcur">0:00</span><span id="ttot">' + (tm ? fmt(tm.d) : '') + '</span></div></div>' +
       '<div class="controls"><button class="c" id="back15">−15</button><button class="c play" id="play" aria-label="Abspielen">▶</button><button class="c" id="fwd15">+15</button></div>' +
       '<div class="prow' + (next ? '' : ' four') + '"><button class="btn sm tile" id="voice"><i>' + voiceInfo(S.voice)[2] + '</i><span>' + voiceInfo(S.voice)[1] + '</span></button><button class="btn sm tile" id="speed"><i>⏩</i><span>1×</span></button><button class="btn sm tile" id="text"><i>📄</i><span>Text</span></button><a class="btn sm tile" href="#/k/' + n + '/quiz/' + tid + '"><i>🎯</i><span>Quiz</span></a>' + (next ? '<a class="btn sm tile" href="#/k/' + n + '/lernen/' + next.id + '"><i>⏭️</i><span>Weiter</span></a>' : '') + '</div>' +
@@ -457,10 +501,26 @@
     var isNew = box(it.id) < 0;
     app.innerHTML = '<div class="qtop"><a class="x" href="#/k/' + Q.n + '" aria-label="Beenden">✕</a><div class="qprog"><i style="width:' + (Q.i / Q.items.length * 100) + '%"></i></div><div class="combo" id="combo">' + (Q.combo >= 2 ? '🔥×' + Q.combo : '') + '</div></div>' +
       '<div class="qcard"><div class="qmeta"><span>' + (Q.i + 1) + ' / ' + Q.items.length + ' · ' + esc(t.title) + '</span><span>' + (isNew ? '✨ neu' : box(it.id) === 0 ? '↻ Wiederholung' : '') + '</span></div>' +
-      '<div class="qtext">' + md(it.q) + '</div><div class="opts">' +
+      '<div class="qtext">' + md(it.q) + '</div>' + (it.num != null ?
+      '<div class="numq"><div class="numhint">⌨️ Antwort eintippen · <b>' + esc(it.hint || 'Zahl') + '</b></div><div class="numrow"><input id="numin" type="text" inputmode="decimal" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Zahl eingeben"><span class="unit">' + esc(it.unit || '') + '</span></div><button class="btn main block" id="numok">Prüfen</button></div></div><div class="fb" id="fb"></div>' :
+      '<div class="opts">' +
       it.order.map(function (ai, k) { return '<button class="opt" data-a="' + ai + '"><span class="k">' + 'ABCD'[k] + '</span><span>' + md(it.a[ai]).replace(/^<p>|<\/p>$/g, '') + '</span></button>'; }).join('') +
-      '</div></div><div class="fb" id="fb"></div>';
+      '</div></div><div class="fb" id="fb"></div>');
     $$('.opt').forEach(function (b) { b.onclick = function () { answer(+b.dataset.a, b); }; });
+    if (it.num != null) {
+      var inp = $('#numin'), ok = $('#numok');
+      var go = function () {
+        var v = parseNum(inp.value);
+        if (isNaN(v)) { inp.classList.add('err'); toast('Bitte eine Zahl eingeben – ' + (it.hint || '')); return; }
+        inp.blur(); inp.disabled = true; ok.disabled = true;
+        var right = Math.abs(v - it.num) <= (it.tol || 0) + 1e-9;
+        it.given = String(v); it.a = [it.a[0], fmtNum(v) + (it.unit ? ' ' + it.unit : '')];
+        inp.classList.add(right ? 'right' : 'wrong');
+        answer(right ? 0 : 1, ok);
+      };
+      ok.onclick = go; inp.onkeydown = function (e) { if (e.key === 'Enter') go(); }; inp.oninput = function () { inp.classList.remove('err'); };
+      setTimeout(function () { try { inp.focus(); } catch (e) {} }, 350);
+    }
   }
   function answer(ai, btn) {
     var it = Q.items[Q.i], right = ai === 0;
@@ -480,10 +540,10 @@
     if (gain) { Q.xp += gain; addXp(gain, btn); }
     var c = $('#combo'); c.textContent = Q.combo >= 2 ? '🔥×' + Q.combo : ''; c.classList.remove('pop'); void c.offsetWidth; if (Q.combo >= 2) c.classList.add('pop');
     var praise = ['Richtig!', 'Super!', 'Stark!', 'Genau so!', 'Perfekt!', 'Klasse!', 'Volltreffer!'], comfort = ['Nicht ganz.', 'Knapp daneben.', 'Fast!', 'Das sitzt beim nächsten Mal.'];
-    var fb = $('#fb');
+    var fb = $('#fb'), reason = right ? '' : (it.w ? it.w[ai - 1] : (it.wr && (it.wr[it.a[ai]] || it.wr[it.given]))) || '';
     fb.className = 'fb ' + (right ? 'good' : 'bad');
     fb.innerHTML = '<div class="inner"><h3>' + (right ? '✅ ' + praise[Math.floor(Math.random() * praise.length)] + (gain ? ' <span style="color:#ffd166;font-size:15px">+' + gain + ' XP</span>' : '') : '💡 ' + comfort[Math.floor(Math.random() * comfort.length)]) + '</h3>' +
-      (right ? '' : '<div style="font-weight:800;margin-top:6px">Richtig ist: <span style="color:#7ff0b2">' + md(it.a[0]).replace(/^<p>|<\/p>$/g, '') + '</span></div>') +
+      (right ? '<div class="why ok"><b>✔ Warum das stimmt</b></div>' : '<div class="why bad"><b>✘ Deine Antwort:</b> ' + md(it.a[ai]).replace(/^<p>|<\/p>$/g, '') + (reason ? '<div class="reason">' + md(reason).replace(/^<p>|<\/p>$/g, '') + '</div>' : '') + '</div><div class="why ok"><b>✔ Richtig ist:</b> ' + md(it.a[0]).replace(/^<p>|<\/p>$/g, '') + '</div><div class="why"><b>Erklärung</b></div>') +
       '<div class="ex">' + md(it.e) + '</div><div class="row"><button class="info" id="info" title="Im Lerntext nachlesen">i</button><button class="btn ' + (right ? 'ok' : 'main') + ' block" id="next">' + (Q.i + 1 < Q.items.length ? 'Weiter' : 'Auswertung') + '</button></div></div>';
     requestAnimationFrame(function () { fb.classList.add('on'); });
     $('#info').onclick = function () {
@@ -512,7 +572,7 @@
 
   /* ================= Router ================= */
   function route() {
-    stopPlayer(); closeSheets(); window.scrollTo(0, 0);
+    stopPlayer(); stopTerms(); closeSheets(); window.scrollTo(0, 0);
     var h = location.hash.replace(/^#/, '') || '/', qs = '', qi = h.indexOf('?');
     if (qi >= 0) { qs = h.slice(qi + 1); h = h.slice(0, qi); }
     var params = {}; qs.split('&').forEach(function (kv) { if (!kv) return; var p = kv.split('='); params[p[0]] = decodeURIComponent(p[1] || ''); });

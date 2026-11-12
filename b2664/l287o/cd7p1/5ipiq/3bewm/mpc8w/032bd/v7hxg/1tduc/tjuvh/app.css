@@ -78,6 +78,7 @@ body.immersive #app { padding-bottom: calc(24px + var(--safe-b)); }
 /* Kapitel-Seite */
 .back { display: inline-flex; align-items: center; gap: 6px; color: var(--dim); font-weight: 800; font-size: 15px; padding: 6px 2px; margin-bottom: 8px; }
 .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 5px; border-radius: 18px; background: var(--bg2); border: 1px solid var(--line); margin: 14px 0; }
+.seg.three { grid-template-columns: 1fr 1fr 1fr; }
 .seg button { min-height: 46px; border-radius: 14px; font-weight: 900; font-size: 16px; color: var(--dim); }
 .seg button.on { background: var(--card2); color: var(--text); box-shadow: 0 4px 14px rgba(0,0,0,.3); }
 .topics { display: grid; gap: 10px; }
@@ -276,3 +277,33 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px;
   .controls .play { width: 66px; height: 66px; font-size: 26px; }
   .ptitle h1 { font-size: 18.5px; }
 }
+/* ---------- Fachbegriffe ---------- */
+.terms { display: grid; gap: 14px; margin-top: 4px; }
+@media (min-width: 720px) { .terms { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.term { border-radius: 22px; overflow: hidden; background: var(--card); border: 1px solid var(--line); }
+.tstage { position: relative; aspect-ratio: 4 / 3; background: radial-gradient(ellipse at 50% 0%, #1f2450, #121530 70%); border-bottom: 1px solid var(--line); }
+.tstage svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.tbody { padding: 14px 16px 16px; }
+.tbody h3 { font-size: 19px; font-weight: 900; }
+.tbody small { display: block; color: #c9c3ff; font-weight: 800; font-size: 13px; margin-top: 2px; }
+.ttext { margin-top: 8px; color: #dcdcf2; font-size: 15.5px; line-height: 1.6; -webkit-user-select: text; user-select: text; }
+.ttext p { margin: 0 0 8px; }
+.tlink { display: inline-block; margin-top: 4px; color: #ffb3d1; font-weight: 800; font-size: 14px; }
+/* ---------- Quiz-Feedback: warum richtig / falsch ---------- */
+.fb .why { margin-top: 10px; font-size: 15px; line-height: 1.5; color: #ececff; }
+.fb .why b { font-weight: 900; }
+.fb .why.ok b { color: #7ff0b2; }
+.fb .why.bad b { color: #ff9aa5; }
+.fb .why .reason { margin-top: 4px; padding: 8px 10px; border-radius: 12px; background: rgba(255,93,108,.12); border: 1px solid rgba(255,93,108,.3); font-size: 14.5px; }
+.fb .ex { margin-top: 4px; }
+/* ---------- Eingabefragen ---------- */
+.numq { display: grid; gap: 10px; }
+.numhint { font-size: 13.5px; color: var(--dim); font-weight: 700; line-height: 1.4; }
+.numhint b { color: #ffd9a8; }
+.numrow { display: flex; align-items: center; gap: 10px; padding: 6px 14px; border-radius: 16px; background: var(--card); border: 2px solid var(--line2); }
+.numrow input { flex: 1; min-width: 0; font: inherit; font-size: 22px; font-weight: 900; color: var(--text); background: transparent; border: 0; outline: 0; padding: 10px 0; -webkit-user-select: text; user-select: text; font-variant-numeric: tabular-nums; }
+.numrow .unit { font-weight: 900; color: #c9c3ff; font-size: 16px; }
+.numrow:has(input.right) { border-color: var(--ok); background: rgba(47,209,124,.14); }
+.numrow:has(input.wrong) { border-color: var(--bad); background: rgba(255,93,108,.12); }
+.numrow:has(input.err) { border-color: var(--a3); }
+
