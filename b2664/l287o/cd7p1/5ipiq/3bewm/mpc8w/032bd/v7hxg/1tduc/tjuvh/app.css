@@ -218,3 +218,39 @@ pre { font-family: var(--mono); font-size: 13px; line-height: 1.5; background: #
 @keyframes fadeIn { from { opacity: 0; } }
 @keyframes zoomIn { from { transform: scale(.6); opacity: 0; } }
 .empty { text-align: center; color: var(--dim); padding: 40px 10px; }
+
+/* ---------- iPhone hochkant (z. B. iPhone 15 Pro, 393 × 852) ---------- */
+html, body { -webkit-user-select: none; user-select: none; }
+.article, .fb .ex, .qtext, .subs { -webkit-user-select: text; user-select: text; }
+input[type=range] { -webkit-appearance: none; appearance: none; background: transparent; height: 34px; }
+input[type=range]::-webkit-slider-runnable-track { height: 6px; border-radius: 6px; background: linear-gradient(90deg, #ff5fa2 var(--fill, 0%), rgba(255,255,255,.14) var(--fill, 0%)); }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; margin-top: -8px; border-radius: 50%; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.5); }
+.sheet .panel { max-height: 88dvh; }
+@media (max-width: 520px) and (orientation: portrait) {
+  #app { padding: calc(10px + var(--safe-t)) 14px calc(92px + var(--safe-b)); }
+  body.immersive #app { padding-top: calc(6px + var(--safe-t)); }
+  .player { margin: 0 -14px; }
+  .stage-wrap { padding: 0; }
+  .stage { border-radius: 0; border-left: 0; border-right: 0; aspect-ratio: 4 / 3.15; }
+  .subs { margin: 8px 14px 0; min-height: 70px; font-size: 15.5px; }
+  .ptitle { padding: 10px 14px 0; }
+  .ptitle h1 { font-size: 20px; }
+  .scrub { padding: 6px 14px 0; }
+  .controls { gap: 26px; padding: 4px 14px 2px; }
+  .controls .c { width: 56px; height: 56px; }
+  .controls .play { width: 78px; height: 78px; }
+  .prow { gap: 6px; padding: 8px 10px; }
+  .prow .btn.sm { padding: 8px 11px; font-size: 13.5px; min-height: 42px; }
+  .segs { padding: 8px 14px 4px; }
+  .hero { padding: 18px 16px; border-radius: 22px; }
+  .hero h1 { font-size: 24px; }
+  .qtext { font-size: 18px; }
+  .opt { padding: 13px 12px; font-size: 15.5px; min-height: 56px; }
+  .qtop { position: sticky; top: 0; z-index: 5; margin: -10px -14px 12px; padding: calc(10px + var(--safe-t)) 14px 10px; background: rgba(13,15,31,.92); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+  .fb { max-height: 62dvh; padding-left: 14px; padding-right: 14px; }
+  .fb .ex { font-size: 14.5px; }
+  .stat-grid { gap: 8px; }
+  .badges { gap: 8px; }
+  pre { font-size: 12px; padding: 10px 11px; }
+  .tabbar a span { font-size: 24px; }
+}

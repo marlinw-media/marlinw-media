@@ -315,7 +315,7 @@
       if (tm) {
         time = curTime(); i = segAt(time);
         var s0 = tm.s[i], s1 = i + 1 < tm.s.length ? tm.s[i + 1] : tm.d; p = (time - s0) / Math.max(.1, s1 - s0);
-        if (!P.seeking) seek.value = Math.round(time / tm.d * 1000);
+        if (!P.seeking) { seek.value = Math.round(time / tm.d * 1000); seek.style.setProperty('--fill', (time / tm.d * 100) + '%'); }
         $('#tcur').textContent = fmt(time);
         if (P.playing) markListened(key, time / tm.d);
       } else { i = P.cur; p = P.segP; }

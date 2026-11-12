@@ -7,9 +7,12 @@
   function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
   function ease(t) { t = clamp(t, 0, 1); return 1 - Math.pow(1 - t, 3); }
   function ap(p, i, n, span) { /* Einblend-Fortschritt von Element i aus n */ var s = i / (n + (span || .6)); return ease((p - s) * (n + 1) * 1.4); }
+  /* auf schmalen Handys kleine Schrift etwas vergrößern */
+  var FS = (window.innerWidth || 400) < 520 ? 1.12 : 1;
+  function fs(n) { return n < 13 ? Math.min(13, n * FS) : n; }
   function T(x, y, s, o) {
     o = o || {};
-    return '<text x="' + x + '" y="' + y + '" font-size="' + (o.size || 12) + '" font-weight="' + (o.w || 700) + '" fill="' + (o.fill || '#e9e9ff') + '" text-anchor="' + (o.anchor || 'middle') + '" opacity="' + (o.op === undefined ? 1 : o.op) + '"' + (o.mono ? ' font-family="ui-monospace,Menlo,monospace"' : '') + (o.extra || '') + '>' + esc(s) + '</text>';
+    return '<text x="' + x + '" y="' + y + '" font-size="' + fs(o.size || 12) + '" font-weight="' + (o.w || 700) + '" fill="' + (o.fill || '#e9e9ff') + '" text-anchor="' + (o.anchor || 'middle') + '" opacity="' + (o.op === undefined ? 1 : o.op) + '"' + (o.mono ? ' font-family="ui-monospace,Menlo,monospace"' : '') + (o.extra || '') + '>' + esc(s) + '</text>';
   }
   function R(x, y, w, h, o) {
     o = o || {};
