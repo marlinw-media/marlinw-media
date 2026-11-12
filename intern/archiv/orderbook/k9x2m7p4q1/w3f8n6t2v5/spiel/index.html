@@ -2,2111 +2,265 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="robots" content="noindex, nofollow, noarchive">
-<meta name="theme-color" content="#1a2e1a">
+<meta name="theme-color" content="#0f1f14">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Pets">
+<meta name="format-detection" content="telephone=no">
+<meta name="color-scheme" content="dark">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="../icon-180.png">
-<title>Hauptspiel</title>
+<title>Pets</title>
 <style>
   :root {
-    --sky: #bfe8f5;
-    --wood: #8a5a3a;
-    --room: #f6e6c8;
+    --safe-t: env(safe-area-inset-top, 0px);
+    --safe-r: env(safe-area-inset-right, 0px);
+    --safe-b: env(safe-area-inset-bottom, 0px);
+    --safe-l: env(safe-area-inset-left, 0px);
+    --glass: rgba(18, 28, 22, .55);
+    --glass-2: rgba(255, 255, 255, .14);
+    --line: rgba(255, 255, 255, .22);
+    --ink: #fff;
+    --gold: #ffd166;
+    --pink: #ff8fb8;
+    --green: #6ee7a8;
+    --font: ui-rounded, "SF Pro Rounded", "Arial Rounded MT Bold", "Nunito", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   }
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none; -webkit-user-select: none; }
   html, body {
-    height: 100%; margin: 0; overflow: hidden;
-    font-family: 'Baloo 2', 'Comic Sans MS', system-ui, sans-serif;
-    background: #1a2e1a;
+    position: fixed; inset: 0; margin: 0; overflow: hidden;
+    width: 100%; height: 100%;
+    background: #0f1f14; color: var(--ink); font-family: var(--font);
+    overscroll-behavior: none; touch-action: none;
   }
-  #app { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+  canvas#game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+  button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer; touch-action: manipulation; }
+  [hidden] { display: none !important; }
 
-  .rotate-overlay {
-    position: fixed; inset: 0; background: #000; color: #fff;
-    display: none; flex-direction: column; align-items: center; justify-content: center;
-    gap: 14px; z-index: 999; text-align: center; padding: 24px;
+  /* ---------- Glas-Elemente ---------- */
+  .glass {
+    background: var(--glass);
+    -webkit-backdrop-filter: blur(14px) saturate(1.4); backdrop-filter: blur(14px) saturate(1.4);
+    border: 1px solid var(--line);
+    box-shadow: 0 8px 30px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.15);
   }
-  @media (orientation: portrait) { .rotate-overlay { display: flex; } #app { display: none; } }
-  .rotate-icon { font-size: 54px; animation: rotHint 1.6s ease-in-out infinite; }
-  @keyframes rotHint { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(90deg); } }
-  .rotate-overlay p { font-size: 15px; color: #cbd5e1; max-width: 32ch; margin: 0; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 7px 13px; font-weight: 800; font-size: 14px; line-height: 1; white-space: nowrap; }
+  .icon-btn { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; font-size: 19px; }
+  .icon-btn:active, .pill-btn:active { transform: scale(.92); }
+  #btn-quests.pulse-q { box-shadow: 0 0 0 0 rgba(255,209,102,.8); animation: qpulse 1.4s ease-out infinite; }
+  @keyframes qpulse { to { box-shadow: 0 0 0 14px rgba(255,209,102,0); } }
 
-  .back-btn {
-    position: fixed; top: 10px; right: 10px; z-index: 60;
-    border: none; border-radius: 999px;
-    background: rgba(255,255,255,.85); color: #3f6b3d;
-    font-weight: 700; font-size: 13px; padding: 10px 16px;
-    box-shadow: 0 4px 0 rgba(0,0,0,.2);
-  }
-  .back-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,.2); }
+  /* ---------- HUD ---------- */
+  #hud { position: fixed; inset: 0; pointer-events: none; z-index: 10; }
+  #hud > * { pointer-events: auto; }
+  .hud-tl { position: absolute; top: calc(10px + var(--safe-t)); left: calc(10px + var(--safe-l)); display: flex; gap: 8px; align-items: center; }
+  .hud-tr { position: absolute; top: calc(10px + var(--safe-t)); right: calc(10px + var(--safe-r)); display: flex; gap: 8px; align-items: center; }
+  .hud-tc { position: absolute; top: calc(10px + var(--safe-t)); left: 50%; transform: translateX(-50%); display: flex; gap: 8px; align-items: center; pointer-events: none !important; }
+  .bones-pill b { font-variant-numeric: tabular-nums; min-width: 1.4ch; text-align: right; }
+  .bones-pill.bump { animation: bump .45s cubic-bezier(.3,1.6,.5,1); }
+  @keyframes bump { 40% { transform: scale(1.25); } }
+  .stats-mini { display: flex; gap: 10px; padding: 7px 12px; border-radius: 999px; }
+  .sm { display: flex; align-items: center; gap: 5px; font-size: 13px; }
+  .sm i { display: block; width: 34px; height: 6px; border-radius: 9px; background: rgba(255,255,255,.18); overflow: hidden; }
+  .sm i b { display: block; height: 100%; width: 50%; border-radius: 9px; background: linear-gradient(90deg, #6ee7a8, #34d399); transition: width .4s ease; }
+  .sm i b.low { background: linear-gradient(90deg, #ff8a5c, #ef4444); }
+  .objective { padding: 8px 16px; font-size: 14px; }
+  .timer { font-variant-numeric: tabular-nums; }
+  .hearts { letter-spacing: 2px; }
 
-  .scene { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; }
-  .scene.active { display: flex; }
+  /* ---------- Joystick (schwebend: erscheint, wo der Daumen aufsetzt) ---------- */
+  #joyzone { position: fixed; left: 0; bottom: 0; width: 46%; height: 70%; z-index: 9; touch-action: none; }
+  #joystick { position: fixed; left: 0; top: 0; width: 128px; height: 128px; margin: -64px 0 0 -64px; z-index: 11; pointer-events: none; opacity: .55; transition: opacity .2s; }
+  #joystick.active { opacity: 1; transition: none; }
+  .joy-base { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,.10), rgba(255,255,255,.04) 70%); border: 2px solid rgba(255,255,255,.35); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+  .joy-knob { position: absolute; left: 50%; top: 50%; width: 54px; height: 54px; margin: -27px 0 0 -27px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff, #dfe9e3 70%); box-shadow: 0 6px 16px rgba(0,0,0,.35); }
 
-  /* ---------- Außenwelt: freie Welt, kein Kachelraster ---------- */
-  #outdoor-stage { position: fixed; inset: 0; overflow: hidden; }
-  #world { position: absolute; top: 0; left: 0; will-change: transform; }
-  #maze-world, #platform-world, #fish-world, #car-world { will-change: transform; }
-  #ground {
-    position: absolute; top: 0; left: 0;
-    background:
-      radial-gradient(ellipse 600px 420px at 12% 18%, rgba(255,255,255,.10), transparent 60%),
-      radial-gradient(ellipse 500px 380px at 68% 62%, rgba(35,85,32,.20), transparent 55%),
-      radial-gradient(ellipse 700px 500px at 88% 12%, rgba(255,255,255,.08), transparent 60%),
-      radial-gradient(ellipse 550px 400px at 28% 82%, rgba(35,85,32,.16), transparent 55%),
-      radial-gradient(ellipse 480px 360px at 52% 40%, rgba(255,255,255,.06), transparent 60%),
-      linear-gradient(160deg, #7bc96f, #5fae55 55%, #4d9a44);
-  }
-  #ground::after {
-    content: "";
-    position: absolute; inset: 0;
-    opacity: .55; mix-blend-mode: multiply;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='280' height='280'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.32  0 0 0 0 0.55  0 0 0 0 0.27  0 0 0 0.4 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    background-size: 260px 260px;
-  }
-  .fence-edge { position: absolute; pointer-events: none; background-repeat: repeat; z-index: 2; }
-  .obstacle, .tree-sprite, .house-sprite, .pond-svg, .flower-sprite, .creek-svg, .bridge-sprite, .gravel-svg, .gate-sprite, .poop-sprite, .rock-sprite, .puddle-svg { position: absolute; pointer-events: none; }
-  .creek-svg, .gravel-svg, .puddle-svg { z-index: 1; }
-  .pond-svg, .bridge-sprite, .house-sprite, .gate-sprite { z-index: 2; }
-  .poop-sprite { font-size: 26px; z-index: 2; }
-  /* Bäume/Felsen liegen perspektivisch VOR allem Boden-Deko, aber hinter Spieler/Hund/Leine */
-  .tree-sprite, .rock-sprite { z-index: 3; }
+  /* ---------- Aktionsknöpfe ---------- */
+  #actions { position: fixed; right: calc(14px + var(--safe-r)); bottom: calc(14px + var(--safe-b)); z-index: 12; display: grid; grid-template-columns: auto auto; grid-template-rows: auto auto; gap: 10px; align-items: end; justify-items: end; }
+  .act { position: relative; display: grid; place-items: center; border-radius: 50%; color: #fff; font-weight: 800; touch-action: none; transition: transform .12s, opacity .2s; }
+  .act .ic { font-size: 24px; line-height: 1; }
+  .act .lb { position: absolute; bottom: -2px; left: 50%; transform: translate(-50%, 100%); font-size: 11px; font-weight: 800; text-shadow: 0 1px 3px rgba(0,0,0,.6); white-space: nowrap; letter-spacing: .02em; }
+  .act.sm { width: 58px; height: 58px; margin-bottom: 16px; }
+  .act.lg { width: 84px; height: 84px; grid-row: 1 / span 2; grid-column: 2; margin-bottom: 16px; }
+  .act.lg .ic { font-size: 34px; }
+  .act.primary { background: radial-gradient(circle at 35% 25%, #ffe08a, #f5a623 65%, #d9800f); box-shadow: 0 8px 22px rgba(245,166,35,.45), inset 0 2px 0 rgba(255,255,255,.5), inset 0 -4px 0 rgba(0,0,0,.15); }
+  .act.secondary { background: rgba(20,32,26,.55); border: 1.5px solid rgba(255,255,255,.35); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); box-shadow: 0 6px 16px rgba(0,0,0,.3); }
+  .act.pressed, .act:active { transform: scale(.9); }
+  .act:disabled { opacity: .4; }
+  .act.pulse::after { content: ""; position: absolute; inset: -6px; border-radius: 50%; border: 3px solid rgba(255,214,102,.8); animation: ring 1.2s ease-out infinite; }
+  @keyframes ring { from { transform: scale(.9); opacity: 1; } to { transform: scale(1.25); opacity: 0; } }
 
-  .leash-svg { position: absolute; top: 0; left: 0; pointer-events: none; z-index: 4; overflow: visible; }
+  /* ---------- Toast & Banner ---------- */
+  #toast { position: fixed; left: 50%; top: calc(64px + var(--safe-t)); transform: translate(-50%, -10px); z-index: 30; opacity: 0; transition: opacity .25s, transform .3s cubic-bezier(.3,1.4,.5,1); pointer-events: none; padding: 10px 18px; font-size: 15px; max-width: 88vw; white-space: normal; text-align: center; }
+  #toast.show { opacity: 1; transform: translate(-50%, 0); }
+  #banner { position: fixed; inset: 0; display: grid; place-items: center; z-index: 31; pointer-events: none; }
+  #banner span { font-size: clamp(54px, 14vmin, 120px); font-weight: 900; color: #fff; text-shadow: 0 6px 0 rgba(0,0,0,.18), 0 12px 40px rgba(0,0,0,.4); -webkit-text-stroke: 2px rgba(0,0,0,.08); opacity: 0; }
+  #banner span.go { animation: bannerPop .9s cubic-bezier(.2,1.4,.4,1) forwards; }
+  @keyframes bannerPop { 0% { opacity: 0; transform: scale(2.2); } 25% { opacity: 1; transform: scale(1); } 75% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(.8); } }
 
-  .sprite { position: absolute; left: 0; top: 0; transition: none; }
-  .sprite svg { width: 100%; height: 100%; display: block; overflow: visible; }
-  .player-sprite { z-index: 6; width: 36px; height: 46px; }
-  .dog-sprite { z-index: 5; width: 50px; height: 38px; }
-  .dog-visual { width: 100%; height: 100%; transition: transform .25s ease; }
-  .dog-visual svg { width: 100%; height: 100%; display: block; overflow: visible; }
-  .dog-visual.face-left { transform: scaleX(-1); }
-  .dog-visual.shake { animation: shakeDog .5s ease; }
-  @keyframes shakeDog { 0%,100% { transform: rotate(0); } 20% { transform: rotate(-12deg); } 40% { transform: rotate(10deg); } 60% { transform: rotate(-8deg); } 80% { transform: rotate(6deg); } }
-  .dog-visual.digging { animation: digBob .35s ease-in-out infinite; }
-  @keyframes digBob { 0%,100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(4px) rotate(-6deg); } }
+  /* ---------- Modal ---------- */
+  #modal { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; padding: calc(16px + var(--safe-t)) calc(16px + var(--safe-r)) calc(16px + var(--safe-b)) calc(16px + var(--safe-l)); background: rgba(5,10,8,.45); opacity: 0; pointer-events: none; transition: opacity .25s; }
+  #modal.show { opacity: 1; pointer-events: auto; }
+  .card { width: min(460px, 100%); max-height: 100%; overflow: auto; border-radius: 26px; padding: 22px 22px 18px; background: linear-gradient(160deg, rgba(34,52,42,.92), rgba(16,26,20,.94)); border: 1px solid rgba(255,255,255,.18); box-shadow: 0 30px 80px rgba(0,0,0,.5); transform: translateY(14px) scale(.97); transition: transform .35s cubic-bezier(.2,1.3,.4,1); -webkit-overflow-scrolling: touch; touch-action: pan-y; }
+  #modal.show .card { transform: none; }
+  .card h2 { margin: 0 0 4px; font-size: 24px; font-weight: 900; letter-spacing: -.01em; }
+  .card p.sub { margin: 0 0 14px; color: rgba(255,255,255,.7); font-size: 14px; }
+  .card .row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+  .btn { flex: 1; min-height: 50px; border-radius: 16px; padding: 12px 16px; font-weight: 800; font-size: 16px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+  .btn:active { transform: scale(.96); }
+  .btn.gold { background: linear-gradient(180deg, #ffd166, #f5a623); color: #3a2400; box-shadow: 0 6px 0 #c47a10; }
+  .btn.ghost { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); }
+  .stars { font-size: 44px; text-align: center; letter-spacing: 6px; margin: 6px 0 2px; }
+  .stars .off { opacity: .2; filter: grayscale(1); }
+  .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+  .result-grid div { background: rgba(255,255,255,.07); border-radius: 14px; padding: 10px 12px; }
+  .result-grid small { display: block; font-size: 12px; color: rgba(255,255,255,.6); }
+  .result-grid b { font-size: 20px; }
+  .list { display: grid; gap: 8px; margin-top: 6px; }
+  .q { display: grid; grid-template-columns: 34px 1fr auto; gap: 10px; align-items: center; background: rgba(255,255,255,.07); border-radius: 16px; padding: 10px 12px; }
+  .q .e { font-size: 24px; text-align: center; }
+  .q small { display: block; color: rgba(255,255,255,.6); font-size: 12px; margin-top: 2px; }
+  .q .bar { height: 6px; border-radius: 9px; background: rgba(255,255,255,.15); margin-top: 6px; overflow: hidden; }
+  .q .bar b { display: block; height: 100%; background: linear-gradient(90deg, #ffd166, #f5a623); }
+  .q.done { background: rgba(110,231,168,.14); }
+  .tiny-btn { border-radius: 12px; padding: 8px 12px; font-weight: 800; font-size: 13px; background: linear-gradient(180deg, #ffd166, #f5a623); color: #3a2400; }
+  .tiny-btn:disabled { background: rgba(255,255,255,.12); color: rgba(255,255,255,.5); }
+  .wardrobe { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .ward { border-radius: 16px; padding: 10px 6px 8px; background: rgba(255,255,255,.07); border: 2px solid transparent; text-align: center; font-size: 12px; font-weight: 700; }
+  .ward canvas { width: 70px; height: 54px; display: block; margin: 0 auto 4px; }
+  .ward.on { border-color: var(--gold); background: rgba(255,209,102,.14); }
+  .ward .price { color: var(--gold); }
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 4px; border-bottom: 1px solid rgba(255,255,255,.1); font-weight: 700; }
+  .switch { width: 52px; height: 30px; border-radius: 99px; background: rgba(255,255,255,.18); position: relative; transition: background .2s; }
+  .switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; transition: transform .25s cubic-bezier(.3,1.4,.5,1); }
+  .switch.on { background: #34d399; }
+  .switch.on::after { transform: translateX(22px); }
+  .name-input { width: 100%; font: inherit; font-size: 20px; font-weight: 800; padding: 12px 14px; border-radius: 14px; border: 2px solid rgba(255,255,255,.2); background: rgba(0,0,0,.25); color: #fff; outline: none; user-select: text; -webkit-user-select: text; touch-action: manipulation; }
+  .name-input:focus { border-color: var(--gold); }
 
-  .stick-sprite {
-    position: absolute; z-index: 6; pointer-events: none;
-    width: 20px; height: 20px;
-    transition: left .5s cubic-bezier(.3,.6,.4,1), top .5s cubic-bezier(.3,.6,.4,1);
-  }
+  /* ---------- Haus-UI ---------- */
+  #house-ui { position: fixed; inset: 0; z-index: 12; pointer-events: none; }
+  #house-ui > * { pointer-events: auto; }
+  .care-bars { position: absolute; top: calc(62px + var(--safe-t)); left: calc(12px + var(--safe-l)); display: grid; gap: 7px; padding: 12px 14px; border-radius: 20px; min-width: 170px; }
+  .cb { display: grid; grid-template-columns: 22px 1fr; gap: 8px; align-items: center; font-size: 15px; }
+  .cb i { display: block; height: 9px; border-radius: 9px; background: rgba(255,255,255,.16); overflow: hidden; }
+  .cb i b { display: block; height: 100%; border-radius: 9px; background: linear-gradient(90deg, #6ee7a8, #22c55e); transition: width .5s cubic-bezier(.3,1.3,.5,1); }
+  .cb i b.low { background: linear-gradient(90deg, #ffb35c, #ef4444); }
+  .mood { font-size: 12px; font-weight: 800; color: rgba(255,255,255,.8); margin-top: 2px; }
+  .tray { position: absolute; left: 50%; bottom: calc(12px + var(--safe-b)); transform: translateX(-50%); display: flex; gap: 10px; padding: 10px; border-radius: 24px; }
+  .item { width: 62px; height: 62px; border-radius: 18px; display: grid; place-items: center; font-size: 30px; background: rgba(255,255,255,.92); box-shadow: 0 5px 0 rgba(0,0,0,.18); touch-action: none; position: relative; }
+  .item small { position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); font-size: 11px; color: #fff; font-weight: 800; text-shadow: 0 1px 3px rgba(0,0,0,.6); white-space: nowrap; }
+  .item.drag-ghost { position: fixed; z-index: 99; pointer-events: none; transform: scale(1.18) rotate(-6deg); box-shadow: 0 16px 30px rgba(0,0,0,.35); margin: -31px 0 0 -31px; }
+  .house-right { position: absolute; top: calc(62px + var(--safe-t)); right: calc(12px + var(--safe-r)); display: grid; gap: 8px; justify-items: end; }
+  .pill-btn { border-radius: 999px; padding: 10px 14px; font-weight: 800; font-size: 14px; }
 
-  .toast {
-    position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
-    background: rgba(255,255,255,.94); color: #3f6b3d; font-weight: 700; font-size: 13px;
-    padding: 7px 16px; border-radius: 999px; z-index: 30;
-    opacity: 0; transition: opacity .25s, transform .25s;
-    pointer-events: none;
-  }
-  .toast.show { opacity: 1; transform: translateX(-50%) translateY(4px); }
+  /* ---------- Titelbildschirm ---------- */
+  #title { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; text-align: center; padding: 20px; background: radial-gradient(ellipse at 50% 120%, rgba(0,0,0,.55), transparent 60%), linear-gradient(180deg, rgba(10,20,14,.15), rgba(10,20,14,.55)); transition: opacity .6s; }
+  #title.out { opacity: 0; pointer-events: none; }
+  .logo { font-size: clamp(64px, 18vmin, 150px); font-weight: 900; letter-spacing: -.02em; line-height: 1; color: #fff; animation: logoIn 1s cubic-bezier(.2,1.4,.4,1) both; }
+  .logo span { display: inline-block; color: #fff8e6; text-shadow: 0 5px 0 #f5a623, 0 9px 0 rgba(0,0,0,.2), 0 18px 40px rgba(0,0,0,.45); animation: wob 2.8s ease-in-out infinite; }
+  .logo span:nth-child(2) { animation-delay: .15s; } .logo span:nth-child(3) { animation-delay: .3s; } .logo span:nth-child(4) { animation-delay: .45s; }
+  @keyframes wob { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-6px) rotate(-2deg); } }
+  @keyframes logoIn { from { opacity: 0; transform: scale(.6) translateY(30px); } }
+  .tagline { margin: 10px 0 22px; font-size: 16px; font-weight: 700; color: rgba(255,255,255,.85); text-shadow: 0 2px 8px rgba(0,0,0,.5); }
+  .start-btn { min-width: 220px; min-height: 60px; border-radius: 20px; font-size: 20px; font-weight: 900; background: linear-gradient(180deg, #ffd166, #f5a623); color: #3a2400; box-shadow: 0 8px 0 #c47a10, 0 20px 40px rgba(0,0,0,.35); animation: logoIn 1s .2s cubic-bezier(.2,1.4,.4,1) both; }
+  .start-btn:active { transform: translateY(5px); box-shadow: 0 3px 0 #c47a10; }
+  .title-foot { position: absolute; bottom: calc(14px + var(--safe-b)); left: 0; right: 0; font-size: 12px; color: rgba(255,255,255,.55); font-weight: 700; }
+  .title-back { position: absolute; top: calc(12px + var(--safe-t)); right: calc(12px + var(--safe-r)); }
 
-  .joystick { position: fixed; left: 22px; bottom: 22px; z-index: 40; }
-  .joy-base {
-    width: 108px; height: 108px; border-radius: 50%;
-    background: rgba(255,255,255,.25);
-    border: 3px solid rgba(255,255,255,.5);
-    position: relative;
-    touch-action: none;
-  }
-  .joy-knob {
-    position: absolute; left: 50%; top: 50%;
-    width: 46px; height: 46px; margin: -23px 0 0 -23px;
-    border-radius: 50%;
-    background: rgba(255,255,255,.9);
-    box-shadow: 0 4px 8px rgba(0,0,0,.3);
-  }
-
-  .action-buttons {
-    position: fixed; right: 18px; bottom: 22px; z-index: 40;
-    display: flex; flex-direction: column; gap: 10px; align-items: flex-end;
-  }
-  .action-btn {
-    border: none; border-radius: 999px;
-    background: rgba(255,255,255,.85);
-    color: #3f6b3d; font-weight: 700; font-size: 13px;
-    padding: 12px 18px;
-    box-shadow: 0 4px 0 rgba(0,0,0,.2);
-    display: flex; align-items: center; gap: 6px;
-  }
-  .action-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,.2); }
-  .action-btn:disabled { opacity: .45; }
-  .action-btn[hidden] { display: none; }
-
-  /* ---------- Höhlen-Labyrinth ---------- */
-  #maze-stage { position: fixed; inset: 0; overflow: hidden; background: #15100c; }
-  #maze-world { position: absolute; top: 0; left: 0; }
-  #maze-ground { position: absolute; inset: 0; background: linear-gradient(160deg, #4a4038, #2c2620); }
-  .maze-wall {
-    position: absolute; box-sizing: border-box;
-    background: linear-gradient(160deg, #857b6e, #4c463d);
-    border: 2px solid #241f1a; border-radius: 3px;
-  }
-  .maze-key { position: absolute; font-size: 28px; z-index: 5; filter: drop-shadow(0 0 6px gold); }
-  .maze-exit { position: absolute; font-size: 34px; z-index: 5; }
-
-  /* ---------- Jump'n'Run ---------- */
-  #platform-stage { position: fixed; inset: 0; overflow: hidden; background: #ffb27a; }
-  .scene-objective {
-    position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
-    background: rgba(0,0,0,.45); color: #fff; font-weight: 700; font-size: 13px;
-    padding: 6px 16px; border-radius: 999px; z-index: 45; white-space: nowrap;
-  }
-  #platform-world { position: absolute; top: 0; left: 0; }
-  #platform-bg { position: absolute; inset: 0; background: linear-gradient(180deg, #ffd9a0, #ffb27a 55%, #e8935a); }
-  .platform-block {
-    position: absolute; box-sizing: border-box;
-    background: linear-gradient(160deg, #b06a3a, #7a4526);
-    border-top: 6px solid #6fcf6b;
-  }
-  .platform-goal { position: absolute; font-size: 46px; z-index: 5; }
-  .platform-hazard { position: absolute; font-size: 28px; z-index: 4; transform: translateX(-50%); }
-  .platform-jump-btn { position: fixed; right: 18px; bottom: 110px; z-index: 41; }
-
-  /* ---------- Angeln (Vollbild) ---------- */
-  #fish-stage { position: fixed; inset: 0; overflow: hidden; background: #2f7a91; }
-  #fish-world { position: absolute; top: 0; left: 0; }
-  #fish-water {
-    position: absolute; inset: 0;
-    background: linear-gradient(160deg, #7fd4e8, #3f9fbf 60%, #2f7a91);
-  }
-  .fish-sprite { position: absolute; font-size: 26px; transition: none; }
-  #fish-boat { font-size: 34px; z-index: 5; }
-  #fish-shark { font-size: 32px; z-index: 4; }
-  #fish-fishes { position: absolute; top: 0; left: 0; }
-
-  /* ---------- Autospiel (Vollbild) ---------- */
-  #car-stage { position: fixed; inset: 0; overflow: hidden; background: #4a4a4a; }
-  #car-world { position: absolute; top: 0; left: 0; }
-  #car-road-bg { position: absolute; inset: 0; background: linear-gradient(90deg, #3f8f3a 0 6%, #5a5a5a 6% 94%, #3f8f3a 94% 100%); }
-  #car-lanes { position: absolute; left: 50%; top: 0; bottom: 0; width: 4px; margin-left: -2px; background: repeating-linear-gradient(#fff 0 24px, transparent 24px 48px); opacity: .5; }
-  .car-lane-div { position: absolute; top: 0; bottom: 0; width: 3px; background: repeating-linear-gradient(#fff 0 20px, transparent 20px 42px); opacity: .55; }
-  .car-obstacle-sprite { position: absolute; font-size: 32px; transform: translateX(-50%); z-index: 4; }
-  #car-player { font-size: 32px; z-index: 5; left: 0; top: 0; }
-  .car-goal { position: absolute; font-size: 30px; z-index: 4; transform: translateX(-50%); }
-
-  /* ---------- Haus-Innenraum ---------- */
-  #scene-house { flex-direction: column; background: var(--room); }
-  .room-bg { position: absolute; inset: 0; overflow: hidden; }
-  .room-floor {
-    position: absolute; left: 0; right: 0; bottom: 0; top: 42%;
-    background: repeating-linear-gradient(90deg, #d9b273 0 40px, #cfa565 40px 42px);
-  }
-  .room-wall {
-    position: absolute; left: 0; right: 0; top: 0; height: 42%;
-    background: linear-gradient(180deg, #f3e0bd, #e8cf9e);
-  }
-  .window {
-    position: absolute; top: 8%; left: 6%;
-    width: 90px; height: 62px;
-    background: linear-gradient(180deg, var(--sky), #8fd0e8);
-    border: 7px solid #fff; border-radius: 8px;
-  }
-  .window::after { content: "☁️"; position: absolute; font-size: 18px; top: 8px; left: 10px; }
-  .picture-frame {
-    position: absolute; top: 10%; right: 8%;
-    width: 60px; height: 46px; background: #fff; border: 5px solid #a9744a; border-radius: 4px;
-  }
-  .picture-frame::after { content:"🐾"; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:20px; }
-
-  .couch {
-    position: absolute; left: 5%; bottom: 8%;
-    width: 190px; height: 90px;
-  }
-  .basket {
-    position: absolute; right: 8%; bottom: 7%;
-    width: 130px; height: 90px;
-  }
-  .drop-target.hover .basket-svg, .drop-target.hover .couch-svg { filter: brightness(1.15) drop-shadow(0 0 8px gold); }
-
-  .dog-big { position: absolute; left: 50%; bottom: 26%; transform: translateX(-50%); width: 170px; height: 130px; z-index: 3; touch-action: none; }
-  .dog-big svg { width: 100%; height: 100%; overflow: visible; }
-  .dog-big.happy { animation: happyBounce .5s ease; }
-  .dog-big.resting { width: 110px; height: 84px; }
-  @keyframes happyBounce { 0%,100% { transform: translateX(-50%) scale(1); } 40% { transform: translateX(-50%) scale(1.12) rotate(-4deg); } 70% { transform: translateX(-50%) scale(1.05) rotate(3deg); } }
-  .zzz { position: absolute; font-size: 20px; animation: zzzFloat 2s ease-in-out infinite; pointer-events: none; }
-  @keyframes zzzFloat { 0% { opacity: 0; transform: translateY(0); } 30% { opacity: 1; } 100% { opacity: 0; transform: translateY(-24px); } }
-
-  .hearts-layer { position: absolute; inset: 0; pointer-events: none; z-index: 8; overflow: hidden; }
-  .heart-fx { position: absolute; font-size: 22px; animation: heartUp 1s ease-out forwards; }
-  @keyframes heartUp { 0% { opacity: 0; transform: translateY(0) scale(.6); } 20% { opacity: 1; } 100% { opacity: 0; transform: translateY(-90px) scale(1.2); } }
-  .dust-fx { position: absolute; font-size: 16px; animation: dustPop .6s ease-out forwards; }
-  @keyframes dustPop { 0% { opacity: 0; transform: translate(0,0) scale(.5); } 30% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--dx,10px),-20px) scale(1); } }
-
-  .stat-bars {
-    position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
-    display: flex; gap: 12px; background: rgba(255,255,255,.75); padding: 8px 14px; border-radius: 999px; z-index: 10;
-  }
-  .stat { display: flex; align-items: center; gap: 5px; font-size: 13px; }
-  .stat-track { width: 52px; height: 9px; border-radius: 999px; background: rgba(0,0,0,.15); overflow: hidden; }
-  .stat-fill { height: 100%; background: linear-gradient(90deg,#4ade80,#22c55e); transition: width .3s ease; }
-
-  .items-tray { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); display: flex; gap: 16px; z-index: 15; }
-  .item {
-    width: 56px; height: 56px; border-radius: 16px; background: #fff;
-    box-shadow: 0 6px 0 rgba(0,0,0,.15);
-    display: flex; align-items: center; justify-content: center; font-size: 26px;
-    cursor: grab; touch-action: none;
-  }
-  .item.dragging { position: fixed; z-index: 999; pointer-events: none; box-shadow: 0 10px 20px rgba(0,0,0,.3); transform: scale(1.15); }
-
-  .exit-btn {
-    position: absolute; top: 14px; left: 14px; border: none; border-radius: 999px;
-    background: rgba(255,255,255,.85); color: #6b4226; font-weight: 700; font-size: 14px; padding: 9px 16px; z-index: 15;
-  }
-  .exit-btn:active { transform: scale(.95); }
-
-  .wait-bar-thin { position: fixed; left: 0; right: 0; bottom: 0; height: 6px; background: rgba(255,255,255,.12); z-index: 50; display: none; }
+  /* ---------- Bestell-Sammelbalken ---------- */
+  .wait-bar-thin { position: fixed; left: 0; right: 0; bottom: 0; height: 5px; background: rgba(255,255,255,.12); z-index: 60; display: none; }
   .wait-bar-thin.show { display: block; }
   .wait-bar-thin-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #22d3ee, #a855f7, #ff3d9a); transition: width .5s linear; }
   .wait-bar-thin-fill.gold { background: linear-gradient(90deg, #ffd700, #fff3b0, #ffb703); }
+
+  @media (max-height: 420px) {
+    .act.lg { width: 74px; height: 74px; } .act.sm { width: 52px; height: 52px; }
+    .care-bars { padding: 9px 12px; gap: 5px; min-width: 150px; }
+    .item { width: 54px; height: 54px; font-size: 26px; }
+    .stats-mini { display: none; }
+  }
+  @media (orientation: portrait) {
+    #joyzone { width: 60%; height: 55%; }
+    .stats-mini { display: none; }
+  }
 </style>
 </head>
 <body>
+<canvas id="game"></canvas>
 
-<div class="rotate-overlay" id="rotate-overlay">
-  <div class="rotate-icon">📱</div>
-  <p>Bitte drehe dein Gerät ins Querformat, um zu spielen.</p>
-</div>
-
-<button class="back-btn" id="back-btn" type="button">↩ Bestellliste</button>
-
-<div id="app">
-  <div class="scene active" id="scene-outdoor">
-    <div id="outdoor-stage">
-      <div id="world">
-        <div id="ground"></div>
-        <div id="obstacles"></div>
-        <svg class="leash-svg" id="leash-svg"><path id="leash-path" fill="none" stroke="#8a5a3a" stroke-width="3" stroke-linecap="round"/></svg>
-        <div class="stick-sprite" id="stick" hidden>🥢</div>
-        <div class="sprite player-sprite" id="player"></div>
-        <div class="sprite dog-sprite" id="dog-outdoor"><div class="dog-visual" id="dog-visual"></div></div>
-      </div>
-      <div class="toast" id="toast"></div>
-    </div>
-    <div class="action-buttons">
-      <button class="action-btn" id="btn-pet" type="button">✋ Streicheln</button>
-      <button class="action-btn" id="btn-call" type="button">📣 Herrufen</button>
-      <button class="action-btn" id="btn-fetch" type="button">🥢 Stöckchen</button>
-      <button class="action-btn" id="btn-clean" type="button" hidden>🧹 Aufsammeln</button>
-    </div>
+<div id="hud">
+  <div class="hud-tl">
+    <button class="icon-btn glass" id="btn-menu" type="button" aria-label="Menü">⚙︎</button>
+    <button class="pill glass pill-btn" id="btn-exit" type="button" hidden>✕ Verlassen</button>
   </div>
-
-  <div class="scene" id="scene-maze">
-    <div id="maze-stage">
-      <div id="maze-world">
-        <div id="maze-ground"></div>
-        <div id="maze-walls"></div>
-        <div class="maze-key" id="maze-key">🔑</div>
-        <div class="maze-exit" id="maze-exit-sprite">⛳</div>
-        <div class="sprite dog-sprite" id="maze-dog"><div class="dog-visual" id="maze-dog-visual"></div></div>
-      </div>
-      <div class="toast" id="maze-toast"></div>
-      <div class="scene-objective">🔑 Finde den Schlüssel und dann den Ausgang!</div>
+  <div class="hud-tc">
+    <div class="stats-mini glass" id="stats-mini">
+      <span class="sm">❤️<i><b id="sm-love"></b></i></span>
+      <span class="sm">🍖<i><b id="sm-hunger"></b></i></span>
+      <span class="sm">💧<i><b id="sm-water"></b></i></span>
+      <span class="sm">✨<i><b id="sm-fur"></b></i></span>
     </div>
-    <button class="exit-btn" id="maze-exit-btn" type="button">🚪 Verlassen</button>
+    <div class="pill glass objective" id="objective" hidden></div>
   </div>
-
-  <div class="scene" id="scene-platform">
-    <div id="platform-stage">
-      <div id="platform-world">
-        <div id="platform-bg"></div>
-        <div id="platform-platforms"></div>
-        <div id="platform-hazards"></div>
-        <div class="platform-goal" id="platform-goal">⛩️</div>
-        <div class="sprite dog-sprite" id="platform-dog"><div class="dog-visual" id="platform-dog-visual"></div></div>
-      </div>
-      <div class="toast" id="platform-toast"></div>
-      <div class="scene-objective">⛩️ Du läufst von allein – einfach zur richtigen Zeit springen!</div>
-    </div>
-    <button class="exit-btn" id="platform-exit-btn" type="button">🚪 Verlassen</button>
-    <button class="action-btn platform-jump-btn" id="btn-jump" type="button">⬆️ Springen</button>
-  </div>
-
-  <div class="scene" id="scene-fish">
-    <div id="fish-stage">
-      <div id="fish-world">
-        <div id="fish-water"></div>
-        <div id="fish-fishes"></div>
-        <div class="sprite" id="fish-shark">🦈</div>
-        <div class="sprite" id="fish-boat">🚣</div>
-      </div>
-      <div class="toast" id="fish-toast"></div>
-      <div class="scene-objective" id="fish-objective">🐟 Fange 6 Fische!</div>
-    </div>
-    <button class="exit-btn" id="fish-exit-btn" type="button">🚪 Verlassen</button>
-  </div>
-
-  <div class="scene" id="scene-car">
-    <div id="car-stage">
-      <div id="car-world">
-        <div id="car-road-bg"></div>
-        <div id="car-lanes"></div>
-        <div id="car-obstacles"></div>
-        <div class="car-goal" id="car-goal">🏁</div>
-        <div class="sprite" id="car-player">🚕</div>
-      </div>
-      <div class="toast" id="car-toast"></div>
-      <div class="scene-objective">🏁 Weiche aus und erreiche das Ziel!</div>
-    </div>
-    <button class="exit-btn" id="car-exit-btn" type="button">🚪 Verlassen</button>
-  </div>
-
-  <div class="scene" id="scene-house">
-    <div class="room-bg">
-      <div class="room-wall"></div>
-      <div class="room-floor"></div>
-      <div class="window"></div>
-      <div class="picture-frame"></div>
-      <div class="couch drop-target" id="drop-couch"></div>
-      <div class="basket drop-target" id="drop-basket"></div>
-    </div>
-    <button class="exit-btn" id="exit-house" type="button">🚪 Raus</button>
-    <div class="stat-bars">
-      <div class="stat">💧<div class="stat-track"><div class="stat-fill" id="stat-water"></div></div></div>
-      <div class="stat">✨<div class="stat-track"><div class="stat-fill" id="stat-fur"></div></div></div>
-      <div class="stat">🍖<div class="stat-track"><div class="stat-fill" id="stat-hunger"></div></div></div>
-      <div class="stat">❤️<div class="stat-track"><div class="stat-fill" id="stat-love"></div></div></div>
-    </div>
-    <div class="dog-big" id="dog-house"></div>
-    <div class="hearts-layer" id="hearts-layer"></div>
-    <div class="items-tray">
-      <div class="item" data-item="water" id="item-water">💧</div>
-      <div class="item" data-item="brush" id="item-brush">🪮</div>
-      <div class="item" data-item="snack" id="item-snack">🍖</div>
-    </div>
+  <div class="hud-tr">
+    <span class="pill glass" id="hud-extra" hidden></span>
+    <span class="pill glass bones-pill" id="bones-pill">🦴 <b id="bones">0</b></span>
+    <button class="icon-btn glass" id="btn-quests" type="button" aria-label="Aufgaben">📜</button>
   </div>
 </div>
 
-<div class="joystick" id="joystick">
-  <div class="joy-base" id="joy-base"><div class="joy-knob" id="joy-knob"></div></div>
+<div id="joyzone"></div>
+<div id="joystick"><div class="joy-base"></div><div class="joy-knob" id="joy-knob"></div></div>
+<div id="actions"></div>
+
+<div id="house-ui" hidden>
+  <div class="care-bars glass">
+    <div class="cb">❤️<i><b id="cb-love"></b></i></div>
+    <div class="cb">🍖<i><b id="cb-hunger"></b></i></div>
+    <div class="cb">💧<i><b id="cb-water"></b></i></div>
+    <div class="cb">✨<i><b id="cb-fur"></b></i></div>
+    <div class="cb">⚡<i><b id="cb-energy"></b></i></div>
+    <div class="mood" id="mood"></div>
+  </div>
+  <div class="house-right">
+    <button class="pill glass pill-btn" id="btn-wardrobe" type="button">🎀 Garderobe</button>
+  </div>
+  <div class="tray glass" id="tray">
+    <div class="item" data-item="snack">🍖<small>Futter</small></div>
+    <div class="item" data-item="water">💧<small>Wasser</small></div>
+    <div class="item" data-item="brush">🪮<small>Bürste</small></div>
+    <div class="item" data-item="ball">🎾<small>Ball</small></div>
+  </div>
+</div>
+
+<div id="toast" class="glass pill"></div>
+<div id="banner"><span id="banner-text"></span></div>
+<div id="modal"><div class="card" id="modal-card"></div></div>
+
+<div id="title">
+  <button class="pill glass pill-btn title-back" id="title-back" type="button">↩ Bestellliste</button>
+  <div>
+    <div class="logo" aria-label="Pets"><span>P</span><span>e</span><span>t</span><span>s</span></div>
+    <div class="tagline" id="tagline">Gassi gehen, spielen, kuscheln.</div>
+    <button class="start-btn" id="start-btn" type="button">Los geht's 🐾</button>
+  </div>
+  <div class="title-foot">Tipp: Am Handy im Querformat spielen · Ton an für das volle Erlebnis</div>
 </div>
 
 <div class="wait-bar-thin" id="wait-bar-thin"><div class="wait-bar-thin-fill" id="wait-bar-thin-fill"></div></div>
 
-<script>
-(function () {
-  'use strict';
-
-  /* ================= Bestell-Sammelbalken ================= */
-  (function () {
-    var KEY = 'mw-wait-order';
-    var bar = document.getElementById('wait-bar-thin');
-    var fill = document.getElementById('wait-bar-thin-fill');
-    function tick() {
-      var q;
-      try { q = JSON.parse(localStorage.getItem(KEY)); } catch (e) { q = null; }
-      if (!q || !q.length) { bar.classList.remove('show'); return; }
-      bar.classList.add('show');
-      var start = q[0].start, end = q[q.length - 1].end, now = Date.now();
-      var pct = Math.max(0, Math.min(100, ((now - start) / (end - start)) * 100));
-      fill.style.width = pct + '%';
-      fill.classList.toggle('gold', now >= end);
-    }
-    tick(); setInterval(tick, 1000);
-  })();
-
-  /* ================= Orientierung + Zurück ================= */
-  document.addEventListener('click', function once() {
-    document.removeEventListener('click', once);
-    try { if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(function () {}); } catch (e) {}
-  }, { once: true });
-  document.getElementById('back-btn').addEventListener('click', function () { location.href = '../index.html'; });
-
-  /* ================= Sound (Web Audio, dezent & einheitlich) ================= */
-  var SFX = (function () {
-    var ctx = null, master = null;
-    function ensure() {
-      if (ctx) return ctx;
-      try {
-        ctx = new (window.AudioContext || window.webkitAudioContext)();
-        master = ctx.createGain(); master.gain.value = 0.35;
-        master.connect(ctx.destination);
-      } catch (e) {}
-      return ctx;
-    }
-    function resume() { if (ctx && ctx.state === 'suspended') ctx.resume(); }
-    function tone(freq, start, dur, type, peak) {
-      var o = ctx.createOscillator(), g = ctx.createGain();
-      o.type = type; o.frequency.value = freq;
-      g.gain.setValueAtTime(0, start);
-      g.gain.linearRampToValueAtTime(peak, start + 0.015);
-      g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
-      o.connect(g); g.connect(master);
-      o.start(start); o.stop(start + dur + 0.05);
-    }
-    function noise(start, dur, peak, freq) {
-      var bufSize = Math.floor(ctx.sampleRate * dur);
-      var buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
-      var data = buf.getChannelData(0);
-      for (var i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
-      var src = ctx.createBufferSource(); src.buffer = buf;
-      var g = ctx.createGain(), filt = ctx.createBiquadFilter();
-      filt.type = 'bandpass'; filt.frequency.value = freq || 1200;
-      g.gain.setValueAtTime(0, start);
-      g.gain.linearRampToValueAtTime(peak, start + 0.01);
-      g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
-      src.connect(filt); filt.connect(g); g.connect(master);
-      src.start(start); src.stop(start + dur + 0.02);
-    }
-    function play(name) {
-      if (!ensure()) return;
-      resume();
-      var t = ctx.currentTime;
-      if (name === 'step') tone(220 + Math.random() * 30, t, 0.06, 'sine', 0.05);
-      else if (name === 'splash') noise(t, 0.18, 0.12, 900);
-      else if (name === 'pet') { tone(660, t, 0.18, 'sine', 0.12); tone(880, t + 0.08, 0.2, 'sine', 0.1); }
-      else if (name === 'dig') noise(t, 0.3, 0.08, 400);
-      else if (name === 'bone') { tone(880, t, 0.12, 'triangle', 0.12); tone(1320, t + 0.09, 0.18, 'triangle', 0.12); }
-      else if (name === 'throw') noise(t, 0.22, 0.1, 2200);
-      else if (name === 'grab') tone(500, t, 0.1, 'square', 0.08);
-      else if (name === 'happy') { tone(523, t, 0.15, 'triangle', 0.12); tone(659, t + 0.1, 0.15, 'triangle', 0.12); tone(784, t + 0.2, 0.22, 'triangle', 0.12); }
-      else if (name === 'drop') tone(200, t, 0.15, 'sine', 0.1);
-      else if (name === 'wake') tone(440, t, 0.12, 'sine', 0.1);
-      else if (name === 'call') { tone(1500, t, 0.14, 'sine', 0.11); tone(1100, t + 0.11, 0.16, 'sine', 0.1); }
-    }
-    return { play: play };
-  })();
-
-  /* ================= Freie Welt (kein Kachelraster) ================= */
-  var WORLD = { w: 2200, h: 1300 };
-  var DOOR_ZONE = { x: 330, y: 648, r: 55 };
-  var HOUSE = { x: 220, y: 430, w: 300, h: 190 };
-  var TREES = [
-    { x: 520, y: 260, r: 26 }, { x: 900, y: 180, r: 24 }, { x: 1450, y: 340, r: 28 },
-    { x: 1780, y: 760, r: 24 }, { x: 640, y: 900, r: 26 }, { x: 1150, y: 1020, r: 22 },
-    /* dichteres Wäldchen oben rechts */
-    { x: 1900, y: 160, r: 24 }, { x: 1980, y: 240, r: 20 }, { x: 1860, y: 280, r: 22 },
-    { x: 2000, y: 340, r: 18 }, { x: 1930, y: 90, r: 20 }
-  ];
-  var ROCKS = [
-    { x: 150, y: 150, r: 22 }, { x: 235, y: 210, r: 17 }, { x: 110, y: 260, r: 19 },
-    { x: 320, y: 120, r: 15 }, { x: 380, y: 230, r: 23 }, { x: 190, y: 320, r: 16 },
-    { x: 2080, y: 900, r: 20 }, { x: 2000, y: 1000, r: 16 },
-    /* Felsregion um den Höhleneingang */
-    { x: 1970, y: 1070, r: 22 }, { x: 2135, y: 1090, r: 18 }, { x: 1955, y: 1225, r: 17 },
-    { x: 2145, y: 1235, r: 21 }, { x: 2065, y: 1045, r: 15 }, { x: 2020, y: 1270, r: 16 }
-  ];
-  var CAVE_ENTRANCE = { x: 2050, y: 1180, r: 55 };
-  var JHOUSE = { x: 1580, y: 40, w: 200, h: 140 };
-  var JDOOR_ZONE = { x: 1680, y: 205, r: 50 };
-  var MUD_PUDDLES = [
-    { x: 700, y: 500, r: 46 }, { x: 1050, y: 720, r: 40 }, { x: 1650, y: 950, r: 52 },
-    { x: 900, y: 1080, r: 42 }, { x: 1900, y: 320, r: 38 }, { x: 160, y: 900, r: 44 }
-  ];
-  var POND = { x: 1400, y: 620, rx: 150, ry: 100 };
-  var CREEK_HALF = 17;
-  var CREEK_PTS = [
-    { x: 1400, y: -20 }, { x: 1400, y: 50 }, { x: 1335, y: 105 }, { x: 1410, y: 165 },
-    { x: 1460, y: 225 }, { x: 1400, y: 285 }, { x: 1400, y: 345 }, { x: 1400, y: 425 }, { x: 1400, y: 522 }
-  ];
-  var BRIDGE_W = 92, BRIDGE_H = 40;
-  var BRIDGE_POS = { x: 1400 - BRIDGE_W / 2, y: 385 - BRIDGE_H / 2 };
-  var BRIDGE_CENTER = { x: 1400, y: 385 };
-  var GRAVEL_PTS = [
-    { x: 330, y: 700 }, { x: 330, y: 860 }, { x: 420, y: 910 }, { x: 420, y: 1100 }, { x: 420, y: 1264 }
-  ];
-  var GATE_POS = { x: 420, y: 1264 };
-  var DOCK_W = 150, DOCK_H = 36;
-  var DOCK_POS = { x: POND.x - POND.rx - (DOCK_W - 90), y: POND.y - DOCK_H / 2 };
-  var FISH_SPOT = { x: DOCK_POS.x + DOCK_W - 18, y: POND.y, r: 26 };
-  var CAR_SPOT = { x: GATE_POS.x, y: GATE_POS.y - 20, r: 70 };
-  var PLAYER_R = 15, DOG_R = 13;
-
-  function distToSeg(px, py, ax, ay, bx, by) {
-    var dx = bx - ax, dy = by - ay;
-    var len2 = dx * dx + dy * dy;
-    var t = len2 ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / len2)) : 0;
-    var cx = ax + dx * t, cy = ay + dy * t;
-    return Math.hypot(px - cx, py - cy);
-  }
-  function inCreek(x, y, pad) {
-    pad = pad || 0;
-    if (Math.hypot(x - BRIDGE_CENTER.x, y - BRIDGE_CENTER.y) < 55) return false;
-    for (var i = 0; i < CREEK_PTS.length - 1; i++) {
-      var p = CREEK_PTS[i], q = CREEK_PTS[i + 1];
-      if (distToSeg(x, y, p.x, p.y, q.x, q.y) < CREEK_HALF + pad) return true;
-    }
-    return false;
-  }
-
-  var worldEl = document.getElementById('world');
-  var groundEl = document.getElementById('ground');
-  var obstaclesEl = document.getElementById('obstacles');
-  var stage = document.getElementById('outdoor-stage');
-  var playerEl = document.getElementById('player');
-  var dogOutEl = document.getElementById('dog-outdoor');
-  var dogVisualEl = document.getElementById('dog-visual');
-  var dogFacing = 1;
-  var leashPath = document.getElementById('leash-path');
-  var toastEl = document.getElementById('toast');
-
-  function toast(msg) {
-    toastEl.textContent = msg;
-    toastEl.classList.add('show');
-    clearTimeout(toast._t);
-    toast._t = setTimeout(function () { toastEl.classList.remove('show'); }, 1600);
-  }
-
-  /* ---- Detailliertere SVG-Illustrationen (Gradients für mehr Tiefe) ---- */
-  var DEFS =
-    '<defs>' +
-    '<radialGradient id="gCanopy" cx="35%" cy="30%" r="70%"><stop offset="0%" stop-color="#8fd47f"/><stop offset="100%" stop-color="#3f8f3a"/></radialGradient>' +
-    '<linearGradient id="gTrunk" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#8a5a3a"/><stop offset="100%" stop-color="#6b4226"/></linearGradient>' +
-    '<linearGradient id="gRoof" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#e07360"/><stop offset="100%" stop-color="#b4453a"/></linearGradient>' +
-    '<linearGradient id="gWall" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fbe8c2"/><stop offset="100%" stop-color="#eccb95"/></linearGradient>' +
-    '<radialGradient id="gHair" cx="35%" cy="25%" r="75%"><stop offset="0%" stop-color="#7a4a2b"/><stop offset="100%" stop-color="#5a3319"/></radialGradient>' +
-    '<radialGradient id="gDress" cx="35%" cy="20%" r="80%"><stop offset="0%" stop-color="#ff9ec4"/><stop offset="100%" stop-color="#e8639c"/></radialGradient>' +
-    '<radialGradient id="gSkin" cx="35%" cy="30%" r="75%"><stop offset="0%" stop-color="#ffe3c2"/><stop offset="100%" stop-color="#f0c398"/></radialGradient>' +
-    '<radialGradient id="gFur" cx="35%" cy="25%" r="80%"><stop offset="0%" stop-color="#f0c58a"/><stop offset="100%" stop-color="#c9924f"/></radialGradient>' +
-    '<radialGradient id="gRiver" cx="40%" cy="30%" r="80%"><stop offset="0%" stop-color="#9fe6f5"/><stop offset="100%" stop-color="#3f9fbf"/></radialGradient>' +
-    '<radialGradient id="gMud" cx="40%" cy="30%" r="80%"><stop offset="0%" stop-color="#8a6a45"/><stop offset="100%" stop-color="#5c4326"/></radialGradient>' +
-    '<radialGradient id="gRock" cx="35%" cy="25%" r="80%"><stop offset="0%" stop-color="#b8b0a4"/><stop offset="100%" stop-color="#7c7468"/></radialGradient>' +
-    '</defs>';
-
-  /* Jedes per innerHTML eingefügte SVG bekommt eigene, eindeutige IDs für Gradienten/Filter.
-     Duplizierte IDs über viele gleichzeitig im DOM liegende Inline-SVGs hinweg führen auf
-     manchen Android-WebViews dazu, dass url(#...)-Referenzen auf ein falsches/leeres Element
-     zeigen (Hund wird nur als Kontur ohne Füllfarbe gerendert). */
-  var svgUidCounter = 0;
-  var SVG_ID_RE = /(#|id=")(gCanopy|gTrunk|gRoof|gWall|gHair|gDress|gSkin|gFur|gRiver|gMud|gRock|pn|cn|gr|mn)(["')])/g;
-  function uidSvg(html) {
-    var uid = '_' + (++svgUidCounter);
-    return html.replace(SVG_ID_RE, function (m, pre, id, post) { return pre + id + uid + post; });
-  }
-  /* SVGs mit feTurbulence/feDisplacementMap (Teich, Bach, Kiesweg, Pfützen) werden als <img>
-     statt als Live-Inline-SVG eingebettet: der Browser rastert den Filter dann einmalig beim
-     Laden und behandelt das Ergebnis danach wie ein normales Bild. Ohne das rendern manche
-     Android-WebViews den Filter bei jeder Kamera-Bewegung (transform auf #world) neu, was auf
-     schwächeren Geräten zu massiven Frameraten-Einbrüchen führt. Optisch ist das Ergebnis identisch. */
-  function svgToImg(svgMarkup) {
-    /* Als eigenständige Bildressource braucht das SVG eine explizite xmlns-Deklaration,
-       sonst scheitert das Decodieren (Bild bleibt leer/kaputt) - inline per innerHTML war das nie nötig. */
-    if (svgMarkup.indexOf('xmlns=') === -1) {
-      svgMarkup = svgMarkup.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" ');
-    }
-    return '<img src="data:image/svg+xml,' + encodeURIComponent(svgMarkup) + '" style="display:block;width:100%;height:100%;" alt="">';
-  }
-
-  function svgTree() {
-    var oc = '#2e5a2a';
-    return uidSvg('<svg viewBox="0 0 48 56">' + DEFS +
-      '<ellipse cx="24" cy="50" rx="10" ry="3" fill="rgba(0,0,0,.18)"/>' +
-      '<rect x="20" y="30" width="8" height="18" rx="3" fill="url(#gTrunk)" stroke="#4a2f1a" stroke-width="1"/>' +
-      '<circle cx="24" cy="20" r="16" fill="url(#gCanopy)" stroke="' + oc + '" stroke-width="1.4"/>' +
-      '<circle cx="14" cy="26" r="10" fill="url(#gCanopy)" stroke="' + oc + '" stroke-width="1.2"/>' +
-      '<circle cx="34" cy="26" r="10" fill="url(#gCanopy)" stroke="' + oc + '" stroke-width="1.2"/>' +
-      '<circle cx="18" cy="14" r="4" fill="#fff" opacity=".25"/>' +
-      '</svg>');
-  }
-  function svgHouse() {
-    return uidSvg('<svg viewBox="0 0 100 100">' + DEFS +
-      '<polygon points="50,4 96,42 4,42" fill="url(#gRoof)"/>' +
-      '<rect x="4" y="40" width="92" height="2" fill="#8a3a2f"/>' +
-      '<rect x="16" y="40" width="68" height="54" fill="url(#gWall)"/>' +
-      '<rect x="42" y="62" width="18" height="32" fill="#8a5a3a" rx="3"/>' +
-      '<circle cx="55" cy="78" r="1.6" fill="#f2dcae"/>' +
-      '<rect x="22" y="52" width="16" height="16" fill="#bfe8f5" stroke="#fff" stroke-width="3"/>' +
-      '<rect x="62" y="52" width="16" height="16" fill="#bfe8f5" stroke="#fff" stroke-width="3"/>' +
-      '<rect x="76" y="10" width="8" height="16" fill="#8a5a3a"/>' +
-      '<circle cx="24" cy="96" r="4" fill="#e07360" opacity=".8"/><circle cx="30" cy="96" r="4" fill="#e8639c" opacity=".8"/>' +
-      '</svg>');
-  }
-  function svgJapaneseHouse() {
-    return uidSvg('<svg viewBox="0 0 100 90">' + DEFS +
-      '<polygon points="50,2 94,30 82,30 82,36 18,36 18,30 6,30" fill="#8a2f2f" stroke="#5a1c1c" stroke-width="1.5"/>' +
-      '<polygon points="50,10 82,30 18,30" fill="#a8403f"/>' +
-      '<rect x="20" y="36" width="60" height="46" fill="#e8cfa0" stroke="#6b4226" stroke-width="1.5"/>' +
-      '<rect x="20" y="36" width="60" height="6" fill="#c9a565"/>' +
-      '<rect x="34" y="52" width="32" height="30" fill="#f4e8cf" stroke="#8a5a3a" stroke-width="1.5"/>' +
-      '<line x1="50" y1="52" x2="50" y2="82" stroke="#8a5a3a" stroke-width="1.2"/>' +
-      '<line x1="34" y1="67" x2="66" y2="67" stroke="#8a5a3a" stroke-width="1.2"/>' +
-      '<rect x="8" y="10" width="6" height="20" fill="#8a5a3a"/>' +
-      '<circle cx="11" cy="8" r="4" fill="#a8403f"/>' +
-      '</svg>');
-  }
-  function svgCaveMouth() {
-    return uidSvg('<svg viewBox="0 0 140 110">' + DEFS +
-      '<ellipse cx="70" cy="104" rx="60" ry="6" fill="rgba(0,0,0,.25)"/>' +
-      '<path d="M6 100C-2 60 18 14 70 10c52 4 72 50 64 90z" fill="url(#gRock)" stroke="#4a463c" stroke-width="2"/>' +
-      '<ellipse cx="70" cy="76" rx="34" ry="40" fill="#120d0a"/>' +
-      '<ellipse cx="70" cy="76" rx="34" ry="40" fill="none" stroke="#000" stroke-width="2" opacity=".5"/>' +
-      '</svg>');
-  }
-  function svgPlayer() {
-    /* Frau: Zopf, Kleid */
-    var oc = '#5a3a1f', ow = 1.2;
-    return uidSvg('<svg viewBox="0 0 40 50">' + DEFS +
-      '<ellipse cx="20" cy="46" rx="10" ry="3" fill="rgba(0,0,0,.2)"/>' +
-      '<path d="M11 22c0 10 3 20 9 20s9-10 9-20z" fill="url(#gDress)" stroke="' + oc + '" stroke-width="' + ow + '"/>' +
-      '<circle cx="20" cy="13" r="10.5" fill="url(#gSkin)" stroke="' + oc + '" stroke-width="' + ow + '"/>' +
-      '<path d="M9.5 12a10.5 10.5 0 0 1 21 0c-1-1-3-4-10.5-4s-9.5 3-10.5 4z" fill="url(#gHair)" stroke="' + oc + '" stroke-width="1"/>' +
-      '<path d="M28 14c3 1 4 6 2 9-1-3-1-6-2-9z" fill="url(#gHair)" stroke="' + oc + '" stroke-width="1"/>' +
-      '<circle cx="16.5" cy="14" r="1.5" fill="#3a2a20"/><circle cx="23.5" cy="14" r="1.5" fill="#3a2a20"/>' +
-      '<circle cx="14.5" cy="17" r="1.6" fill="#f4a6b0" opacity=".7"/><circle cx="25.5" cy="17" r="1.6" fill="#f4a6b0" opacity=".7"/>' +
-      '<path d="M16.5 18.5c1.5 1.5 5.5 1.5 7 0" stroke="#a8583f" stroke-width="1.3" fill="none" stroke-linecap="round"/>' +
-      '</svg>');
-  }
-  function svgCouch() {
-    return uidSvg('<svg viewBox="0 0 190 90">' +
-      '<ellipse cx="95" cy="82" rx="80" ry="6" fill="rgba(0,0,0,.15)"/>' +
-      '<rect x="10" y="30" width="170" height="45" rx="16" fill="#c0596b" stroke="#7a2f3c" stroke-width="1.5"/>' +
-      '<rect x="10" y="16" width="170" height="30" rx="14" fill="#d97088" stroke="#7a2f3c" stroke-width="1.5"/>' +
-      '<circle cx="28" cy="34" r="16" fill="#e88298" stroke="#7a2f3c" stroke-width="1.5"/>' +
-      '<circle cx="162" cy="34" r="16" fill="#e88298" stroke="#7a2f3c" stroke-width="1.5"/>' +
-      '<rect x="4" y="40" width="14" height="40" rx="6" fill="#a84457" stroke="#7a2f3c" stroke-width="1.5"/>' +
-      '<rect x="172" y="40" width="14" height="40" rx="6" fill="#a84457" stroke="#7a2f3c" stroke-width="1.5"/>' +
-      '<rect x="14" y="76" width="10" height="10" fill="#6b4226"/><rect x="166" y="76" width="10" height="10" fill="#6b4226"/>' +
-      '</svg>');
-  }
-  function svgBasket() {
-    return uidSvg('<svg viewBox="0 0 130 90">' +
-      '<ellipse cx="65" cy="82" rx="55" ry="6" fill="rgba(0,0,0,.15)"/>' +
-      '<path d="M15 45h100l-10 35a8 8 0 0 1-8 6H33a8 8 0 0 1-8-6z" fill="#c9924f" stroke="#7a5a34" stroke-width="1.5"/>' +
-      '<path d="M15 45c0-10 22-18 50-18s50 8 50 18" fill="none" stroke="#7a5a34" stroke-width="2"/>' +
-      '<path d="M22 45c6-4 12-6 20-7M45 45c6-4 12-6 20-7M68 45c6-4 12-6 20-7M91 45c6-4 12-6 15-7" stroke="#7a5a34" stroke-width="1.2" fill="none" opacity=".6"/>' +
-      '<ellipse cx="65" cy="52" rx="36" ry="9" fill="#e8c9a0"/>' +
-      '<ellipse cx="65" cy="52" rx="36" ry="9" fill="none" stroke="#7a5a34" stroke-width="1.2"/>' +
-      '</svg>');
-  }
-  function svgDog(dirty) {
-    var speck = dirty ? '<circle cx="18" cy="30" r="2.4" fill="#7a5a34" opacity=".55"/><circle cx="34" cy="20" r="2" fill="#7a5a34" opacity=".5"/><circle cx="12" cy="22" r="1.8" fill="#7a5a34" opacity=".5"/>' : '';
-    var oc = '#5a3a1f', ow = 1.4;
-    return uidSvg('<svg viewBox="0 0 60 44">' + DEFS +
-      '<ellipse cx="30" cy="40" rx="16" ry="3" fill="rgba(0,0,0,.18)"/>' +
-      '<ellipse cx="26" cy="26" rx="17" ry="13" fill="url(#gFur)" stroke="' + oc + '" stroke-width="' + ow + '"/>' +
-      '<circle cx="46" cy="18" r="11" fill="url(#gFur)" stroke="' + oc + '" stroke-width="' + ow + '"/>' +
-      '<path d="M38 10c-2-5 2-8 5-6-1 3-1 6-2 8z" fill="#a8703c" stroke="' + oc + '" stroke-width="1"/>' +
-      '<path d="M52 10c3-4 8-3 8 1-3 1-6 3-7 5z" fill="#a8703c" stroke="' + oc + '" stroke-width="1"/>' +
-      '<circle cx="42" cy="17" r="1.6" fill="#3a2a20"/><circle cx="50" cy="16" r="1.6" fill="#3a2a20"/>' +
-      '<ellipse cx="55" cy="21" rx="3" ry="2.2" fill="#3a2a20"/>' +
-      '<path class="tail" d="M10 22c-6 1-8 6-4 9 3-2 6-4 8-6z" fill="url(#gFur)" stroke="' + oc + '" stroke-width="1"/>' +
-      speck +
-      '</svg>');
-  }
-  function svgPond() {
-    /* unregelmäßiger, organischer Teich statt gerader Kanten */
-    var w = POND.rx * 2, h = POND.ry * 2;
-    var path = 'M ' + w * 0.02 + ' ' + h * 0.42 +
-      ' C ' + w * -0.03 + ' ' + h * 0.18 + ', ' + w * 0.22 + ' ' + h * -0.06 + ', ' + w * 0.46 + ' ' + h * 0.02 +
-      ' C ' + w * 0.7 + ' ' + h * 0.09 + ', ' + w * 0.92 + ' ' + h * 0.06 + ', ' + w * 1.01 + ' ' + h * 0.34 +
-      ' C ' + w * 1.08 + ' ' + h * 0.58 + ', ' + w * 0.9 + ' ' + h * 0.72 + ', ' + w * 0.78 + ' ' + h * 0.9 +
-      ' C ' + w * 0.6 + ' ' + h * 1.06 + ', ' + w * 0.3 + ' ' + h * 1.02 + ', ' + w * 0.14 + ' ' + h * 0.86 +
-      ' C ' + w * 0.0 + ' ' + h * 0.72 + ', ' + w * 0.06 + ' ' + h * 0.58 + ', ' + w * 0.02 + ' ' + h * 0.42 + ' Z';
-    return uidSvg('<svg viewBox="' + (-w * 0.12) + ' ' + (-h * 0.12) + ' ' + (w * 1.24) + ' ' + (h * 1.24) + '" width="' + w + '" height="' + h + '" style="overflow:visible">' + DEFS +
-      '<filter id="pn" x="-30%" y="-30%" width="160%" height="160%"><feTurbulence type="fractalNoise" baseFrequency="0.025" numOctaves="2" result="t"/><feDisplacementMap in="SourceGraphic" in2="t" scale="16"/></filter>' +
-      '<path d="' + path + '" fill="url(#gRiver)" stroke="#2f7a91" stroke-width="2" filter="url(#pn)"/>' +
-      '<path d="' + path + '" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="4" filter="url(#pn)" transform="scale(.82) translate(' + w * 0.09 + ',' + h * 0.08 + ')"/>' +
-      '</svg>');
-  }
-  function ptsToPath(pts, ox, oy) {
-    var d = 'M ' + (pts[0].x - ox) + ' ' + (pts[0].y - oy);
-    for (var i = 1; i < pts.length; i++) d += ' L ' + (pts[i].x - ox) + ' ' + (pts[i].y - oy);
-    return d;
-  }
-  function boundsOf(pts, margin) {
-    var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    pts.forEach(function (p) {
-      minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x);
-      minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y);
-    });
-    return { x: minX - margin, y: minY - margin, w: (maxX - minX) + margin * 2, h: (maxY - minY) + margin * 2 };
-  }
-  function svgCreek() {
-    var b = boundsOf(CREEK_PTS, 40);
-    var path = ptsToPath(CREEK_PTS, b.x, b.y);
-    return uidSvg('<svg viewBox="0 0 ' + b.w + ' ' + b.h + '" width="' + b.w + '" height="' + b.h + '" style="overflow:visible">' + DEFS +
-      '<filter id="cn" x="-40%" y="-10%" width="180%" height="120%"><feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" result="t"/><feDisplacementMap in="SourceGraphic" in2="t" scale="10"/></filter>' +
-      '<path d="' + path + '" fill="none" stroke="url(#gRiver)" stroke-width="' + (CREEK_HALF * 2) + '" stroke-linecap="round" stroke-linejoin="round" filter="url(#cn)"/>' +
-      '<path d="' + path + '" fill="none" stroke="#2f7a91" stroke-width="' + (CREEK_HALF * 2) + '" stroke-opacity=".25" stroke-linecap="round" stroke-linejoin="round" filter="url(#cn)"/>' +
-      '<path d="' + path + '" fill="none" stroke="#fff" stroke-opacity=".4" stroke-width="6" stroke-linejoin="round" filter="url(#cn)"/>' +
-      '</svg>');
-  }
-  function svgBridge() {
-    var w = BRIDGE_W, h = BRIDGE_H;
-    return uidSvg('<svg viewBox="0 0 ' + w + ' ' + h + '">' +
-      '<ellipse cx="' + (w / 2) + '" cy="' + (h - 4) + '" rx="' + (w / 2 - 4) + '" ry="4" fill="rgba(0,0,0,.15)"/>' +
-      '<rect x="3" y="' + (h * 0.34) + '" width="' + (w - 6) + '" height="' + (h * 0.38) + '" rx="3" fill="url(#gTrunk)" stroke="#4a2f1a" stroke-width="1.5"/>' +
-      [10, 24, 38, 52, 66, 80].filter(function (x) { return x < w - 6; }).map(function (x) {
-        return '<line x1="' + x + '" y1="' + (h * 0.34) + '" x2="' + x + '" y2="' + (h * 0.72) + '" stroke="#4a2f1a" stroke-width="1.2"/>';
-      }).join('') +
-      '<rect x="3" y="' + (h * 0.18) + '" width="' + (w - 6) + '" height="4" rx="2" fill="#8a5a3a"/>' +
-      '<rect x="3" y="' + (h * 0.72) + '" width="' + (w - 6) + '" height="4" rx="2" fill="#8a5a3a"/>' +
-      '</svg>');
-  }
-  function svgGravelPath() {
-    var b = boundsOf(GRAVEL_PTS, 30);
-    var path = ptsToPath(GRAVEL_PTS, b.x, b.y);
-    var specks = '';
-    for (var i = 1; i < GRAVEL_PTS.length; i++) {
-      var a = GRAVEL_PTS[i - 1], c = GRAVEL_PTS[i];
-      for (var k = 0; k < 4; k++) {
-        var f = (k + 0.5) / 4;
-        var sx = (a.x + (c.x - a.x) * f - b.x) + (Math.random() * 16 - 8);
-        var sy = (a.y + (c.y - a.y) * f - b.y) + (Math.random() * 16 - 8);
-        specks += '<circle cx="' + sx.toFixed(1) + '" cy="' + sy.toFixed(1) + '" r="' + (2 + (k % 3)) + '" fill="#a8927a" opacity=".55"/>';
-      }
-    }
-    return uidSvg('<svg viewBox="0 0 ' + b.w + ' ' + b.h + '" width="' + b.w + '" height="' + b.h + '" style="overflow:visible">' +
-      '<filter id="gr" x="-40%" y="-10%" width="180%" height="120%"><feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="1" result="t"/><feDisplacementMap in="SourceGraphic" in2="t" scale="5"/></filter>' +
-      '<path d="' + path + '" fill="none" stroke="#cdb896" stroke-width="30" stroke-linecap="round" stroke-linejoin="round" filter="url(#gr)"/>' +
-      '<path d="' + path + '" fill="none" stroke="#b8a17c" stroke-width="30" stroke-opacity=".3" stroke-linecap="round" stroke-linejoin="round" filter="url(#gr)"/>' +
-      specks +
-      '</svg>');
-  }
-  function svgGate() {
-    return uidSvg('<svg viewBox="0 0 40 40">' +
-      '<rect x="2" y="4" width="6" height="34" fill="url(#gTrunk)" stroke="#4a2f1a" stroke-width="1"/>' +
-      '<rect x="32" y="4" width="6" height="34" fill="url(#gTrunk)" stroke="#4a2f1a" stroke-width="1"/>' +
-      '<rect x="7" y="10" width="26" height="5" fill="#8a5a3a" stroke="#4a2f1a" stroke-width="1"/>' +
-      '<rect x="7" y="24" width="26" height="5" fill="#8a5a3a" stroke="#4a2f1a" stroke-width="1"/>' +
-      '<line x1="10" y1="10" x2="30" y2="29" stroke="#6b4226" stroke-width="3"/>' +
-      '<line x1="30" y1="10" x2="10" y2="29" stroke="#6b4226" stroke-width="3"/>' +
-      '</svg>');
-  }
-  function svgDock() {
-    /* Gleicher Look wie die Brücke: flaches Bohlen-Deck mit Geländer */
-    var w = DOCK_W, h = DOCK_H;
-    return uidSvg('<svg viewBox="0 0 ' + w + ' ' + h + '">' +
-      '<ellipse cx="' + (w / 2) + '" cy="' + (h - 4) + '" rx="' + (w / 2 - 4) + '" ry="4" fill="rgba(0,0,0,.15)"/>' +
-      '<rect x="3" y="' + (h * 0.34) + '" width="' + (w - 6) + '" height="' + (h * 0.38) + '" rx="3" fill="url(#gTrunk)" stroke="#4a2f1a" stroke-width="1.5"/>' +
-      [10, 30, 50, 70, 90, 110, 130].filter(function (x) { return x < w - 6; }).map(function (x) {
-        return '<line x1="' + x + '" y1="' + (h * 0.34) + '" x2="' + x + '" y2="' + (h * 0.72) + '" stroke="#4a2f1a" stroke-width="1.2"/>';
-      }).join('') +
-      '<rect x="3" y="' + (h * 0.18) + '" width="' + (w - 6) + '" height="4" rx="2" fill="#8a5a3a"/>' +
-      '<rect x="3" y="' + (h * 0.72) + '" width="' + (w - 6) + '" height="4" rx="2" fill="#8a5a3a"/>' +
-      '</svg>');
-  }
-  function svgPuddle(r) {
-    var w = r * 2, h = r * 1.3;
-    var path = 'M ' + w * 0.03 + ' ' + h * 0.5 +
-      ' C ' + w * -0.02 + ' ' + h * 0.2 + ', ' + w * 0.3 + ' ' + h * -0.05 + ', ' + w * 0.55 + ' ' + h * 0.04 +
-      ' C ' + w * 0.8 + ' ' + h * 0.12 + ', ' + w * 1.03 + ' ' + h * 0.32 + ', ' + w * 0.97 + ' ' + h * 0.58 +
-      ' C ' + w * 0.92 + ' ' + h * 0.85 + ', ' + w * 0.6 + ' ' + h * 1.05 + ', ' + w * 0.32 + ' ' + h * 0.94 +
-      ' C ' + w * 0.1 + ' ' + h * 0.85 + ', ' + w * 0.06 + ' ' + h * 0.7 + ', ' + w * 0.03 + ' ' + h * 0.5 + ' Z';
-    return uidSvg('<svg viewBox="' + (-w * 0.1) + ' ' + (-h * 0.15) + ' ' + (w * 1.2) + ' ' + (h * 1.3) + '" width="' + w + '" height="' + h + '" style="overflow:visible">' + DEFS +
-      '<filter id="mn" x="-30%" y="-30%" width="160%" height="160%"><feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="2" result="t"/><feDisplacementMap in="SourceGraphic" in2="t" scale="8"/></filter>' +
-      '<ellipse cx="' + (w * 0.5) + '" cy="' + (h * 0.95) + '" rx="' + (w * 0.5) + '" ry="' + (h * 0.12) + '" fill="rgba(0,0,0,.15)"/>' +
-      '<path d="' + path + '" fill="url(#gMud)" stroke="#3f2e18" stroke-width="1.5" opacity=".88" filter="url(#mn)"/>' +
-      '<ellipse cx="' + (w * 0.4) + '" cy="' + (h * 0.35) + '" rx="' + (w * 0.14) + '" ry="' + (h * 0.08) + '" fill="#fff" opacity=".18"/>' +
-      '</svg>');
-  }
-  function svgRock() {
-    return uidSvg('<svg viewBox="0 0 40 32">' + DEFS +
-      '<ellipse cx="20" cy="29" rx="17" ry="3" fill="rgba(0,0,0,.2)"/>' +
-      '<path d="M4 26c-2-8 3-16 12-18 7-2 14 2 18 8 3 5 1 12-4 14-8 4-22 3-26-4z" fill="url(#gRock)" stroke="#5a544a" stroke-width="1.3"/>' +
-      '<path d="M12 12c3-3 8-4 12-2" stroke="#fff" stroke-opacity=".3" stroke-width="2" fill="none" stroke-linecap="round"/>' +
-      '</svg>');
-  }
-
-  function buildWorld() {
-    groundEl.style.width = WORLD.w + 'px';
-    groundEl.style.height = WORLD.h + 'px';
-    worldEl.style.width = WORLD.w + 'px';
-    worldEl.style.height = WORLD.h + 'px';
-    document.getElementById('leash-svg').setAttribute('width', WORLD.w);
-    document.getElementById('leash-svg').setAttribute('height', WORLD.h);
-    document.getElementById('leash-svg').style.width = WORLD.w + 'px';
-    document.getElementById('leash-svg').style.height = WORLD.h + 'px';
-
-    obstaclesEl.innerHTML = '';
-    var FENCE = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'36\' height=\'36\'%3E%3Crect x=\'15\' y=\'2\' width=\'7\' height=\'32\' rx=\'2\' fill=\'%238a5a3a\'/%3E%3Crect x=\'0\' y=\'11\' width=\'36\' height=\'4\' fill=\'%236b4226\'/%3E%3Crect x=\'0\' y=\'22\' width=\'36\' height=\'4\' fill=\'%236b4226\'/%3E%3C/svg%3E")';
-    [
-      { l: 0, t: 0, w: WORLD.w, h: 36, rep: 'repeat-x' },
-      { l: 0, t: WORLD.h - 36, w: WORLD.w, h: 36, rep: 'repeat-x' },
-      { l: 0, t: 0, w: 36, h: WORLD.h, rep: 'repeat-y' },
-      { l: WORLD.w - 36, t: 0, w: 36, h: WORLD.h, rep: 'repeat-y' }
-    ].forEach(function (f) {
-      var el = document.createElement('div');
-      el.className = 'fence-edge';
-      el.style.left = f.l + 'px'; el.style.top = f.t + 'px';
-      el.style.width = f.w + 'px'; el.style.height = f.h + 'px';
-      el.style.backgroundImage = FENCE; el.style.backgroundRepeat = f.rep;
-      obstaclesEl.appendChild(el);
-    });
-
-    var gravelB = boundsOf(GRAVEL_PTS, 30);
-    var gravel = document.createElement('div');
-    gravel.className = 'gravel-svg';
-    gravel.style.left = gravelB.x + 'px'; gravel.style.top = gravelB.y + 'px';
-    gravel.innerHTML = svgToImg(svgGravelPath());
-    obstaclesEl.appendChild(gravel);
-
-    var gate = document.createElement('div');
-    gate.className = 'gate-sprite';
-    gate.style.left = (GATE_POS.x - 20) + 'px'; gate.style.top = (GATE_POS.y - 20) + 'px';
-    gate.style.width = '40px'; gate.style.height = '40px';
-    gate.innerHTML = svgGate();
-    obstaclesEl.appendChild(gate);
-
-    var creekB = boundsOf(CREEK_PTS, 40);
-    var creek = document.createElement('div');
-    creek.className = 'creek-svg';
-    creek.style.left = creekB.x + 'px'; creek.style.top = creekB.y + 'px';
-    creek.innerHTML = svgToImg(svgCreek());
-    obstaclesEl.appendChild(creek);
-
-    var pond = document.createElement('div');
-    pond.className = 'pond-svg';
-    pond.style.left = (POND.x - POND.rx) + 'px'; pond.style.top = (POND.y - POND.ry) + 'px';
-    pond.innerHTML = svgToImg(svgPond());
-    obstaclesEl.appendChild(pond);
-
-    var bridge = document.createElement('div');
-    bridge.className = 'bridge-sprite';
-    bridge.style.left = BRIDGE_POS.x + 'px'; bridge.style.top = BRIDGE_POS.y + 'px';
-    bridge.style.width = BRIDGE_W + 'px'; bridge.style.height = BRIDGE_H + 'px';
-    bridge.innerHTML = svgBridge();
-    obstaclesEl.appendChild(bridge);
-
-    var dock = document.createElement('div');
-    dock.className = 'bridge-sprite';
-    dock.style.left = DOCK_POS.x + 'px'; dock.style.top = DOCK_POS.y + 'px';
-    dock.style.width = DOCK_W + 'px'; dock.style.height = DOCK_H + 'px';
-    dock.innerHTML = svgDock();
-    obstaclesEl.appendChild(dock);
-
-    var hs = document.createElement('div');
-    hs.className = 'house-sprite';
-    hs.style.left = (HOUSE.x - 20) + 'px'; hs.style.top = (HOUSE.y - 70) + 'px';
-    hs.style.width = (HOUSE.w + 40) + 'px'; hs.style.height = (HOUSE.h + 70) + 'px';
-    hs.innerHTML = svgHouse();
-    obstaclesEl.appendChild(hs);
-
-    var jh = document.createElement('div');
-    jh.className = 'house-sprite';
-    jh.style.left = (JHOUSE.x - 10) + 'px'; jh.style.top = (JHOUSE.y - 20) + 'px';
-    jh.style.width = (JHOUSE.w + 20) + 'px'; jh.style.height = (JHOUSE.h + 40) + 'px';
-    jh.innerHTML = svgJapaneseHouse();
-    obstaclesEl.appendChild(jh);
-
-    var cave = document.createElement('div');
-    cave.className = 'house-sprite';
-    cave.style.left = (CAVE_ENTRANCE.x - 70) + 'px'; cave.style.top = (CAVE_ENTRANCE.y - 90) + 'px';
-    cave.style.width = '140px'; cave.style.height = '110px';
-    cave.innerHTML = svgCaveMouth();
-    obstaclesEl.appendChild(cave);
-
-    TREES.forEach(function (tr) {
-      var el = document.createElement('div');
-      el.className = 'tree-sprite';
-      var s = tr.r * 3.6;
-      el.style.left = (tr.x - s / 2) + 'px'; el.style.top = (tr.y - s * 0.62) + 'px';
-      el.style.width = s + 'px'; el.style.height = (s * 1.15) + 'px';
-      el.innerHTML = svgTree();
-      obstaclesEl.appendChild(el);
-    });
-
-    ROCKS.forEach(function (rk) {
-      var el = document.createElement('div');
-      el.className = 'rock-sprite';
-      var s = rk.r * 2.4;
-      el.style.left = (rk.x - s / 2) + 'px'; el.style.top = (rk.y - s * 0.6) + 'px';
-      el.style.width = s + 'px'; el.style.height = (s * 0.8) + 'px';
-      el.innerHTML = svgRock();
-      obstaclesEl.appendChild(el);
-    });
-
-    MUD_PUDDLES.forEach(function (m) {
-      var el = document.createElement('div');
-      el.className = 'puddle-svg';
-      el.style.left = (m.x - m.r * 1.1) + 'px'; el.style.top = (m.y - m.r * 0.75) + 'px';
-      el.innerHTML = svgToImg(svgPuddle(m.r));
-      obstaclesEl.appendChild(el);
-    });
-
-    for (var i = 0; i < 40; i++) {
-      var fx = 60 + Math.random() * (WORLD.w - 120);
-      var fy = 60 + Math.random() * (WORLD.h - 120);
-      if (inRect(fx, fy, HOUSE) || inPond(fx, fy, 20)) continue;
-      var fl = document.createElement('div');
-      fl.className = 'flower-sprite';
-      fl.style.left = fx + 'px'; fl.style.top = fy + 'px';
-      fl.style.fontSize = (12 + Math.random() * 8) + 'px';
-      fl.textContent = ['🌼', '🌸', '🍀', '🌿'][(Math.random() * 4) | 0];
-      obstaclesEl.appendChild(fl);
-    }
-
-    /* Wildblumen-/Hochgras-Wiese unten rechts: dichter und höher */
-    for (var j = 0; j < 35; j++) {
-      var mx = 680 + Math.random() * 620;
-      var my = 940 + Math.random() * 300;
-      if (inRect(mx, my, HOUSE)) continue;
-      var ml = document.createElement('div');
-      ml.className = 'flower-sprite';
-      ml.style.left = mx + 'px'; ml.style.top = my + 'px';
-      ml.style.fontSize = (14 + Math.random() * 12) + 'px';
-      ml.textContent = ['🌾', '🌾', '🌼', '🌸', '🌿'][(Math.random() * 5) | 0];
-      obstaclesEl.appendChild(ml);
-    }
-  }
-
-  playerEl.innerHTML = svgPlayer();
-
-  var player = { x: 460, y: 700 };
-  var dogPos = { x: 500, y: 740 };
-  var fetching = false;
-  var camX = player.x, camY = player.y;
-  var dogLeash = 160;
-  var dogWanderTarget = { x: dogPos.x, y: dogPos.y };
-  var dogWanderAt = 0;
-  var dogWanderSpeed = 60;
-  var dogWanderPause = 0;
-  var dogCalled = false, dogCallTimer = null;
-  var prevDogX = dogPos.x;
-  var fetchState = null;
-  var poop = null;
-  var dogVel = { x: 0, y: 0 };
-  var playerMud = 0, dogMud = 0, dogWasDirty = false;
-  function applyMud(el, lvl) {
-    /* nur schreiben, wenn sich der Wert sichtbar ändert - spart Style-Recalcs auf schwächeren Geräten */
-    var rounded = Math.round(lvl * 20);
-    if (el._mudStep === rounded) return;
-    el._mudStep = rounded;
-    el.style.filter = lvl > 0.03 ? 'sepia(' + Math.min(1, lvl * 1.1).toFixed(2) + ') saturate(2) brightness(' + (1 - lvl * 0.15).toFixed(2) + ')' : '';
-  }
-
-  function pickWanderTarget() {
-    var ang = Math.random() * Math.PI * 2;
-    var dist = 30 + Math.random() * (dogLeash - 30);
-    dogWanderTarget = {
-      x: Math.max(30, Math.min(WORLD.w - 30, player.x + Math.cos(ang) * dist)),
-      y: Math.max(30, Math.min(WORLD.h - 30, player.y + Math.sin(ang) * dist))
-    };
-    dogWanderSpeed = 35 + Math.random() * Math.random() * 85;
-    dogWanderPause = Math.random() < 0.3 ? 500 + Math.random() * 900 : 0;
-  }
-  function accelerateTo(vel, desired, accel, dt) {
-    var dx = desired.x - vel.x, dy = desired.y - vel.y;
-    var d = Math.hypot(dx, dy);
-    var maxDelta = accel * dt;
-    if (d <= maxDelta || d < 0.0001) { vel.x = desired.x; vel.y = desired.y; }
-    else { vel.x += dx / d * maxDelta; vel.y += dy / d * maxDelta; }
-  }
-
-  function inRect(x, y, r, pad) {
-    pad = pad || 0;
-    return x > r.x - pad && x < r.x + r.w + pad && y > r.y - pad && y < r.y + r.h + pad;
-  }
-  function inPond(x, y, pad) {
-    pad = pad || 0;
-    var dx = (x - POND.x) / (POND.rx + pad), dy = (y - POND.y) / (POND.ry + pad);
-    return dx * dx + dy * dy < 1;
-  }
-  function onDock(x, y, pad) {
-    pad = pad || 0;
-    return x > DOCK_POS.x - pad && x < DOCK_POS.x + DOCK_W + pad && y > DOCK_POS.y - pad && y < DOCK_POS.y + DOCK_H + pad;
-  }
-  function inMud(x, y) {
-    for (var i = 0; i < MUD_PUDDLES.length; i++) {
-      var m = MUD_PUDDLES[i];
-      if (Math.hypot(x - m.x, y - m.y) < m.r) return true;
-    }
-    return false;
-  }
-
-  function collides(x, y, r) {
-    if (x - r < 20 || y - r < 20 || x + r > WORLD.w - 20 || y + r > WORLD.h - 20) return true;
-    if (inRect(x, y, HOUSE, r)) return true;
-    if (inRect(x, y, JHOUSE, r)) return true;
-    for (var i = 0; i < TREES.length; i++) {
-      var t = TREES[i];
-      if (Math.hypot(x - t.x, y - t.y) < t.r + r * 0.7) return true;
-    }
-    for (var j = 0; j < ROCKS.length; j++) {
-      var rk = ROCKS[j];
-      if (Math.hypot(x - rk.x, y - rk.y) < rk.r + r * 0.7) return true;
-    }
-    if (inPond(x, y, r * 0.5) && !onDock(x, y, 12)) return true;
-    if (inCreek(x, y, r * 0.6)) return true;
-    return false;
-  }
-
-  function placeSprite(el, x, y, w, h) {
-    /* transform statt left/top: vermeidet Reflow/Layout bei jedem Frame (wichtig für Android) */
-    el.style.transform = 'translate(' + (x - w / 2) + 'px,' + (y - h * 0.82) + 'px)';
-  }
-
-  function updateLeash() {
-    var mx = (player.x + dogPos.x) / 2, my = (player.y + dogPos.y) / 2 + 14;
-    leashPath.setAttribute('d', 'M ' + player.x + ' ' + (player.y - 14) + ' Q ' + mx + ' ' + my + ' ' + dogPos.x + ' ' + (dogPos.y - 10));
-  }
-
-  function renderDog() {
-    dogVisualEl.innerHTML = svgDog(stats.fur < 45);
-    dogVisualEl.classList.toggle('face-left', dogFacing < 0);
-  }
-
-  function updateCamera() {
-    var vw = innerWidth, vh = innerHeight;
-    camX = WORLD.w <= vw ? WORLD.w / 2 : Math.max(vw / 2, Math.min(WORLD.w - vw / 2, player.x));
-    camY = WORLD.h <= vh ? WORLD.h / 2 : Math.max(vh / 2, Math.min(WORLD.h - vh / 2, player.y));
-    worldEl.style.transform = 'translate(' + (vw / 2 - camX) + 'px,' + (vh / 2 - camY) + 'px)';
-  }
-
-  function render() {
-    placeSprite(playerEl, player.x, player.y, 36, 46);
-    placeSprite(dogOutEl, dogPos.x, dogPos.y, 50, 38);
-    updateLeash();
-    updateCamera();
-  }
-
-  function maybeDig() {
-    if (fetching || Math.random() > 0.05) return;
-    dogVisualEl.classList.add('digging');
-    SFX.play('dig');
-    setTimeout(function () {
-      dogVisualEl.classList.remove('digging');
-      SFX.play('bone');
-      bones = (bones || 0) + 1;
-      try { localStorage.setItem('mw-pet-bones', String(bones)); } catch (e) {}
-      toast('🦴 Der Hund hat einen Knochen gefunden!');
-    }, 650);
-  }
-
-  /* ---- Eingabe: Tastatur (frei, auch diagonal) + Joystick ---- */
-  var keys = {};
-  document.addEventListener('keydown', function (e) {
-    keys[e.key] = true;
-    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].indexOf(e.key) >= 0) e.preventDefault();
-  });
-  document.addEventListener('keyup', function (e) { keys[e.key] = false; });
-
-  var joyVec = { x: 0, y: 0 };
-  (function () {
-    var base = document.getElementById('joy-base');
-    var knob = document.getElementById('joy-knob');
-    var active = false;
-    function update(e) {
-      var r = base.getBoundingClientRect();
-      var cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-      var dx = e.clientX - cx, dy = e.clientY - cy;
-      var maxD = r.width / 2 - 6;
-      var dist = Math.min(Math.hypot(dx, dy), maxD);
-      var ang = Math.atan2(dy, dx);
-      knob.style.transform = 'translate(' + (Math.cos(ang) * dist) + 'px,' + (Math.sin(ang) * dist) + 'px)';
-      var mag = dist / maxD;
-      if (mag < 0.12) { joyVec.x = 0; joyVec.y = 0; return; }
-      joyVec.x = Math.cos(ang) * mag; joyVec.y = Math.sin(ang) * mag;
-    }
-    base.addEventListener('pointerdown', function (e) { active = true; try { base.setPointerCapture(e.pointerId); } catch (err) {} update(e); });
-    base.addEventListener('pointermove', function (e) { if (active) update(e); });
-    function end() { active = false; joyVec.x = 0; joyVec.y = 0; knob.style.transform = 'translate(0,0)'; }
-    base.addEventListener('pointerup', end);
-    base.addEventListener('pointercancel', end);
-  })();
-
-  function getMoveVector() {
-    var kx = 0, ky = 0;
-    if (keys.ArrowLeft || keys.a) kx -= 1;
-    if (keys.ArrowRight || keys.d) kx += 1;
-    if (keys.ArrowUp || keys.w) ky -= 1;
-    if (keys.ArrowDown || keys.s) ky += 1;
-    if (kx || ky) { var len = Math.hypot(kx, ky); return { x: kx / len, y: ky / len }; }
-    if (joyVec.x || joyVec.y) return joyVec;
-    return { x: 0, y: 0 };
-  }
-
-  /* ---- Streicheln (Außen) ---- */
-  document.getElementById('btn-pet').addEventListener('click', function () {
-    if (Math.hypot(player.x - dogPos.x, player.y - dogPos.y) > 90) { toast('Der Hund ist zu weit weg!'); return; }
-    stats.love = Math.min(100, stats.love + 15); saveStats();
-    SFX.play('pet');
-    dogVisualEl.classList.remove('shake'); void dogVisualEl.offsetWidth; dogVisualEl.classList.add('shake');
-    popHeart(innerWidth / 2 - (player.x - dogPos.x), innerHeight / 2 - (player.y - dogPos.y) - 30);
-  });
-
-  /* ---- Herrufen ---- */
-  document.getElementById('btn-call').addEventListener('click', function () {
-    dogCalled = true;
-    if (dogCallTimer) { clearTimeout(dogCallTimer); dogCallTimer = null; }
-    SFX.play('call');
-  });
-
-  /* ---- Aufsammeln (Kackhaufen) ---- */
-  var btnCleanEl = document.getElementById('btn-clean');
-  function spawnPoop() {
-    var x = Math.max(60, Math.min(WORLD.w - 60, dogPos.x + (Math.random() * 50 - 25)));
-    var y = Math.max(60, Math.min(WORLD.h - 60, dogPos.y + (Math.random() * 50 - 25)));
-    if (inRect(x, y, HOUSE, 20) || inPond(x, y, 20) || inCreek(x, y, 20)) return;
-    var el = document.createElement('div');
-    el.className = 'poop-sprite';
-    el.style.left = (x - 14) + 'px'; el.style.top = (y - 14) + 'px';
-    el.textContent = '💩';
-    obstaclesEl.appendChild(el);
-    poop = { x: x, y: y, el: el };
-  }
-  function schedulePoop() {
-    var delay = 180000 + Math.random() * 240000;
-    setTimeout(function () {
-      if (sceneOutdoor.classList.contains('active') && !poop) spawnPoop();
-      schedulePoop();
-    }, delay);
-  }
-  btnCleanEl.addEventListener('click', function () {
-    if (!poop) return;
-    poop.el.remove(); poop = null;
-    btnCleanEl.hidden = true;
-    SFX.play('drop');
-    stats.love = Math.min(100, stats.love + 4); saveStats();
-  });
-
-  /* ---- Stöckchen werfen ---- */
-  var stickEl = document.getElementById('stick');
-  document.getElementById('btn-fetch').addEventListener('click', function () {
-    if (fetching || fetchState) return;
-    fetching = true;
-    document.getElementById('btn-fetch').disabled = true;
-    SFX.play('throw');
-    var ang = Math.random() * Math.PI * 2, dist = 140 + Math.random() * 100;
-    var target = { x: player.x + Math.cos(ang) * dist, y: player.y + Math.sin(ang) * dist };
-    target.x = Math.max(40, Math.min(WORLD.w - 40, target.x));
-    target.y = Math.max(40, Math.min(WORLD.h - 40, target.y));
-    stickEl.hidden = false;
-    stickEl.style.left = (player.x - 10) + 'px'; stickEl.style.top = (player.y - 10) + 'px';
-    requestAnimationFrame(function () {
-      stickEl.style.left = (target.x - 10) + 'px'; stickEl.style.top = (target.y - 10) + 'px';
-    });
-    dogCalled = false;
-    fetchState = { phase: 'go', target: target };
-  });
-
-  /* ================= Szenenwechsel ================= */
-  var sceneOutdoor = document.getElementById('scene-outdoor');
-  var sceneHouse = document.getElementById('scene-house');
-  var sceneMaze = document.getElementById('scene-maze');
-  var scenePlatform = document.getElementById('scene-platform');
-  var joystickEl = document.getElementById('joystick');
-  function setJoystickVisible(v) { joystickEl.style.display = v ? '' : 'none'; }
-  function enterHouse() {
-    sceneOutdoor.classList.remove('active');
-    sceneHouse.classList.add('active');
-    setJoystickVisible(false);
-    refreshStats();
-    renderDogHouse();
-  }
-  document.getElementById('exit-house').addEventListener('click', function () {
-    sceneHouse.classList.remove('active');
-    sceneOutdoor.classList.add('active');
-    setJoystickVisible(true);
-    player.x = DOOR_ZONE.x; player.y = DOOR_ZONE.y + DOOR_ZONE.r + 25;
-    dogPos = { x: player.x + 30, y: player.y };
-    prevDogX = dogPos.x; dogWanderTarget = { x: dogPos.x, y: dogPos.y }; dogCalled = false;
-    render();
-    renderDog();
-  });
-
-  /* ================= Höhlen-Labyrinth ================= */
-  function mulberry32(a) {
-    return function () {
-      a |= 0; a = a + 0x6D2B79F5 | 0;
-      var t = Math.imul(a ^ a >>> 15, 1 | a);
-      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
-      return ((t ^ t >>> 14) >>> 0) / 4294967296;
-    };
-  }
-  var MAZE_CW = 16, MAZE_CH = 12, MAZE_TILE = 42;
-  var MAZE_GW = MAZE_CW * 2 + 1, MAZE_GH = MAZE_CH * 2 + 1;
-  function buildMazeGrid(seed) {
-    var rng = mulberry32(seed);
-    var grid = [];
-    for (var i = 0; i < MAZE_GH; i++) grid.push(new Array(MAZE_GW).fill(1));
-    var visited = new Array(MAZE_CW * MAZE_CH).fill(false);
-    function idx(cx, cy) { return cy * MAZE_CW + cx; }
-    var stack = [{ x: 0, y: 0 }];
-    visited[0] = true;
-    grid[1][1] = 0;
-    while (stack.length) {
-      var cur = stack[stack.length - 1];
-      var dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
-      for (var i = dirs.length - 1; i > 0; i--) {
-        var j = (rng() * (i + 1)) | 0;
-        var tmp = dirs[i]; dirs[i] = dirs[j]; dirs[j] = tmp;
-      }
-      var moved = false;
-      for (var d = 0; d < dirs.length; d++) {
-        var nx = cur.x + dirs[d][0], ny = cur.y + dirs[d][1];
-        if (nx >= 0 && nx < MAZE_CW && ny >= 0 && ny < MAZE_CH && !visited[idx(nx, ny)]) {
-          visited[idx(nx, ny)] = true;
-          grid[2 * cur.y + 1 + dirs[d][1]][2 * cur.x + 1 + dirs[d][0]] = 0;
-          grid[2 * ny + 1][2 * nx + 1] = 0;
-          stack.push({ x: nx, y: ny });
-          moved = true;
-          break;
-        }
-      }
-      if (!moved) stack.pop();
-    }
-    /* Braiding: zusätzliche Wände einreißen, damit es mehr Abzweigungen/Schleifen statt nur einem Weg gibt */
-    for (var wy = 1; wy < MAZE_GH - 1; wy++) {
-      for (var wx = 1; wx < MAZE_GW - 1; wx++) {
-        var isInterWall = (wx % 2 === 0) !== (wy % 2 === 0);
-        if (!isInterWall || grid[wy][wx] !== 1) continue;
-        if (rng() < 0.16) grid[wy][wx] = 0;
-      }
-    }
-    return grid;
-  }
-  var MAZE_LAYOUTS = [buildMazeGrid(1337), buildMazeGrid(9001)];
-  var mazeGrid = MAZE_LAYOUTS[0];
-  var mazeStartCell = { gx: 1, gy: 1 };
-  var mazeExitCell = { gx: MAZE_GW - 2, gy: MAZE_GH - 2 };
-  var mazeDogPos = { x: 0, y: 0 };
-  var mazeVel = { x: 0, y: 0 };
-  var mazeKeyPos = null, mazeHasKey = false;
-  var mazeCamX = 0, mazeCamY = 0;
-  var mazeWorldEl = document.getElementById('maze-world');
-  var mazeGroundEl = document.getElementById('maze-ground');
-  var mazeWallsEl = document.getElementById('maze-walls');
-  var mazeDogEl = document.getElementById('maze-dog');
-  var mazeDogVisualEl = document.getElementById('maze-dog-visual');
-  var mazeKeyEl = document.getElementById('maze-key');
-  var mazeExitEl = document.getElementById('maze-exit-sprite');
-  var mazeToastEl = document.getElementById('maze-toast');
-  var mazeStage = document.getElementById('maze-stage');
-  function mazeToast(msg) {
-    mazeToastEl.textContent = msg;
-    mazeToastEl.classList.add('show');
-    clearTimeout(mazeToast._t);
-    mazeToast._t = setTimeout(function () { mazeToastEl.classList.remove('show'); }, 1800);
-  }
-  function mazeCell(gx, gy) {
-    if (gy < 0 || gy >= MAZE_GH || gx < 0 || gx >= MAZE_GW) return 1;
-    return mazeGrid[gy][gx];
-  }
-  function mazeBuildWalls() {
-    mazeWorldEl.style.width = (MAZE_GW * MAZE_TILE) + 'px';
-    mazeWorldEl.style.height = (MAZE_GH * MAZE_TILE) + 'px';
-    mazeGroundEl.style.width = (MAZE_GW * MAZE_TILE) + 'px';
-    mazeGroundEl.style.height = (MAZE_GH * MAZE_TILE) + 'px';
-    mazeWallsEl.innerHTML = '';
-    for (var gy = 0; gy < MAZE_GH; gy++) {
-      for (var gx = 0; gx < MAZE_GW; gx++) {
-        if (mazeGrid[gy][gx] === 1) {
-          var w = document.createElement('div');
-          w.className = 'maze-wall';
-          var wInset = 4;
-          w.style.left = (gx * MAZE_TILE + wInset) + 'px'; w.style.top = (gy * MAZE_TILE + wInset) + 'px';
-          w.style.width = (MAZE_TILE - wInset * 2) + 'px'; w.style.height = (MAZE_TILE - wInset * 2) + 'px';
-          mazeWallsEl.appendChild(w);
-        }
-      }
-    }
-  }
-  mazeBuildWalls();
-  function mazeCollides(x, y, r) {
-    var gx0 = Math.floor((x - r) / MAZE_TILE), gx1 = Math.floor((x + r) / MAZE_TILE);
-    var gy0 = Math.floor((y - r) / MAZE_TILE), gy1 = Math.floor((y + r) / MAZE_TILE);
-    for (var gy = gy0; gy <= gy1; gy++) {
-      for (var gx = gx0; gx <= gx1; gx++) {
-        if (mazeCell(gx, gy) === 1) return true;
-      }
-    }
-    return false;
-  }
-  function mazePlaceDog(gx, gy) {
-    mazeDogPos = { x: gx * MAZE_TILE + MAZE_TILE / 2, y: gy * MAZE_TILE + MAZE_TILE / 2 };
-    mazeVel = { x: 0, y: 0 };
-  }
-  function mazeRender() {
-    mazeDogEl.style.transform = 'translate(' + (mazeDogPos.x - 25) + 'px,' + (mazeDogPos.y - 20) + 'px)';
-    var vw = innerWidth, vh = innerHeight, ww = MAZE_GW * MAZE_TILE, wh = MAZE_GH * MAZE_TILE;
-    mazeCamX = ww <= vw ? ww / 2 : Math.max(vw / 2, Math.min(ww - vw / 2, mazeDogPos.x));
-    mazeCamY = wh <= vh ? wh / 2 : Math.max(vh / 2, Math.min(wh - vh / 2, mazeDogPos.y));
-    mazeWorldEl.style.transform = 'translate(' + (vw / 2 - mazeCamX) + 'px,' + (vh / 2 - mazeCamY) + 'px)';
-  }
-  function enterCave() {
-    sceneOutdoor.classList.remove('active');
-    sceneMaze.classList.add('active');
-    mazeGrid = MAZE_LAYOUTS[(Math.random() * MAZE_LAYOUTS.length) | 0];
-    mazeBuildWalls();
-    mazePlaceDog(mazeStartCell.gx, mazeStartCell.gy);
-    mazeHasKey = false;
-    mazeKeyEl.style.display = '';
-    mazeExitEl.style.left = (mazeExitCell.gx * MAZE_TILE + MAZE_TILE / 2 - 17) + 'px';
-    mazeExitEl.style.top = (mazeExitCell.gy * MAZE_TILE + MAZE_TILE / 2 - 17) + 'px';
-    /* Schlüssel bewusst abseits vom direkten Weg zum Ausgang platzieren, damit man
-       zuerst in eine Sackgasse abbiegen und danach wieder zurück muss. */
-    function mazeBFS(sx, sy) {
-      var dist = mazeGrid.map(function (row) { return row.map(function () { return -1; }); });
-      dist[sy][sx] = 0;
-      var q = [[sx, sy]], qi = 0;
-      while (qi < q.length) {
-        var cx = q[qi][0], cy = q[qi][1]; qi++;
-        [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(function (d) {
-          var nx = cx + d[0], ny = cy + d[1];
-          if (nx >= 0 && nx < MAZE_GW && ny >= 0 && ny < MAZE_GH && mazeGrid[ny][nx] === 0 && dist[ny][nx] === -1) {
-            dist[ny][nx] = dist[cy][cx] + 1;
-            q.push([nx, ny]);
-          }
-        });
-      }
-      return dist;
-    }
-    var distFromStart = mazeBFS(mazeStartCell.gx, mazeStartCell.gy);
-    var distFromExit = mazeBFS(mazeExitCell.gx, mazeExitCell.gy);
-    var directDist = distFromStart[mazeExitCell.gy][mazeExitCell.gx];
-    var candidates = [];
-    for (var gy = 1; gy < MAZE_GH; gy += 2) {
-      for (var gx = 1; gx < MAZE_GW; gx += 2) {
-        if (mazeGrid[gy][gx] !== 0) continue;
-        if (gx === mazeStartCell.gx && gy === mazeStartCell.gy) continue;
-        if (gx === mazeExitCell.gx && gy === mazeExitCell.gy) continue;
-        var detour = distFromStart[gy][gx] + distFromExit[gy][gx] - directDist;
-        candidates.push({ gx: gx, gy: gy, detour: detour });
-      }
-    }
-    candidates.sort(function (a, b) { return b.detour - a.detour; });
-    var topCount = Math.max(1, Math.ceil(candidates.length * 0.35));
-    var pick = candidates[(Math.random() * topCount) | 0];
-    mazeKeyPos = { x: pick.gx * MAZE_TILE + MAZE_TILE / 2, y: pick.gy * MAZE_TILE + MAZE_TILE / 2 };
-    mazeKeyEl.style.left = (mazeKeyPos.x - 14) + 'px'; mazeKeyEl.style.top = (mazeKeyPos.y - 14) + 'px';
-    mazeRender();
-  }
-  function exitMaze() {
-    sceneMaze.classList.remove('active');
-    sceneOutdoor.classList.add('active');
-    player.x = CAVE_ENTRANCE.x; player.y = CAVE_ENTRANCE.y + CAVE_ENTRANCE.r + 25;
-    dogPos = { x: player.x + 30, y: player.y };
-    prevDogX = dogPos.x; dogWanderTarget = { x: dogPos.x, y: dogPos.y }; dogCalled = false;
-    render(); renderDog();
-  }
-  document.getElementById('maze-exit-btn').addEventListener('click', exitMaze);
-
-  /* ================= Jump'n'Run (Japanisches Haus) ================= */
-  var PLATFORM_W = 2500, PLATFORM_H = 640;
-  var PLAT_FORWARD_SPEED = 170, PLAT_JUMP_VY = -480, PLAT_GRAVITY = 1100;
-  var PLATFORM_LEVELS = [
-    {
-      blocks: [
-        { x: 0, y: 560, w: 420, h: 80 },
-        { x: 480, y: 560, w: 240, h: 80 },
-        { x: 780, y: 500, w: 120, h: 26 },
-        { x: 960, y: 560, w: 200, h: 80 },
-        { x: 1220, y: 500, w: 120, h: 26 },
-        { x: 1400, y: 440, w: 120, h: 26 },
-        { x: 1580, y: 500, w: 120, h: 26 },
-        { x: 1760, y: 560, w: 740, h: 80 }
-      ],
-      goal: { x: 2420, y: 560 },
-      hazards: [
-        { baseX: 600, y: 542, range: 90, speed: 1.5 },
-        { baseX: 2000, y: 542, range: 160, speed: 1.1 }
-      ]
-    },
-    {
-      blocks: [
-        { x: 0, y: 560, w: 300, h: 80 },
-        { x: 360, y: 500, w: 110, h: 26 },
-        { x: 530, y: 560, w: 300, h: 80 },
-        { x: 890, y: 500, w: 110, h: 26 },
-        { x: 1060, y: 440, w: 110, h: 26 },
-        { x: 1230, y: 500, w: 110, h: 26 },
-        { x: 1400, y: 560, w: 300, h: 80 },
-        { x: 1760, y: 500, w: 110, h: 26 },
-        { x: 1930, y: 560, w: 570, h: 80 }
-      ],
-      goal: { x: 2400, y: 560 },
-      hazards: [
-        { baseX: 700, y: 542, range: 110, speed: 1.3 },
-        { baseX: 2150, y: 542, range: 150, speed: 1.4 }
-      ]
-    },
-    {
-      blocks: [
-        { x: 0, y: 560, w: 380, h: 80 },
-        { x: 440, y: 560, w: 200, h: 80 },
-        { x: 700, y: 500, w: 110, h: 26 },
-        { x: 870, y: 440, w: 110, h: 26 },
-        { x: 1040, y: 500, w: 110, h: 26 },
-        { x: 1210, y: 560, w: 300, h: 80 },
-        { x: 1570, y: 560, w: 160, h: 80 },
-        { x: 1790, y: 500, w: 120, h: 26 },
-        { x: 1970, y: 560, w: 530, h: 80 }
-      ],
-      goal: { x: 2440, y: 560 },
-      hazards: [
-        { baseX: 520, y: 542, range: 90, speed: 1.4 },
-        { baseX: 1650, y: 542, range: 70, speed: 1.6 }
-      ]
-    }
-  ];
-  var PLATFORM_BLOCKS = PLATFORM_LEVELS[0].blocks;
-  var PLATFORM_GOAL = PLATFORM_LEVELS[0].goal;
-  var platDog = { x: 60, y: 500, vx: 0, vy: 0, onGround: false };
-  var platWorldEl = document.getElementById('platform-world');
-  var platBlocksEl = document.getElementById('platform-platforms');
-  var platDogEl = document.getElementById('platform-dog');
-  var platDogVisualEl = document.getElementById('platform-dog-visual');
-  var platGoalEl = document.getElementById('platform-goal');
-  var platToastEl = document.getElementById('platform-toast');
-  var platFacing = 1;
-  var scenePlatformActive = false;
-  function platToast(msg) {
-    platToastEl.textContent = msg;
-    platToastEl.classList.add('show');
-    clearTimeout(platToast._t);
-    platToast._t = setTimeout(function () { platToastEl.classList.remove('show'); }, 1800);
-  }
-  var platHazardsEl = document.getElementById('platform-hazards');
-  var platHazards = [];
-  var platHazardT = 0;
-  function platBuild(levelIdx) {
-    var lvl = PLATFORM_LEVELS[levelIdx || 0];
-    PLATFORM_BLOCKS = lvl.blocks;
-    PLATFORM_GOAL = lvl.goal;
-    platWorldEl.style.width = PLATFORM_W + 'px';
-    platWorldEl.style.height = PLATFORM_H + 'px';
-    platBlocksEl.innerHTML = '';
-    PLATFORM_BLOCKS.forEach(function (b) {
-      var el = document.createElement('div');
-      el.className = 'platform-block';
-      el.style.left = b.x + 'px'; el.style.top = b.y + 'px';
-      el.style.width = b.w + 'px'; el.style.height = b.h + 'px';
-      platBlocksEl.appendChild(el);
-    });
-    platGoalEl.style.left = (PLATFORM_GOAL.x - 23) + 'px'; platGoalEl.style.top = (PLATFORM_GOAL.y - 60) + 'px';
-    platHazardsEl.innerHTML = '';
-    platHazardT = 0;
-    platHazards = (lvl.hazards || []).map(function (h) {
-      var el = document.createElement('div');
-      el.className = 'platform-hazard';
-      el.textContent = '👹';
-      platHazardsEl.appendChild(el);
-      return { baseX: h.baseX, y: h.y, range: h.range, speed: h.speed, el: el, x: h.baseX };
-    });
-  }
-  platBuild(0);
-  function platGroundAt(x, yTop, yBottom, vy) {
-    for (var i = 0; i < PLATFORM_BLOCKS.length; i++) {
-      var b = PLATFORM_BLOCKS[i];
-      if (x > b.x + 6 && x < b.x + b.w - 6 && yBottom >= b.y && yBottom <= b.y + 18 && vy >= 0) {
-        return b.y;
-      }
-    }
-    return null;
-  }
-  function platBlocked(x, y, halfW, halfH) {
-    for (var i = 0; i < PLATFORM_BLOCKS.length; i++) {
-      var b = PLATFORM_BLOCKS[i];
-      if (x + halfW > b.x && x - halfW < b.x + b.w && y + halfH > b.y && y - halfH < b.y + b.h) return true;
-    }
-    return false;
-  }
-  function platResetDog() {
-    platDog = { x: 60, y: 500, vx: 0, vy: 0, onGround: false };
-    platFacing = 1;
-  }
-  function platRender() {
-    platDogEl.style.transform = 'translate(' + (platDog.x - 25) + 'px,' + (platDog.y - 30) + 'px)';
-    var vw = innerWidth, vh = innerHeight;
-    var camX = Math.max(vw / 2, Math.min(PLATFORM_W - vw / 2, platDog.x));
-    var camY = PLATFORM_H <= vh ? PLATFORM_H / 2 : Math.max(vh / 2, Math.min(PLATFORM_H - vh / 2, platDog.y));
-    platWorldEl.style.transform = 'translate(' + (vw / 2 - camX) + 'px,' + (vh / 2 - camY) + 'px)';
-  }
-  var platJumpQueued = false;
-  document.getElementById('btn-jump').addEventListener('click', function () { platJumpQueued = true; });
-  function enterPlatform() {
-    sceneOutdoor.classList.remove('active');
-    scenePlatform.classList.add('active');
-    scenePlatformActive = true;
-    platBuild((Math.random() * PLATFORM_LEVELS.length) | 0);
-    platResetDog();
-    platRender();
-  }
-  function exitPlatform() {
-    scenePlatform.classList.remove('active');
-    sceneOutdoor.classList.add('active');
-    scenePlatformActive = false;
-    player.x = JDOOR_ZONE.x; player.y = JDOOR_ZONE.y + JDOOR_ZONE.r + 25;
-    dogPos = { x: player.x + 30, y: player.y };
-    prevDogX = dogPos.x; dogWanderTarget = { x: dogPos.x, y: dogPos.y }; dogCalled = false;
-    render(); renderDog();
-  }
-  document.getElementById('platform-exit-btn').addEventListener('click', exitPlatform);
-
-  /* ================= Angeln (Vollbild) ================= */
-  var sceneFish = document.getElementById('scene-fish');
-  var FISH_WORLD = { w: 1000, h: 700 };
-  var FISH_TARGET = 6;
-  var fishWorldEl = document.getElementById('fish-world');
-  var fishFishesEl = document.getElementById('fish-fishes');
-  var fishBoatEl = document.getElementById('fish-boat');
-  var fishToastEl = document.getElementById('fish-toast');
-  var fishObjectiveEl = document.getElementById('fish-objective');
-  var fishBoatPos = { x: 0, y: 0 };
-  var fishVel = { x: 0, y: 0 };
-  var fishCaught = 0;
-  var fishList = [];
-  var fishSharkEl = document.getElementById('fish-shark');
-  var fishSharkPos = { x: 0, y: 0 };
-  var FISH_SHARK_SPEED = 195;
-  var fishInvulnUntil = 0;
-  function fishToast(msg) {
-    fishToastEl.textContent = msg;
-    fishToastEl.classList.add('show');
-    clearTimeout(fishToast._t);
-    fishToast._t = setTimeout(function () { fishToastEl.classList.remove('show'); }, 1600);
-  }
-  function fishUpdateObjective() {
-    fishObjectiveEl.textContent = '🐟 Fange ' + FISH_TARGET + ' Fische, weiche dem Hai aus! (' + fishCaught + '/' + FISH_TARGET + ')';
-  }
-  function fishSpawnAll() {
-    fishFishesEl.innerHTML = '';
-    fishList = [];
-    for (var i = 0; i < FISH_TARGET + 4; i++) {
-      var x = 60 + Math.random() * (FISH_WORLD.w - 120);
-      var y = 60 + Math.random() * (FISH_WORLD.h - 120);
-      var el = document.createElement('div');
-      el.className = 'fish-sprite';
-      el.textContent = '🐟';
-      el.style.left = (x - 13) + 'px'; el.style.top = (y - 13) + 'px';
-      fishFishesEl.appendChild(el);
-      fishList.push({ x: x, y: y, vx: (Math.random() * 2 - 1) * 26, vy: (Math.random() * 2 - 1) * 26, el: el, caught: false });
-    }
-  }
-  function fishRender() {
-    fishBoatEl.style.transform = 'translate(' + (fishBoatPos.x - 17) + 'px,' + (fishBoatPos.y - 17) + 'px)';
-    fishSharkEl.style.transform = 'translate(' + (fishSharkPos.x - 16) + 'px,' + (fishSharkPos.y - 16) + 'px)';
-    var vw = innerWidth, vh = innerHeight;
-    var camX = FISH_WORLD.w <= vw ? FISH_WORLD.w / 2 : Math.max(vw / 2, Math.min(FISH_WORLD.w - vw / 2, fishBoatPos.x));
-    var camY = FISH_WORLD.h <= vh ? FISH_WORLD.h / 2 : Math.max(vh / 2, Math.min(FISH_WORLD.h - vh / 2, fishBoatPos.y));
-    fishWorldEl.style.transform = 'translate(' + (vw / 2 - camX) + 'px,' + (vh / 2 - camY) + 'px)';
-  }
-  function enterFishing() {
-    sceneOutdoor.classList.remove('active');
-    sceneFish.classList.add('active');
-    fishWorldEl.style.width = FISH_WORLD.w + 'px'; fishWorldEl.style.height = FISH_WORLD.h + 'px';
-    fishBoatPos = { x: FISH_WORLD.w * 0.25, y: FISH_WORLD.h / 2 };
-    fishSharkPos = { x: FISH_WORLD.w * 0.85, y: FISH_WORLD.h * 0.85 };
-    fishVel = { x: 0, y: 0 };
-    fishCaught = 0;
-    fishInvulnUntil = 0;
-    fishUpdateObjective();
-    fishSpawnAll();
-    fishRender();
-  }
-  function exitFishing() {
-    sceneFish.classList.remove('active');
-    sceneOutdoor.classList.add('active');
-    player.x = DOCK_POS.x - 30; player.y = POND.y;
-    dogPos = { x: player.x - 30, y: player.y };
-    prevDogX = dogPos.x; dogWanderTarget = { x: dogPos.x, y: dogPos.y }; dogCalled = false;
-    render(); renderDog();
-  }
-  document.getElementById('fish-exit-btn').addEventListener('click', exitFishing);
-
-  /* ================= Autospiel (Vollbild) ================= */
-  var sceneCar = document.getElementById('scene-car');
-  var CAR_ROAD_W = 380, CAR_LEN = 2600, CAR_GOAL_Y = 70;
-  var carWorldEl = document.getElementById('car-world');
-  var carLanesEl = document.getElementById('car-lanes');
-  var carObstaclesEl = document.getElementById('car-obstacles');
-  var carPlayerEl = document.getElementById('car-player');
-  var carGoalEl = document.getElementById('car-goal');
-  var carToastEl = document.getElementById('car-toast');
-  var carPos = { x: 0, y: 0 };
-  var carVel = { x: 0, y: 0 };
-  var carLives = 3;
-  var carObstacles = [];
-  var carInvulnUntil = 0;
-  function carToast(msg) {
-    carToastEl.textContent = msg;
-    carToastEl.classList.add('show');
-    clearTimeout(carToast._t);
-    carToast._t = setTimeout(function () { carToastEl.classList.remove('show'); }, 1600);
-  }
-  var CAR_EMOJIS = ['🚗', '🚙', '🚕', '🚓', '🚐', '🚌'];
-  function carSpawnObstacles() {
-    carObstaclesEl.innerHTML = '';
-    carObstacles = [];
-    var zoneW = CAR_ROAD_W / 3;
-    var totalLen = CAR_LEN - 260 - (CAR_GOAL_Y + 80);
-    var y = CAR_LEN - 260;
-    while (y > CAR_GOAL_Y + 80) {
-      var progress = 1 - Math.max(0, (y - (CAR_GOAL_Y + 80)) / totalLen); // 0 at start, 1 near goal
-      var zones = [0, 1, 2];
-      for (var i = zones.length - 1; i > 0; i--) { var j = (Math.random() * (i + 1)) | 0; var t = zones[i]; zones[i] = zones[j]; zones[j] = t; }
-      var count = Math.random() < (0.35 + progress * 0.45) ? 2 : 1;
-      var chosen = zones.slice(0, count);
-      chosen.forEach(function (z) {
-        var x = z * zoneW + zoneW * 0.3 + Math.random() * zoneW * 0.4;
-        var isPed = Math.random() < 0.2;
-        var el = document.createElement('div');
-        el.className = 'car-obstacle-sprite';
-        el.textContent = isPed ? (Math.random() < 0.5 ? '🚶' : '🧍') : CAR_EMOJIS[(Math.random() * CAR_EMOJIS.length) | 0];
-        el.style.left = x + 'px'; el.style.top = y + 'px';
-        carObstaclesEl.appendChild(el);
-        carObstacles.push({ x: x, y: y });
-      });
-      y -= 95 + Math.random() * 55 - progress * 25;
-    }
-  }
-  function carPlaceDog(x, y) {
-    carPos = { x: x, y: y };
-    carVel = { x: 0, y: 0 };
-  }
-  function carRender() {
-    carPlayerEl.style.transform = 'translate(' + carPos.x + 'px,' + carPos.y + 'px) translateX(-50%)';
-    var vw = innerWidth, vh = innerHeight;
-    var camX = CAR_ROAD_W <= vw ? CAR_ROAD_W / 2 : Math.max(vw / 2, Math.min(CAR_ROAD_W - vw / 2, carPos.x));
-    var camY = Math.max(vh / 2, Math.min(CAR_LEN - vh / 2, carPos.y));
-    carWorldEl.style.transform = 'translate(' + (vw / 2 - camX) + 'px,' + (vh / 2 - camY) + 'px)';
-  }
-  function enterCarGame() {
-    sceneOutdoor.classList.remove('active');
-    sceneCar.classList.add('active');
-    carWorldEl.style.width = CAR_ROAD_W + 'px'; carWorldEl.style.height = CAR_LEN + 'px';
-    carGoalEl.style.left = (CAR_ROAD_W / 2) + 'px'; carGoalEl.style.top = CAR_GOAL_Y + 'px';
-    carLives = 3;
-    carInvulnUntil = 0;
-    carPlaceDog(CAR_ROAD_W / 2, CAR_LEN - 60);
-    carSpawnObstacles();
-    carRender();
-  }
-  function exitCarGame() {
-    sceneCar.classList.remove('active');
-    sceneOutdoor.classList.add('active');
-    player.x = GATE_POS.x; player.y = GATE_POS.y - 100;
-    dogPos = { x: player.x + 30, y: player.y };
-    prevDogX = dogPos.x; dogWanderTarget = { x: dogPos.x, y: dogPos.y }; dogCalled = false;
-    render(); renderDog();
-  }
-  document.getElementById('car-exit-btn').addEventListener('click', exitCarGame);
-
-  /* ================= Spielschleife ================= */
-  var lastT = performance.now();
-  var distAccum = 0, lastStepAt = 0, lastFurAt = 0;
-  function loop(t) {
-    var dt = Math.min(0.05, (t - lastT) / 1000); lastT = t;
-    if (sceneOutdoor.classList.contains('active')) {
-      if (!fetching) {
-        var v = getMoveVector();
-        if (v.x || v.y) {
-          var speed = 230;
-          var nx = player.x + v.x * speed * dt;
-          var ny = player.y + v.y * speed * dt;
-          if (!collides(nx, player.y, PLAYER_R)) player.x = nx;
-          if (!collides(player.x, ny, PLAYER_R)) player.y = ny;
-          distAccum += speed * dt;
-          if (distAccum - lastStepAt > 46) {
-            lastStepAt = distAccum;
-            SFX.play(inPond(player.x, player.y, PLAYER_R + 30) ? 'splash' : 'step');
-          }
-          if (distAccum - lastFurAt > 70) {
-            lastFurAt = distAccum;
-            stats.fur = Math.max(0, stats.fur - 0.8);
-            renderDog();
-            maybeDig();
-          }
-        }
-        if (inMud(player.x, player.y)) { playerMud = 1; }
-        else { playerMud = Math.max(0, playerMud - dt / 5); }
-        applyMud(playerEl, playerMud);
-      }
-
-      if (fetchState) {
-        var goalF = fetchState.phase === 'return' ? { x: player.x + 30, y: player.y } : fetchState.target;
-        var fdx = goalF.x - dogPos.x, fdy = goalF.y - dogPos.y, fdist = Math.hypot(fdx, fdy);
-        var fDesiredSpeed = Math.min(260, fdist * 4);
-        var fDesVel = fdist > 0.01 ? { x: fdx / fdist * fDesiredSpeed, y: fdy / fdist * fDesiredSpeed } : { x: 0, y: 0 };
-        accelerateTo(dogVel, fDesVel, 340, dt);
-        dogPos.x += dogVel.x * dt; dogPos.y += dogVel.y * dt;
-        if (fdist <= 6) {
-          if (fetchState.phase === 'go') {
-            SFX.play('grab');
-            stickEl.hidden = true;
-            fetchState = { phase: 'return' };
-          } else {
-            fetching = false;
-            fetchState = null;
-            document.getElementById('btn-fetch').disabled = false;
-            stats.love = Math.min(100, stats.love + 8); saveStats();
-            popHeart(innerWidth / 2, innerHeight / 2 - 40);
-            SFX.play('happy');
-            dogWanderTarget = { x: dogPos.x, y: dogPos.y };
-          }
-        }
-      } else {
-        var goal = dogCalled ? player : dogWanderTarget;
-        if (!dogCalled && dogWanderPause === 0 && (t - dogWanderAt > 3200 + Math.random() * 3200 || Math.hypot(dogWanderTarget.x - dogPos.x, dogWanderTarget.y - dogPos.y) < 12)) {
-          dogWanderAt = t;
-          pickWanderTarget();
-          goal = dogWanderTarget;
-        } else if (dogWanderPause > 0) {
-          dogWanderPause = Math.max(0, dogWanderPause - dt * 1000);
-        }
-        var toGoalX = goal.x - dogPos.x, toGoalY = goal.y - dogPos.y;
-        var goalDist = Math.hypot(toGoalX, toGoalY);
-        var baseSpeed = dogCalled ? 210 : (dogWanderPause > 0 ? 0 : dogWanderSpeed);
-        var desiredSpeed = Math.min(baseSpeed, goalDist * 3.5);
-        var desVel = (goalDist > 0.01 && desiredSpeed > 0.01) ? { x: toGoalX / goalDist * desiredSpeed, y: toGoalY / goalDist * desiredSpeed } : { x: 0, y: 0 };
-        accelerateTo(dogVel, desVel, dogCalled ? 260 : 130, dt);
-        dogPos.x += dogVel.x * dt; dogPos.y += dogVel.y * dt;
-        var leashDx = dogPos.x - player.x, leashDy = dogPos.y - player.y;
-        var leashDist = Math.hypot(leashDx, leashDy);
-        if (leashDist > dogLeash) {
-          var pull = (leashDist - dogLeash) / leashDist;
-          dogPos.x -= leashDx * pull;
-          dogPos.y -= leashDy * pull;
-        }
-        if (dogCalled && leashDist < 45 && !dogCallTimer) {
-          dogCallTimer = setTimeout(function () {
-            dogCalled = false; dogCallTimer = null; dogWanderAt = performance.now(); pickWanderTarget();
-          }, 5000);
-        }
-      }
-
-      if (Math.abs(dogPos.x - prevDogX) > 0.4) {
-        dogFacing = dogPos.x < prevDogX ? -1 : 1;
-        dogVisualEl.classList.toggle('face-left', dogFacing < 0);
-      }
-      prevDogX = dogPos.x;
-
-      if (inMud(dogPos.x, dogPos.y)) {
-        dogMud = 1;
-        stats.fur = Math.max(0, stats.fur - 22 * dt);
-      } else {
-        dogMud = Math.max(0, dogMud - dt / 5);
-      }
-      applyMud(dogVisualEl, dogMud);
-      if (stats.fur < 45 && !dogWasDirty) { dogWasDirty = true; renderDog(); }
-      else if (stats.fur >= 45 && dogWasDirty) { dogWasDirty = false; renderDog(); }
-
-      if (poop) {
-        var pd = Math.hypot(player.x - poop.x, player.y - poop.y);
-        btnCleanEl.hidden = pd > 70;
-      } else if (!btnCleanEl.hidden) {
-        btnCleanEl.hidden = true;
-      }
-      render();
-      if (!fetching) {
-        if (Math.hypot(player.x - DOOR_ZONE.x, player.y - DOOR_ZONE.y) < DOOR_ZONE.r) enterHouse();
-        else if (Math.hypot(player.x - CAVE_ENTRANCE.x, player.y - CAVE_ENTRANCE.y) < CAVE_ENTRANCE.r) enterCave();
-        else if (Math.hypot(player.x - JDOOR_ZONE.x, player.y - JDOOR_ZONE.y) < JDOOR_ZONE.r) enterPlatform();
-        else if (Math.hypot(player.x - FISH_SPOT.x, player.y - FISH_SPOT.y) < FISH_SPOT.r) enterFishing();
-        else if (Math.hypot(player.x - CAR_SPOT.x, player.y - CAR_SPOT.y) < CAR_SPOT.r) enterCarGame();
-      }
-    } else if (sceneMaze.classList.contains('active')) {
-      var mv = getMoveVector();
-      var mSpeed = 190;
-      var mDesVel = (mv.x || mv.y) ? { x: mv.x * mSpeed, y: mv.y * mSpeed } : { x: 0, y: 0 };
-      accelerateTo(mazeVel, mDesVel, 900, dt);
-      var mnx = mazeDogPos.x + mazeVel.x * dt, mny = mazeDogPos.y + mazeVel.y * dt;
-      if (!mazeCollides(mnx, mazeDogPos.y, 9)) mazeDogPos.x = mnx; else mazeVel.x = 0;
-      if (!mazeCollides(mazeDogPos.x, mny, 9)) mazeDogPos.y = mny; else mazeVel.y = 0;
-      if (Math.abs(mazeVel.x) > 4) mazeDogVisualEl.classList.toggle('face-left', mazeVel.x < 0);
-      if (!mazeHasKey && mazeKeyPos && Math.hypot(mazeDogPos.x - mazeKeyPos.x, mazeDogPos.y - mazeKeyPos.y) < 26) {
-        mazeHasKey = true;
-        mazeKeyEl.style.display = 'none';
-        SFX.play('bone');
-        mazeToast('Schlüssel gefunden!');
-      }
-      if (Math.hypot(mazeDogPos.x - (mazeExitCell.gx * MAZE_TILE + MAZE_TILE / 2), mazeDogPos.y - (mazeExitCell.gy * MAZE_TILE + MAZE_TILE / 2)) < 26) {
-        if (mazeHasKey) {
-          SFX.play('happy');
-          stats.love = Math.min(100, stats.love + 12); saveStats();
-          bones = (bones || 0) + 1;
-          try { localStorage.setItem('mw-pet-bones', String(bones)); } catch (e) {}
-          mazeToast('Geschafft! 🎉');
-          setTimeout(exitMaze, 900);
-        } else {
-          mazeToast('Du brauchst noch den Schlüssel!');
-        }
-      }
-      mazeRender();
-    } else if (scenePlatformActive) {
-      var pv = getMoveVector();
-      /* Automatischer Vorwärtslauf: man muss nur noch springen, nicht gleichzeitig steuern */
-      var pTargetVX = PLAT_FORWARD_SPEED + pv.x * 130;
-      var pAccel = 700;
-      var pDvx = pTargetVX - platDog.vx;
-      var pMaxDelta = pAccel * dt;
-      if (Math.abs(pDvx) <= pMaxDelta) platDog.vx = pTargetVX;
-      else platDog.vx += Math.sign(pDvx) * pMaxDelta;
-      if (Math.abs(platDog.vx) > 4) { platFacing = platDog.vx < 0 ? -1 : 1; platDogVisualEl.classList.toggle('face-left', platFacing < 0); }
-      if (platJumpQueued || keys[' '] || keys.ArrowUp || keys.w) {
-        if (platDog.onGround) { platDog.vy = PLAT_JUMP_VY; platDog.onGround = false; SFX.play('happy'); }
-        platJumpQueued = false;
-      }
-      platDog.vy += PLAT_GRAVITY * dt;
-      var pnx = platDog.x + platDog.vx * dt;
-      if (!platBlocked(pnx, platDog.y - 14, 15, 14)) platDog.x = pnx;
-      platDog.x = Math.max(15, Math.min(PLATFORM_W - 15, platDog.x));
-      var pny = platDog.y + platDog.vy * dt;
-      var landY = platGroundAt(platDog.x, platDog.y, pny, platDog.vy);
-      if (landY !== null) { platDog.y = landY; platDog.vy = 0; platDog.onGround = true; }
-      else { platDog.y = pny; platDog.onGround = false; }
-      if (platDog.y > PLATFORM_H + 100) { platResetDog(); platToast('Autsch! Nochmal von vorne.'); }
-      platHazardT += dt;
-      platHazards.forEach(function (h) {
-        h.x = h.baseX + Math.sin(platHazardT * h.speed) * h.range;
-        h.el.style.left = h.x + 'px'; h.el.style.top = h.y + 'px';
-        if (Math.abs(platDog.x - h.x) < 24 && Math.abs(platDog.y - h.y) < 24) {
-          platResetDog();
-          platToast('Erwischt! Nochmal von vorne.');
-        }
-      });
-      if (Math.hypot(platDog.x - PLATFORM_GOAL.x, platDog.y - PLATFORM_GOAL.y) < 40) {
-        SFX.play('happy');
-        stats.love = Math.min(100, stats.love + 12); saveStats();
-        bones = (bones || 0) + 1;
-        try { localStorage.setItem('mw-pet-bones', String(bones)); } catch (e) {}
-        platToast('Geschafft! 🎉');
-        scenePlatformActive = false;
-        setTimeout(exitPlatform, 900);
-      }
-      platRender();
-    } else if (sceneFish.classList.contains('active')) {
-      var fv = getMoveVector();
-      var fDesVel = (fv.x || fv.y) ? { x: fv.x * 220, y: fv.y * 220 } : { x: 0, y: 0 };
-      accelerateTo(fishVel, fDesVel, 500, dt);
-      fishBoatPos.x = Math.max(20, Math.min(FISH_WORLD.w - 20, fishBoatPos.x + fishVel.x * dt));
-      fishBoatPos.y = Math.max(20, Math.min(FISH_WORLD.h - 20, fishBoatPos.y + fishVel.y * dt));
-      for (var fi = fishList.length - 1; fi >= 0; fi--) {
-        var f = fishList[fi];
-        if (f.caught) continue;
-        f.x += f.vx * dt; f.y += f.vy * dt;
-        if (f.x < 30 || f.x > FISH_WORLD.w - 30) f.vx *= -1;
-        if (f.y < 30 || f.y > FISH_WORLD.h - 30) f.vy *= -1;
-        f.el.style.left = (f.x - 13) + 'px'; f.el.style.top = (f.y - 13) + 'px';
-        if (Math.hypot(fishBoatPos.x - f.x, fishBoatPos.y - f.y) < 30) {
-          f.caught = true;
-          f.el.remove();
-          fishCaught++;
-          SFX.play('happy');
-          fishToast('Fisch gefangen! 🐟');
-          fishUpdateObjective();
-          if (fishCaught >= FISH_TARGET) {
-            stats.love = Math.min(100, stats.love + 12); saveStats();
-            bones = (bones || 0) + 1;
-            try { localStorage.setItem('mw-pet-bones', String(bones)); } catch (e) {}
-            fishToast('Geschafft! 🎉');
-            setTimeout(exitFishing, 1000);
-          }
-        }
-      }
-      var fsdx = fishBoatPos.x - fishSharkPos.x, fsdy = fishBoatPos.y - fishSharkPos.y;
-      var fsDist = Math.hypot(fsdx, fsdy);
-      if (fsDist > 1) {
-        var fsStep = Math.min(fsDist, FISH_SHARK_SPEED * dt);
-        fishSharkPos.x += (fsdx / fsDist) * fsStep;
-        fishSharkPos.y += (fsdy / fsDist) * fsStep;
-      }
-      var fishNow = performance.now();
-      if (fishNow > fishInvulnUntil && fsDist < 30) {
-        fishInvulnUntil = fishNow + 1400;
-        fishCaught = Math.max(0, fishCaught - 1);
-        SFX.play('drop');
-        fishToast('Der Hai hat dich erwischt! 🦈');
-        fishUpdateObjective();
-        fishBoatPos = { x: FISH_WORLD.w * 0.25, y: FISH_WORLD.h / 2 };
-        fishSharkPos = { x: FISH_WORLD.w * 0.85, y: FISH_WORLD.h * 0.85 };
-      }
-      fishRender();
-    } else if (sceneCar.classList.contains('active')) {
-      var cv = getMoveVector();
-      var cDesVel = { x: cv.x * 220, y: 0 };
-      accelerateTo(carVel, cDesVel, 700, dt);
-      carPos.x = Math.max(24, Math.min(CAR_ROAD_W - 24, carPos.x + carVel.x * dt));
-      carPos.y -= 130 * dt;
-      if (carPos.y < CAR_GOAL_Y) {
-        SFX.play('happy');
-        stats.love = Math.min(100, stats.love + 12); saveStats();
-        bones = (bones || 0) + 1;
-        try { localStorage.setItem('mw-pet-bones', String(bones)); } catch (e) {}
-        carToast('Ziel erreicht! 🎉');
-        setTimeout(exitCarGame, 1000);
-      } else {
-        var now = performance.now();
-        if (now > carInvulnUntil) {
-          for (var ci = 0; ci < carObstacles.length; ci++) {
-            var co = carObstacles[ci];
-            if (Math.abs(carPos.x - co.x) < 28 && Math.abs(carPos.y - co.y) < 28) {
-              carLives--;
-              carInvulnUntil = now + 1200;
-              SFX.play('drop');
-              if (carLives <= 0) {
-                carToast('Autsch! Nochmal von vorne.');
-                carLives = 3;
-                carPlaceDog(CAR_ROAD_W / 2, CAR_LEN - 60);
-              } else {
-                carToast('Autsch! Noch ' + carLives + ' Leben.');
-                carPos.y += 90;
-              }
-              break;
-            }
-          }
-        }
-      }
-      carRender();
-    }
-    requestAnimationFrame(loop);
-  }
-  requestAnimationFrame(loop);
-  mazeDogVisualEl.innerHTML = svgDog(false);
-  platDogVisualEl.innerHTML = svgDog(false);
-
-  /* ================= Haustier-Pflege ================= */
-  var STAT_KEY = 'mw-pet-stats';
-  var bones = 0;
-  try { bones = parseInt(localStorage.getItem('mw-pet-bones'), 10) || 0; } catch (e) {}
-  var stats = { water: 70, fur: 70, hunger: 70, love: 70, resting: false, t: Date.now() };
-  try { var saved = JSON.parse(localStorage.getItem(STAT_KEY)); if (saved) stats = Object.assign(stats, saved); } catch (e) {}
-
-  function decay() {
-    var now = Date.now();
-    var minutes = (now - stats.t) / 60000;
-    stats.water = Math.max(0, stats.water - minutes * 1.5);
-    stats.hunger = Math.max(0, stats.hunger - minutes * 1.3);
-    stats.love = Math.max(0, stats.love - minutes * 1.2);
-    stats.t = now;
-  }
-  function saveStats() { try { localStorage.setItem(STAT_KEY, JSON.stringify(stats)); } catch (e) {} }
-  function refreshStats() {
-    decay();
-    document.getElementById('stat-water').style.width = stats.water + '%';
-    document.getElementById('stat-fur').style.width = stats.fur + '%';
-    document.getElementById('stat-hunger').style.width = stats.hunger + '%';
-    document.getElementById('stat-love').style.width = stats.love + '%';
-    saveStats();
-  }
-  setInterval(function () { if (sceneHouse.classList.contains('active')) refreshStats(); }, 4000);
-
-  function popHeart(x, y) {
-    var layer = document.getElementById('hearts-layer') || document.body;
-    var h = document.createElement('div');
-    h.className = 'heart-fx';
-    h.textContent = ['💖', '✨', '💕'][(Math.random() * 3) | 0];
-    h.style.position = 'fixed'; h.style.left = (x - 10) + 'px'; h.style.top = (y - 10) + 'px'; h.style.zIndex = 40;
-    document.body.appendChild(h);
-    setTimeout(function () { h.remove(); }, 1000);
-  }
-
-  var dogHouseEl = document.getElementById('dog-house');
-  function renderDogHouse() {
-    dogHouseEl.innerHTML = svgDog(stats.fur < 45) + (stats.resting ? '<div class="zzz" style="right:-6px;top:-10px">💤</div>' : '');
-    dogHouseEl.classList.toggle('resting', !!stats.resting);
-    if (stats.resting && stats.restingSpot) {
-      dogHouseEl.style.left = stats.restingSpot.left; dogHouseEl.style.top = stats.restingSpot.top;
-      dogHouseEl.style.bottom = 'auto'; dogHouseEl.style.transform = 'none';
-    } else {
-      dogHouseEl.style.left = '50%'; dogHouseEl.style.bottom = '26%'; dogHouseEl.style.top = 'auto';
-      dogHouseEl.style.transform = 'translateX(-50%)';
-    }
-  }
-
-  function careAction(kind) {
-    if (kind === 'water') stats.water = Math.min(100, stats.water + 35);
-    else if (kind === 'brush') stats.fur = Math.min(100, stats.fur + 35);
-    else if (kind === 'snack') stats.hunger = Math.min(100, stats.hunger + 35);
-    refreshStats();
-    renderDogHouse();
-    SFX.play(kind === 'water' ? 'splash' : kind === 'snack' ? 'grab' : 'pet');
-    dogHouseEl.classList.remove('happy'); void dogHouseEl.offsetWidth; dogHouseEl.classList.add('happy');
-    var rect = dogHouseEl.getBoundingClientRect();
-    for (var i = 0; i < 4; i++) (function (i) { setTimeout(function () { popHeart(rect.left + rect.width / 2 + (Math.random() * 60 - 30), rect.top + Math.random() * 30); }, i * 90); })(i);
-  }
-
-  /* Tippen auf den Hund = streicheln (nur wenn er nicht gerade gezogen wird) */
-  var dogPointerMoved = false;
-  dogHouseEl.addEventListener('pointerdown', function () { dogPointerMoved = false; });
-  dogHouseEl.addEventListener('pointermove', function () { dogPointerMoved = true; });
-  dogHouseEl.addEventListener('click', function () {
-    if (dogPointerMoved) return;
-    if (stats.resting) { stats.resting = false; SFX.play('wake'); renderDogHouse(); return; }
-    stats.love = Math.min(100, stats.love + 15);
-    refreshStats();
-    SFX.play('pet');
-    dogHouseEl.classList.remove('happy'); void dogHouseEl.offsetWidth; dogHouseEl.classList.add('happy');
-    var rect = dogHouseEl.getBoundingClientRect();
-    popHeart(rect.left + rect.width / 2, rect.top);
-  });
-
-  /* Hund per Drag ins Körbchen / aufs Sofa setzen */
-  (function () {
-    var dragging = false, sx = 0, sy = 0;
-    dogHouseEl.addEventListener('pointerdown', function (e) {
-      dragging = true; sx = e.clientX; sy = e.clientY;
-      try { dogHouseEl.setPointerCapture(e.pointerId); } catch (err) {}
-    });
-    dogHouseEl.addEventListener('pointermove', function (e) {
-      if (!dragging) return;
-      var rect = dogHouseEl.getBoundingClientRect();
-      var parentRect = dogHouseEl.parentElement.getBoundingClientRect();
-      dogHouseEl.style.left = (rect.left - parentRect.left + (e.clientX - sx)) + 'px';
-      dogHouseEl.style.top = (rect.top - parentRect.top + (e.clientY - sy)) + 'px';
-      dogHouseEl.style.bottom = 'auto'; dogHouseEl.style.transform = 'none';
-      sx = e.clientX; sy = e.clientY;
-      ['drop-basket', 'drop-couch'].forEach(function (id) {
-        var el = document.getElementById(id);
-        var r = el.getBoundingClientRect(), dr = dogHouseEl.getBoundingClientRect();
-        var over = dr.left < r.right && dr.right > r.left && dr.top < r.bottom && dr.bottom > r.top;
-        el.classList.toggle('hover', over);
-      });
-    });
-    function finish() {
-      if (!dragging) return;
-      dragging = false;
-      var dr = dogHouseEl.getBoundingClientRect();
-      var landed = null;
-      ['drop-basket', 'drop-couch'].forEach(function (id) {
-        var el = document.getElementById(id);
-        el.classList.remove('hover');
-        var r = el.getBoundingClientRect();
-        var over = dr.left < r.right && dr.right > r.left && dr.top < r.bottom && dr.bottom > r.top;
-        if (over) landed = el;
-      });
-      if (landed) {
-        var parentRect = dogHouseEl.parentElement.getBoundingClientRect();
-        var lr = landed.getBoundingClientRect();
-        var left = (lr.left - parentRect.left + lr.width / 2 - 55) + 'px';
-        var top = (lr.top - parentRect.top + lr.height / 2 - 42) + 'px';
-        dogHouseEl.style.left = left; dogHouseEl.style.top = top;
-        stats.resting = true; stats.restingSpot = { left: left, top: top };
-        saveStats();
-        SFX.play('drop');
-        renderDogHouse();
-      }
-    }
-    dogHouseEl.addEventListener('pointerup', finish);
-    dogHouseEl.addEventListener('pointercancel', finish);
-  })();
-
-  /* Pflege-Items per Drag (oder Tap) auf den Hund */
-  document.querySelectorAll('.item').forEach(function (item) {
-    var dragging = false, moved = false, clone = null;
-    item.addEventListener('pointerdown', function (e) { dragging = true; moved = false; try { item.setPointerCapture(e.pointerId); } catch (err) {} });
-    item.addEventListener('pointermove', function (e) {
-      if (!dragging) return;
-      moved = true;
-      if (!clone) { clone = item.cloneNode(true); clone.classList.add('dragging'); document.body.appendChild(clone); }
-      clone.style.left = (e.clientX - 28) + 'px'; clone.style.top = (e.clientY - 28) + 'px';
-    });
-    function finish(e) {
-      if (!dragging) return;
-      dragging = false;
-      var r = dogHouseEl.getBoundingClientRect();
-      var hit = moved && e.clientX >= r.left - 20 && e.clientX <= r.right + 20 && e.clientY >= r.top - 20 && e.clientY <= r.bottom + 20;
-      if (clone) { clone.remove(); clone = null; }
-      if (hit || !moved) careAction(item.dataset.item);
-    }
-    item.addEventListener('pointerup', finish);
-    item.addEventListener('pointercancel', function () { dragging = false; if (clone) { clone.remove(); clone = null; } });
-  });
-
-  window.addEventListener('resize', updateCamera);
-  document.getElementById('drop-couch').innerHTML = svgCouch();
-  document.getElementById('drop-basket').innerHTML = svgBasket();
-  buildWorld();
-  renderDog();
-  render();
-  schedulePoop();
-})();
-</script>
+<script src="js/core.js"></script>
+<script src="js/art.js"></script>
+<script src="js/hub.js"></script>
+<script src="js/house.js"></script>
+<script src="js/maze.js"></script>
+<script src="js/runner.js"></script>
+<script src="js/fishing.js"></script>
+<script src="js/race.js"></script>
+<script src="js/main.js"></script>
 </body>
 </html>
