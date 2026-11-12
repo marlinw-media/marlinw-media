@@ -31,6 +31,13 @@
   var S;
   try { S = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
   S = Object.assign({ voice: 'thorsten', xp: 0, q: {}, listen: {}, badges: {}, days: {}, answered: 0, correct: 0, tests: 0, perfect: 0, bestCombo: 0, goal: 100, last: null, sound: true }, S || {});
+  /* Geräte-Sync: Zustand (Funktionen weiter unten) */
+  var SYNC_API = 'https://ostep-sync.ostep-sync.workers.dev';
+  var SY = (function () { try { return JSON.parse(localStorage.getItem('ostep-sync')) || {}; } catch (e) { return {}; } })();
+  var SY_ABC = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  var SY_K = null;
+  var SY_LOCAL = { pushSub: 1, pushOn: 1, lastVisit: 1 }, SY_ADD = { xp: 1, answered: 1, correct: 1, tests: 1, perfect: 1 };
+  var SY_TIMER = 0, SY_BUSY = false, SY_AGAIN = false;
   var VOICES = [['thorsten', 'Thorsten', '🧔', 'männlich, warm'], ['karlsson', 'Karlsson', '👨', 'männlich, sachlich'], ['kerstin', 'Kerstin', '👩', 'weiblich, ruhig'], ['ramona', 'Ramona', '👩‍🦰', 'weiblich, klar'], ['eva', 'Eva', '👱‍♀️', 'weiblich, hell'], (TIMING.ki ? ['ki', 'KI-Stimme', '✨', 'neu & natürlich – bisher Kapitel 18 und 19'] : ['geraet', 'Gerätestimme', '📱', 'Sprachausgabe deines Handys'])];
   if (TIMING.ki && S.voice === 'geraet') S.voice = 'ki';
   function voiceInfo(id) { return VOICES.filter(function (v) { return v[0] === id; })[0] || VOICES[0]; }
@@ -44,7 +51,7 @@
     var k = n + '-' + tid, r = S.time[k] = S.time[k] || { l: 0, q: 0 };
     r[kind] = (r[kind] || 0) + sec; S.dayTime[today()] = (S.dayTime[today()] || 0) + sec;
   }
-  function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} if (window.OSTEP_SYNC_SOON) window.OSTEP_SYNC_SOON(); }
   function today() { var d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
   function dayXp() { return S.days[today()] || 0; }
   function streak() {
@@ -416,6 +423,7 @@
     if (sub === 'einstellungen') { app.innerHTML = back + settingsHtml(); bindSettings(); return; }
     if (sub === 'stats') { app.innerHTML = back + statsHtml(); return; }
     if (sub === 'noten') { app.innerHTML = back + gradesHtml(); return; }
+    if (sub === 'sync') { app.innerHTML = back + syncHtml(); bindSync(); return; }
     var tot = 0, today0 = (S.dayTime || {})[today()] || 0; Object.keys(S.time || {}).forEach(function (k) { tot += (S.time[k].l || 0) + (S.time[k].q || 0); });
     var got = BADGES.filter(function (b) { return S.badges[b[0]]; }).length;
     app.innerHTML = topBar() + profHead() +
@@ -426,6 +434,7 @@
       '<a href="#/profil/noten"><span>🎓</span><div><b>Noten & Quiz-Übersicht</b><small>alle 20-Fragen-Quizze und deine Gesamtnote</small></div>›</a>' +
       '<a href="#/profil/stats"><span>📊</span><div><b>Fortschritt & Analytics</b><small>Lernzeit, Noten, Zeit pro Thema und Kapitel</small></div>›</a>' +
       '<a href="#/profil/erfolge"><span>🏆</span><div><b>Erfolge</b><small>' + got + ' von ' + BADGES.length + ' Abzeichen</small></div>›</a>' +
+      '<a href="#/profil/sync"><span>🔄</span><div><b>Geräte-Sync</b><small>' + syncSub() + '</small></div>›</a>' +
       '<a href="#/profil/erinnerungen"><span>🔔</span><div><b>Erinnerungen</b><small>Lernzeiten, Streak-Warnung, Kalender</small></div>›</a>' +
       '<a href="#/profil/einstellungen"><span>⚙️</span><div><b>Einstellungen & Farbstil</b><small>5 Farbstile, Tagesziel, Stimme, Töne</small></div>›</a></div>';
     $('#psave').onclick = function () { var v = $('#pname').value.trim().slice(0, 24); S.name = v || null; save(); sfx('win'); toast(v ? '👋 Hallo ' + esc(v) + '! Chippy merkt sich deinen Namen.' : 'Name entfernt'); viewProfile(); };
@@ -998,6 +1007,7 @@
     else if (p[0] === 'k' && p[2] === 'text') viewText(+p[1], p[3], +(p[4] || 0), params.m || '');
     else if (p[0] === 'k' && p[2] === 'quiz') viewQuiz(+p[1], p[3]);
     else if (p[0] === 'k' && p[2] === 'merken') viewMerk(+p[1]);
+    else if (p[0] === 'sync') { syncJoinLink(p[1]); }
     else viewHome();
   }
   window.addEventListener('hashchange', route);
@@ -1010,6 +1020,147 @@
     var shown = Math.max(0, 1500 - (performance.now() - (window.SPLASH_T0 || 0)));
     setTimeout(function () { window.SPLASH_DONE = true; setTimeout(function () { sp.classList.add('out'); setTimeout(function () { sp.remove(); }, 800); }, 450); }, shown);
   })();
+  /* ================= Geräte-Sync (verschlüsselt, Cloudflare Worker) ================= */
+  function sySave() { try { localStorage.setItem('ostep-sync', JSON.stringify(SY)); } catch (e) {} }
+  function syBase() { try { return JSON.parse(localStorage.getItem('ostep-sync-base')); } catch (e) { return null; } }
+  function sySetBase(o) { try { if (o) localStorage.setItem('ostep-sync-base', JSON.stringify(o)); else localStorage.removeItem('ostep-sync-base'); } catch (e) {} }
+  function syNewCode() { var a = new Uint8Array(12), c = ''; crypto.getRandomValues(a); for (var i = 0; i < 12; i++) { c += SY_ABC[a[i] % 32]; if (i === 3 || i === 7) c += '-'; } return c; }
+  function syNorm(c) { c = String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/O/g, '0').replace(/I/g, '1'); return /^[A-Z0-9]{12}$/.test(c) ? c.slice(0, 4) + '-' + c.slice(4, 8) + '-' + c.slice(8) : null; }
+  function syHex(b) { return Array.prototype.map.call(new Uint8Array(b), function (x) { return ('0' + x.toString(16)).slice(-2); }).join(''); }
+  function sySha(t) { return crypto.subtle.digest('SHA-256', new TextEncoder().encode(t)); }
+  function syKeys() {
+    if (SY_K && SY_K.code === SY.code) return SY_K.p;
+    var code = SY.code;
+    SY_K = { code: code, p: Promise.all([sySha('ostep-id|' + code), sySha('ostep-key|' + code)]).then(function (r) { return crypto.subtle.importKey('raw', r[1], 'AES-GCM', false, ['encrypt', 'decrypt']).then(function (k) { return { id: syHex(r[0]), key: k }; }); }) };
+    return SY_K.p;
+  }
+  function syB64(u) { var t = ''; for (var i = 0; i < u.length; i += 8192) t += String.fromCharCode.apply(null, u.subarray(i, i + 8192)); return btoa(t); }
+  function syUnB64(t) { var b = atob(t), u = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; }
+  function syZip(u8, how) { if (!window.CompressionStream) return Promise.resolve(null); var cs = how ? new CompressionStream('gzip') : new DecompressionStream('gzip'); return new Response(new Blob([u8]).stream().pipeThrough(cs)).arrayBuffer().then(function (b) { return new Uint8Array(b); }); }
+  function syEnc(k, obj) {
+    var raw = new TextEncoder().encode(JSON.stringify(obj));
+    return syZip(raw, true).catch(function () { return null; }).then(function (z) {
+      var iv = crypto.getRandomValues(new Uint8Array(12)), body = z || raw;
+      return crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, k, body).then(function (ct) { return (z ? 'z' : 'p') + '.' + syB64(iv) + '.' + syB64(new Uint8Array(ct)); });
+    });
+  }
+  function syDec(k, t) {
+    var p = t.split('.');
+    return crypto.subtle.decrypt({ name: 'AES-GCM', iv: syUnB64(p[1]) }, k, syUnB64(p[2])).then(function (pt) { pt = new Uint8Array(pt); return p[0] === 'z' ? syZip(pt, false) : pt; }).then(function (u) { return JSON.parse(new TextDecoder().decode(u)); });
+  }
+  /* --- Zusammenführen (3-Wege: Basis = zuletzt abgeglichener Stand) --- */
+  function syJ(x) { return JSON.stringify(x === undefined ? null : x); }
+  function syN(x) { return typeof x === 'number' && isFinite(x) ? x : 0; }
+  function syAdd(b, l, r) { return Math.max(syN(r) + syN(l) - syN(b), 0); }
+  function syKeysOf() { var k = {}; Array.prototype.forEach.call(arguments, function (o) { if (o) Object.keys(o).forEach(function (x) { k[x] = 1; }); }); return Object.keys(k); }
+  function syMerge(b, l, r) {
+    var hasB = !!b; b = b || {}; l = l || {}; r = r || {};
+    var out = {};
+    syKeysOf(b, l, r).forEach(function (k) {
+      var bv = b[k], lv = l[k], rv = r[k];
+      if (SY_LOCAL[k]) { if (lv !== undefined) out[k] = lv; return; }
+      if (SY_ADD[k]) { out[k] = syAdd(bv, lv, rv); return; }
+      if (k === 'days' || k === 'dayTime') { out[k] = {}; syKeysOf(bv, lv, rv).forEach(function (d) { out[k][d] = syAdd((bv || {})[d], (lv || {})[d], (rv || {})[d]); }); return; }
+      if (k === 'time') { out[k] = {}; syKeysOf(bv, lv, rv).forEach(function (t) { var B = (bv || {})[t] || {}, Lx = (lv || {})[t] || {}, R = (rv || {})[t] || {}; out[k][t] = { l: syAdd(B.l, Lx.l, R.l), q: syAdd(B.q, Lx.q, R.q) }; }); return; }
+      if (k === 'bestCombo') { out[k] = Math.max(syN(lv), syN(rv)); return; }
+      if (k === 'listen') { out[k] = {}; syKeysOf(lv, rv).forEach(function (t) { out[k][t] = Math.max(syN((lv || {})[t]), syN((rv || {})[t])); }); return; }
+      if (k === 'badges') { out[k] = {}; syKeysOf(lv, rv).forEach(function (t) { var a = (lv || {})[t], c = (rv || {})[t]; out[k][t] = a && c ? Math.min(a, c) : (a || c); }); return; }
+      if (k === 'q') {
+        out[k] = {};
+        syKeysOf(bv, lv, rv).forEach(function (id) {
+          var B = (bv || {})[id], Lq = (lv || {})[id], R = (rv || {})[id], v;
+          if (!Lq) v = R; else if (!R) v = Lq;
+          else if (syJ(Lq) === syJ(B)) v = R; else if (syJ(R) === syJ(B)) v = Lq;
+          else { v = Object.assign({}, syN(Lq.t) >= syN(R.t) ? Lq : R); v.n = syAdd(B && B.n, Lq.n, R.n); v.c = Math.min(v.n, syAdd(B && B.c, Lq.c, R.c)); }
+          if (v) out[k][id] = v;
+        });
+        return;
+      }
+      if (k === 'hist') {
+        var seen = {}, all = [];
+        (lv || []).concat(rv || []).forEach(function (h) { var key = h.d + '|' + h.n + '|' + h.tid; if (!seen[key]) { seen[key] = 1; all.push(h); } });
+        all.sort(function (a, c) { return a.d - c.d; }); out[k] = all.slice(-400); return;
+      }
+      var v = hasB ? (syJ(lv) !== syJ(bv) ? lv : (rv !== undefined ? rv : lv)) : (rv !== undefined ? rv : lv);
+      if (v !== undefined) out[k] = v;
+    });
+    return out;
+  }
+  function syApply(m) {
+    var keepLocal = {}; Object.keys(SY_LOCAL).forEach(function (k) { if (S[k] !== undefined) keepLocal[k] = S[k]; });
+    Object.keys(S).forEach(function (k) { delete S[k]; }); Object.assign(S, m, keepLocal);
+    try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {}
+    applyTheme(S.theme || '');
+    if (/^(#\/?|#\/kapitel|#\/profil(\/(noten|stats|erfolge|sync))?|#\/k\/\d+)?$/.test(location.hash)) route();
+  }
+  function syOn() { return !!(SY.code && SYNC_API && window.crypto && crypto.subtle); }
+  function syClone(o) { return JSON.parse(JSON.stringify(o)); }
+  function syncNow() {
+    if (!syOn()) return Promise.resolve();
+    if (SY_BUSY) { SY_AGAIN = true; return Promise.resolve(); }
+    SY_BUSY = true; clearTimeout(SY_TIMER); syStat('läuft …');
+    var K, snap = syClone(S), baseBox = syBase(), base = baseBox && baseBox.code === SY.code ? baseBox : null;
+    return syKeys().then(function (k) { K = k; return fetch(SYNC_API + '/v1/' + K.id, { cache: 'no-store' }); })
+      .then(function (res) { if (res.status === 404) return null; if (!res.ok) throw new Error('Server ' + res.status); return res.json(); })
+      .then(function (rem) { return rem && rem.data ? syDec(K.key, rem.data) : null; })
+      .then(function (remBox) {
+        if (remBox && base && syN(remBox.v) < syN(base.v)) throw new Error('stale');
+        var merged = remBox ? syMerge(base && base.s, snap, remBox.s) : snap;
+        var cur = syClone(S); if (syJ(cur) !== syJ(snap)) merged = syMerge(snap, cur, merged);
+        if (syJ(merged) !== syJ(cur)) syApply(merged);
+        var box = { v: Math.max(syN(remBox && remBox.v), syN(base && base.v)) + 1, s: syClone(S), code: SY.code };
+        if (remBox && syJ(remBox.s) === syJ(box.s)) { sySetBase({ v: remBox.v, s: remBox.s, code: SY.code }); return; }
+        return syEnc(K.key, { v: box.v, s: box.s }).then(function (data) {
+          return fetch(SYNC_API + '/v1/' + K.id, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: data }), keepalive: data.length < 60000 });
+        }).then(function (res) { if (!res.ok) throw new Error('Server ' + res.status); sySetBase(box); });
+      })
+      .then(function () { SY.last = Date.now(); SY.err = null; sySave(); syStat(); }, function (e) { var m = String(e && e.message || e); if (m !== 'stale') { SY.err = m; sySave(); } syStat(); if (m === 'stale') setTimeout(syncSoon, 20000); })
+      .then(function () { SY_BUSY = false; if (SY_AGAIN) { SY_AGAIN = false; syncSoon(); } });
+  }
+  function syncSoon(ms) { if (!syOn()) return; clearTimeout(SY_TIMER); SY_TIMER = setTimeout(syncNow, ms || 25000); }
+  window.OSTEP_SYNC_SOON = function () { syncSoon(); };
+  document.addEventListener('visibilitychange', function () { if (!syOn()) return; if (document.visibilityState === 'visible') syncSoon(800); else syncNow(); });
+  if (syOn()) setTimeout(syncNow, 1800);
+  function syAgo(t) { if (!t) return 'noch nie'; var m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'gerade eben' : m < 60 ? 'vor ' + m + ' Min.' : m < 1440 ? 'vor ' + Math.round(m / 60) + ' Std.' : 'vor ' + Math.round(m / 1440) + ' Tagen'; }
+  function syncSub() { return syOn() ? 'aktiv · abgeglichen ' + syAgo(SY.last) : 'Lernstand auf iPhone, iPad & Mac gleich halten'; }
+  function syStat(t) { var el = document.getElementById('systat'); if (el) el.innerHTML = t ? '🔄 Abgleich ' + t : (SY.err ? '⚠️ Letzter Versuch fehlgeschlagen (' + esc(SY.err) + ') – wird automatisch wiederholt.' : '✅ Abgeglichen ' + syAgo(SY.last)); }
+  function syLink() { return location.origin + location.pathname + '#/sync/' + SY.code.replace(/-/g, ''); }
+  function syncHtml() {
+    var head = '<div class="sec-title"><h2>🔄 Geräte-Sync</h2></div>';
+    if (!syOn()) return head + '<div class="card" style="display:grid;gap:12px;grid-template-columns:minmax(0,1fr)"><div style="display:flex;gap:12px;align-items:center;min-width:0">' + chippy('wow', 64) + '<div style="font-size:14.5px;line-height:1.45">Lerne auf iPhone, iPad und Mac mit <b>demselben Lernstand</b>. Fortschritt, Noten, Serie und Einstellungen werden automatisch abgeglichen – <b>verschlüsselt</b>, nur mit deinem Code lesbar.</div></div>' +
+      '<button class="btn main" id="synew">✨ Sync auf diesem Gerät starten</button>' +
+      '<div style="font-weight:800;margin-top:4px">Schon auf einem anderen Gerät gestartet?</div><div class="numrow" style="padding:2px 12px"><input id="sycode" style="min-width:0;flex:1" type="text" maxlength="16" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="XXXX-XXXX-XXXX"><button class="btn sm main" id="syjoin">Verbinden</button></div>' +
+      '<div style="font-size:12.5px;color:var(--dim)">Tipp: Safari und die App auf dem Home-Bildschirm zählen als zwei Geräte – verbinde beide.</div></div>';
+    return head + '<div class="card" style="display:grid;gap:12px;grid-template-columns:minmax(0,1fr)"><div id="systat" style="font-weight:800"></div>' +
+      '<div><div style="font-size:12.5px;color:var(--dim);margin-bottom:4px">Dein Sync-Code (wie ein Passwort behandeln)</div><div id="sycodebox" style="font:900 22px ui-monospace,Menlo,monospace;letter-spacing:.08em;cursor:pointer">•••• – •••• – ••••</div><div style="font-size:12px;color:var(--dim)">Antippen zum Anzeigen</div></div>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm main" id="syshare">📲 An anderes Gerät senden</button><button class="btn sm" id="sycopy">📋 Code kopieren</button><button class="btn sm" id="synow">↻ Jetzt abgleichen</button></div>' +
+      '<div style="font-size:13px;line-height:1.5;color:var(--dim)">So geht’s: Auf dem anderen Gerät die Lernseite öffnen → Profil → Geräte-Sync → Code eingeben. Oder den Link per AirDrop schicken und dort öffnen.</div>' +
+      '<button class="btn sm" id="syoff" style="justify-self:start">Sync auf diesem Gerät beenden</button></div>';
+  }
+  function syStart(code, isNew) {
+    SY = { code: code, last: 0 }; sySave(); sySetBase(null); SY_K = null;
+    toast(isNew ? '🔄 Sync gestartet' : '🔗 Verbunden – Lernstand wird abgeglichen …'); sfx('win');
+    return syncNow().then(function () { if (/#\/profil\/sync/.test(location.hash)) viewProfile('sync'); else location.hash = '#/profil/sync'; if (!SY.err && !isNew) toast('✅ Lernstand abgeglichen'); });
+  }
+  function bindSync() {
+    if (!syOn()) {
+      $('#synew').onclick = function () { syStart(syNewCode(), true); };
+      $('#syjoin').onclick = function () { var c = syNorm($('#sycode').value); if (!c) { toast('Der Code hat 12 Zeichen, z. B. ABCD-EF23-GH45'); return; } syStart(c, false); };
+      $('#sycode').onkeydown = function (e) { if (e.key === 'Enter') $('#syjoin').click(); };
+      return;
+    }
+    syStat();
+    var shown = false; $('#sycodebox').onclick = function () { shown = !shown; this.textContent = shown ? SY.code : '•••• – •••• – ••••'; };
+    $('#sycopy').onclick = function () { try { navigator.clipboard.writeText(SY.code).then(function () { toast('📋 Code kopiert'); }); } catch (e) { toast(SY.code, 6000); } };
+    $('#syshare').onclick = function () { var u = syLink(); if (navigator.share) navigator.share({ title: 'OS lernen – Sync', text: 'Mit diesem Link verbindest du dein Gerät mit deinem Lernstand:', url: u }).catch(function () {}); else { try { navigator.clipboard.writeText(u); toast('🔗 Link kopiert'); } catch (e) { toast(u, 8000); } } };
+    $('#synow').onclick = function () { syncNow(); };
+    $('#syoff').onclick = function () { if (!confirm('Sync auf diesem Gerät beenden? Dein Lernstand bleibt hier und auf den anderen Geräten erhalten.')) return; SY = {}; sySave(); sySetBase(null); viewProfile('sync'); toast('Sync beendet'); };
+  }
+  function syncJoinLink(raw) {
+    var c = syNorm(raw); if (!c) { location.hash = '#/profil/sync'; return; }
+    if (SY.code === c) { location.hash = '#/profil/sync'; return; }
+    if (confirm('Dieses Gerät mit deinem Lernstand verbinden? Der Fortschritt beider Geräte wird zusammengeführt.')) syStart(c, false); else location.hash = '#/profil';
+  }
   /* ---------- Neue Version automatisch laden (umgeht den HTML-Cache von Safari / Home-Bildschirm) ---------- */
   (function () {
     function sig(html) { return (html.match(/src="[^"]+\?v=\d+"/g) || []).join('|'); }
