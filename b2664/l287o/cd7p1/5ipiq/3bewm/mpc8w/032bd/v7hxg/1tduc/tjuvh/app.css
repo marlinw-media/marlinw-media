@@ -416,4 +416,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px;
 .vocabbox .plus::after { transform: rotate(90deg); }
 .vocabbox[open] .plus::after { transform: rotate(0deg); }
 .vocabbox .vocab { padding: 0 10px 10px; }
+.ans { font-weight: 800; }
+.ans.ok { color: #7ff0b2; }
+.ans.bad { color: #ff8a95; }
 

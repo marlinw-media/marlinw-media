@@ -787,13 +787,8 @@
     var html = '<h1 style="font-size:21px">💡 Ausführliche Erklärung</h1><p class="lead">' + esc(t.title) + ' · Kapitel ' + it.n + '</p>' +
       '<div class="xq">' + md(it.q) + '</div>';
     if (it.num != null) {
-      html += '<div class="xopt ok"><b>✔ Richtig:</b> ' + strip(it.a[0]) + '</div>' + (!right ? '<div class="xopt bad"><b>✘ Deine Eingabe:</b> ' + strip(it.a[1] || '') + (reason ? '<div>' + strip(reason) + '</div>' : '') + '</div>' : '') +
+      html += (!right ? '<div class="xopt bad"><span class="ans bad">' + strip(it.a[1] || '') + '</span>' + (reason ? '<div>' + strip(reason) + '</div>' : '') + '</div>' : '') + '<div class="xopt ok"><span class="ans ok">' + strip(it.a[0]) + '</span></div>' +
         '<div class="xopt hint"><b>Format:</b> ' + esc(it.hint || '') + (it.unit ? ' · Einheit: ' + esc(it.unit) : '') + '</div>';
-    } else {
-      html += '<h3 style="margin-top:14px">Alle Antworten im Einzelnen</h3>' + it.a.map(function (a, k) {
-        var why = k === 0 ? 'Das ist die richtige Antwort – Begründung siehe unten.' : (it.w ? it.w[k - 1] : it.wr && it.wr[a]) || '';
-        return '<div class="xopt ' + (k === 0 ? 'ok' : 'bad') + (k === ai ? ' mine' : '') + '"><b>' + (k === 0 ? '✔' : '✘') + '</b> ' + strip(a) + (k === ai ? ' <em>(deine Wahl)</em>' : '') + (why ? '<div>' + strip(why) + '</div>' : '') + '</div>';
-      }).join('');
     }
     html += '<h3 style="margin-top:16px">Erklärung & Rechenweg</h3><div class="xexp">' + md(it.e) + '</div>';
     var voc = vocab(plain(it.q) + ' ' + it.a.map(plain).join(' ') + ' ' + plain(it.e));
@@ -919,7 +914,7 @@
     var fb = $('#fb'), reason = right ? '' : (it.w ? it.w[ai - 1] : (it.wr && (it.wr[it.a[ai]] || it.wr[it.given]))) || '';
     fb.className = 'fb ' + (right ? 'good' : 'bad');
     fb.innerHTML = '<div class="inner"><h3>' + (right ? '✅ ' + praise[Math.floor(Math.random() * praise.length)] + (gain ? ' <span style="color:#ffd166;font-size:15px">+' + gain + ' XP</span>' : '') : '💡 ' + comfort[Math.floor(Math.random() * comfort.length)]) + '</h3>' +
-      (right ? '<div class="why ok"><b>✔ Warum das stimmt</b></div>' : '<div class="why bad"><b>✘ Deine Antwort:</b> ' + md(it.a[ai]).replace(/^<p>|<\/p>$/g, '') + (reason ? '<div class="reason">' + md(reason).replace(/^<p>|<\/p>$/g, '') + '</div>' : '') + '</div><div class="why ok"><b>✔ Richtig ist:</b> ' + md(it.a[0]).replace(/^<p>|<\/p>$/g, '') + '</div><div class="why"><b>Erklärung</b></div>') +
+      (right ? '<div class="why ok"><b>✔ Warum das stimmt</b></div>' : '<div class="why bad"><span class="ans bad">' + md(it.a[ai]).replace(/^<p>|<\/p>$/g, '') + '</span>' + (reason ? '<div class="reason">' + md(reason).replace(/^<p>|<\/p>$/g, '') + '</div>' : '') + '</div><div class="why ok"><span class="ans ok">' + md(it.a[0]).replace(/^<p>|<\/p>$/g, '') + '</span></div><div class="why"><b>Erklärung</b></div>') +
       '<div class="ex">' + md(it.e) + '</div><div class="row"><button class="info" id="info" title="Im Lerntext nachlesen">i</button><button class="btn ' + (right ? 'ok' : 'main') + ' block" id="next">' + (Q.i + 1 < Q.items.length ? 'Weiter' : 'Auswertung') + '</button></div></div>';
     requestAnimationFrame(function () { fb.classList.add('on'); });
     $('#info').onclick = function () { openExplain(it, ai, right, reason); };
