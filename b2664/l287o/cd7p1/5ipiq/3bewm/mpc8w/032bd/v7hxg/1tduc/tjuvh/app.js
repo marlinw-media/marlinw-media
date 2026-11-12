@@ -775,7 +775,16 @@
       seen[g[1]] = 1; found.push({ pos: m.index, g: g });
     });
     found.sort(function (a, b) { return a.pos - b.pos; });
-    return found.map(function (f) { return f.g; });
+    /* Grundbegriffe ergänzen: z. B. bei „TLB-Miss“ auch „TLB“ erklären (direkt davor) */
+    var byName = {}; (O.gloss || []).forEach(function (g) { byName[g[1]] = g; });
+    var out = [], have = {};
+    var add = function (g, depth) {
+      if (!g || have[g[1]]) return;
+      if (depth < 2) ((O.glossReq || {})[g[1]] || []).forEach(function (r) { if (!have[r] && byName[r]) add(byName[r], depth + 1); });
+      if (!have[g[1]]) { have[g[1]] = 1; out.push({ g: g, dep: depth > 0 }); }
+    };
+    found.forEach(function (f) { add(f.g, 0); });
+    return out;
   }
   function termLink(l) {
     if (!l || !O.terms || !O.terms[l[0]]) return '';
@@ -794,9 +803,9 @@
       '<h3 style="margin-top:16px">Warum das stimmt</h3><div class="xexp">' + md(it.e) + '</div>';
     else html += '<h3 style="margin-top:16px">' + (/Rechenweg|=/.test(it.e) ? '🧭 Rechenweg' : 'Erklärung') + '</h3><div class="xexp">' + md(it.e) + '</div>';
     var voc = vocab(plain(it.q) + ' ' + it.a.map(plain).join(' ') + ' ' + plain(it.e) + ' ' + plain(it.dw || ''));
-    if (voc.length) html += '<details class="vocabbox"><summary><span>📖 Fachbegriffe <small>(' + voc.length + ')</small></span><i class="plus"></i></summary><div class="vocab">' + voc.map(function (g) {
-      var href = termLink(g[3]);
-      return '<div class="vrow"><div><b>' + esc(g[1]) + '</b><span>' + esc(g[2]) + '</span></div>' + (href ? '<a class="vi" href="' + href + '" title="Zum Begriff">i</a>' : '') + '</div>';
+    if (voc.length) html += '<details class="vocabbox"><summary><span>📖 Fachbegriffe <small>(' + voc.length + ')</small></span><i class="plus"></i></summary><div class="vocab">' + voc.map(function (v) {
+      var g = v.g, href = termLink(g[3]), full = (O.glossFull || {})[g[1]];
+      return '<div class="vrow"><div><b>' + esc(g[1]) + '</b>' + (full ? '<em class="full">' + esc(full) + '</em>' : '') + '<span>' + esc(full ? g[2].replace(full + ' – ', '').replace(/^./, function (c) { return c.toUpperCase(); }) : g[2]) + '</span></div>' + (href ? '<a class="vi" href="' + href + '" title="Zum Begriff">i</a>' : '') + '</div>';
     }).join('') + '</div></details>';
     html += '<a class="tlink" style="display:block;margin-top:14px" target="_blank" href="#/k/' + it.n + '/text/' + it.t + '/' + (it.s || 0) + (it.m ? '?m=' + encodeURIComponent(it.m) : '') + '">📄 Stelle im Lerntext öffnen ›</a>' +
       '<button class="btn main block" style="margin-top:14px" id="xclose">Verstanden 👍</button>';
@@ -978,4 +987,9 @@
   document.body.insertAdjacentHTML('beforeend', '<svg width="0" height="0" style="position:absolute"><defs><linearGradient id="rg" x1="0" x2="1"><stop offset="0" stop-color="#7c5cff"/><stop offset="1" stop-color="#ff5fa2"/></linearGradient><linearGradient id="chipg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a48bff"/><stop offset="1" stop-color="#6a4cf0"/></linearGradient></defs></svg>');
   window.OSTEP_APP = { pool: pool };
   route();
+  (function () {
+    var sp = document.getElementById('splash'); if (!sp) return;
+    var shown = Math.max(0, 1500 - (performance.now() - (window.SPLASH_T0 || 0)));
+    setTimeout(function () { window.SPLASH_DONE = true; setTimeout(function () { sp.classList.add('out'); setTimeout(function () { sp.remove(); }, 800); }, 450); }, shown);
+  })();
 })();

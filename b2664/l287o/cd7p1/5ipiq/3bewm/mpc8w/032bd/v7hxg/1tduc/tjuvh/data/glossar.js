@@ -69,3 +69,24 @@ OSTEP.gloss = [
   ['\\bmmap\\b', 'mmap()', 'Systemaufruf, der Speicher (oder Dateien) in den Adressraum einblendet.', null],
   ['Swap Space|Swapping', 'Swapping', 'Seiten werden auf die Platte ausgelagert und bei Bedarf zurückgeholt.', [18, 'Present-Bit']]
 ];
+/* ausgeschriebene Abkürzungen (klein unter dem Begriff) */
+OSTEP.glossFull = {
+  'TLB': 'Translation Lookaside Buffer', 'TLB-Hit': 'Translation Lookaside Buffer – Treffer', 'TLB-Miss': 'Translation Lookaside Buffer – Fehlschlag', 'TLB-Flush': 'Translation Lookaside Buffer leeren', 'TLB-Abdeckung': 'TLB Coverage',
+  'VPN': 'Virtual Page Number', 'PFN': 'Physical Frame Number', 'PTE': 'Page Table Entry', 'PTBR': 'Page-Table Base Register', 'MMU': 'Memory Management Unit',
+  'ASID': 'Address Space Identifier', 'LRU': 'Least Recently Used', 'CISC': 'Complex Instruction Set Computer', 'RISC': 'Reduced Instruction Set Computer',
+  'MIPS': 'Microprocessor without Interlocked Pipeline Stages', 'CR3': 'Control Register 3', 'U/S-Bit': 'User / Supervisor', 'R/W-Bit': 'Read / Write',
+  'CPU': 'Central Processing Unit', 'OS': 'Operating System (Betriebssystem)', 'PID': 'Process Identifier', 'PCB': 'Process Control Block', 'I/O': 'Input / Output',
+  'FIFO': 'First In, First Out', 'SJF': 'Shortest Job First', 'STCF': 'Shortest Time-to-Completion First', 'MLFQ': 'Multi-Level Feedback Queue',
+  'KB': 'Kilobyte', 'MB': 'Megabyte', 'GB': 'Gigabyte', 'Hex (0x…)': 'Hexadezimalzahl', 'log2': 'Logarithmus zur Basis 2', 'malloc()': 'memory allocation',
+  'SHIFT': 'Verschiebung (Bit-Shift)', 'Reference-/Accessed-Bit': 'Referenz-/Zugriffs-Bit', 'x86': 'Intel-8086-Familie'
+};
+/* Grundbegriffe, die zum Verständnis eines Begriffs zusätzlich erklärt werden */
+OSTEP.glossReq = {
+  'TLB': ['MMU', 'VPN', 'PFN'], 'TLB-Hit': ['TLB'], 'TLB-Miss': ['TLB', 'Page Table'], 'Trefferquote': ['TLB-Hit', 'TLB-Miss'], 'TLB-Flush': ['TLB', 'Kontextwechsel'],
+  'TLB-Abdeckung': ['TLB', 'Seite (Page)'], 'ASID': ['TLB', 'Kontextwechsel'], 'LRU': ['TLB'], 'voll assoziativ': ['TLB'], 'wired': ['TLB'],
+  'PFN': ['Frame (Page Frame)'], 'VPN': ['Seite (Page)'], 'Offset': ['Seite (Page)'], 'PTE': ['Page Table', 'PFN'], 'PTBR': ['Page Table'],
+  'Page Table': ['VPN', 'PFN'], 'Lineare Page Table': ['Page Table', 'VPN'], 'Valid-Bit': ['PTE'], 'Present-Bit': ['PTE'], 'Dirty-Bit': ['PTE'],
+  'Reference-/Accessed-Bit': ['PTE'], 'Protection-Bits': ['PTE'], 'U/S-Bit': ['PTE'], 'R/W-Bit': ['PTE'], 'Paging': ['Seite (Page)', 'Frame (Page Frame)'],
+  'CISC': ['TLB'], 'RISC': ['TLB'], 'MIPS': ['RISC'], 'x86': ['CISC'], 'CR3': ['x86', 'Page Table'], 'Trap / Ausnahme': ['Kernel-Modus'], 'return-from-trap': ['Trap / Ausnahme'],
+  'Segmentation Fault': ['Valid-Bit'], 'Protection Fault': ['Protection-Bits'], 'SHIFT': ['Offset', 'VPN'], 'Maske': ['VPN', 'Offset'], 'Räumliche Lokalität': ['TLB'], 'Zeitliche Lokalität': ['TLB']
+};
