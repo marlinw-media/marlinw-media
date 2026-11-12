@@ -1010,4 +1010,20 @@
     var shown = Math.max(0, 1500 - (performance.now() - (window.SPLASH_T0 || 0)));
     setTimeout(function () { window.SPLASH_DONE = true; setTimeout(function () { sp.classList.add('out'); setTimeout(function () { sp.remove(); }, 800); }, 450); }, shown);
   })();
+  /* ---------- Neue Version automatisch laden (umgeht den HTML-Cache von Safari / Home-Bildschirm) ---------- */
+  (function () {
+    function sig(html) { return (html.match(/src="[^"]+\?v=\d+"/g) || []).join('|'); }
+    var mine = sig(document.documentElement.outerHTML.replace(/src="([^"]+)"/g, function (m, a) { return 'src="' + a.replace(location.href.split('#')[0].split('?')[0].replace(/[^/]*$/, ''), '') + '"'; }));
+    function check(force) {
+      if (!force && /\/quiz\//.test(location.hash)) return;
+      try { fetch(location.pathname + '?u=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (h) {
+        var s = sig(h); if (!s || s === mine) return;
+        var tag = String(s.length) + s.slice(-40);
+        try { if (sessionStorage.getItem('ostep-upd') === tag) return; sessionStorage.setItem('ostep-upd', tag); } catch (e) {}
+        location.replace(location.pathname + '?u=' + Date.now() + location.hash);
+      }).catch(function () {}); } catch (e) {}
+    }
+    setTimeout(function () { check(true); }, 800);
+    document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') check(false); });
+  })();
 })();
