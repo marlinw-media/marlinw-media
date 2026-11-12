@@ -303,7 +303,9 @@
   function motCard() {
     var st = streak(), msg, mood = 'happy', allOpen = 0, best = null;
     O.meta.forEach(function (m) { var ch = O.chapters[m.n]; if (!ch || !chapterProgress(m.n)) return; ch.topics.forEach(function (t) { var c = pool(m.n, t.id).filter(function (it) { var r = S.q[it.id]; return r && r.b === 0; }).length; allOpen += c; if (c && (!best || c > best.c)) best = { n: m.n, t: t, c: c }; }); });
-    if (GAP >= 3) { msg = 'Willkommen zurück' + (S.name ? ', ' + esc(S.name) : '') + '! 👋 ' + GAP + ' Tage Pause – eine kurze Runde bringt dich sofort wieder rein.'; mood = 'wow'; }
+    var ci = S.cal ? calInfo() : null;
+    if (ci && ci.state !== 'aktiv' || ci && ci.left <= 5) { msg = '📅 Deine Kalender-Erinnerungen ' + (ci.state === 'abgelaufen' ? 'sind abgelaufen' : ci.state === 'geaendert' ? 'haben noch die alten Zeiten' : 'laufen in ' + ci.left + ' Tag' + (ci.left === 1 ? '' : 'en') + ' aus') + ' – <a href="#/profil/erinnerungen" style="color:#ffd166;text-decoration:underline">jetzt erneuern</a>'; mood = 'wow'; }
+    else if (GAP >= 3) { msg = 'Willkommen zurück' + (S.name ? ', ' + esc(S.name) : '') + '! 👋 ' + GAP + ' Tage Pause – eine kurze Runde bringt dich sofort wieder rein.'; mood = 'wow'; }
     else if (st >= 2 && dayXp() < S.goal) { msg = '🔥 <b>' + st + ' Tage</b> in Folge – lass die Serie heute nicht reißen!'; mood = 'strong'; }
     else if (st >= 2) { msg = '🔥 <b>' + st + ' Tage</b> Streak und Tagesziel erreicht – du bist eine Lernmaschine!'; mood = 'cool'; }
     else if (best) { msg = '<b>' + best.c + '</b> Fragen in „' + esc(best.t.title) + '“ warten auf eine zweite Chance – die schaffst du jetzt!'; mood = 'strong'; }
@@ -526,21 +528,44 @@
       '<div style="display:flex;gap:10px;align-items:center">' + chippy('happy', 48) + '<div style="font-size:14px;color:#d8d5f5;font-weight:700">Wann lernst du am liebsten? Chippy erinnert dich – jeden Tag mit einem neuen Spruch.</div></div>' +
       REM_SLOTS.map(function (x) { return row(x[0], x[1], r[x[0]]); }).join('') +
       row('streak', '🔥 Streak-Warnung', r.streak, 'abends, falls du heute noch nicht gelernt hast') +
-      '<button class="btn main block" id="remcal">📅 In Apple Kalender eintragen</button>' +
-      '<div style="font-size:12.5px;color:var(--dim);line-height:1.45">Trägt deine Lernzeiten für die nächsten 30 Tage mit Weckalarm in deinen Kalender ein – jeden Tag ein anderer motivierender Text. Tippe danach auf „Alle hinzufügen“. Willst du neue Zeiten? Einfach erneut eintragen (alte Termine vorher im Kalender löschen).</div>' +
-      '<button class="btn block" id="rempush">🔔 Push-Benachrichtigungen</button><div id="rempushinfo" style="font-size:12.5px;color:var(--dim);line-height:1.45"></div></div>';
+      '<div id="calstate" class="calstate"></div>' +
+      '<button class="btn main block" id="remcal"></button>' +
+      '<a id="calshare" class="calshare" href="javascript:void 0">Kalender öffnet sich nicht? Datei teilen / in „Dateien“ sichern ›</a>' +
+      '<div style="font-size:12.5px;color:var(--dim);line-height:1.5">So geht\'s: Tippen → im Kalender-Fenster <b>„Alle hinzufügen“</b>. Die Erinnerungen kommen dann als normale iPhone-Mitteilung mit Weckalarm – jeden Tag mit neuem Spruch. Tipp: Lege in der Kalender-App einen eigenen Kalender „OS lernen“ an und wähle ihn beim Hinzufügen – dann kannst du alles mit einem Tipp wieder löschen.</div></div>';
   }
   function icsEsc(t) { return String(t).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n'); }
   function icsDate(d, hm) { var p = hm.split(':'); return d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + 'T' + pad(+p[0]) + pad(+p[1]) + '00'; }
-  function buildIcs() {
-    var r = remCfg(), url = location.href.split('#')[0], now = new Date(), stamp = now.toISOString().replace(/[-:]/g, '').replace(/\.\d+/, ''), ev = [];
-    var slots = REM_SLOTS.map(function (x) { return x[0]; }).concat(['streak']);
-    for (var day = 0; day < 30; day++) {
-      var d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + day);
+  var CAL_DAYS = 60;
+  function dkey(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function dparse(k) { var p = k.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
+  function calInfo() {
+    var cfg = JSON.stringify(remCfg()) + '|' + (S.name || ''), c = S.cal, t0 = dparse(today());
+    if (!c) return { state: 'neu', cfg: cfg, start: t0 };
+    var until = dparse(c.until), left = Math.round((until - t0) / 864e5);
+    if (c.cfg !== cfg) return { state: 'geaendert', cfg: cfg, start: t0, left: left, until: until };
+    if (left < 0) return { state: 'abgelaufen', cfg: cfg, start: t0, left: left, until: until };
+    return { state: 'aktiv', cfg: cfg, start: new Date(until.getFullYear(), until.getMonth(), until.getDate() + 1), left: left, until: until };
+  }
+  function calState() {
+    var ci = calInfo(), el = $('#calstate'), b = $('#remcal'); if (!el) return;
+    var dd = function (d) { return pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + '.'; };
+    if (ci.state === 'neu') { el.innerHTML = 'Noch nicht im Kalender.'; b.textContent = '📅 In Apple Kalender eintragen'; }
+    else if (ci.state === 'geaendert') { el.innerHTML = '⚠️ Du hast Zeiten oder Namen geändert. Lösch in der Kalender-App die alten „OS lernen“-Termine (bzw. den Kalender „OS lernen“) und trag die neuen ein.'; el.className = 'calstate warn'; b.textContent = '📅 Neue Zeiten eintragen'; return; }
+    else if (ci.state === 'abgelaufen') { el.innerHTML = '⏰ Deine Kalender-Erinnerungen sind abgelaufen.'; el.className = 'calstate warn'; b.textContent = '📅 Wieder eintragen (' + CAL_DAYS + ' Tage)'; return; }
+    else { el.innerHTML = '✅ Im Kalender bis <b>' + dd(ci.until) + '</b> (noch ' + ci.left + ' Tage).' + (ci.left <= 7 ? ' Zeit zum Verlängern!' : ''); b.textContent = '📅 Um ' + CAL_DAYS + ' Tage verlängern'; }
+    el.className = 'calstate' + (ci.state === 'aktiv' && ci.left <= 7 ? ' warn' : '');
+  }
+  function buildIcs(start) {
+    var r = remCfg(), url = location.href.split('#')[0].split('?')[0], now = new Date(), stamp = now.toISOString().replace(/[-:]/g, '').replace(/\.\d+/, ''), ev = [];
+    var slots = REM_SLOTS.map(function (x) { return x[0]; }).concat(['streak']), lastK = null;
+    slots.forEach(function (k) { if (r[k] && r[k].on && k !== 'streak') lastK = k; });
+    for (var day = 0; day < CAL_DAYS; day++) {
+      var d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + day), isToday = dkey(d) === today();
       slots.forEach(function (k, si) {
         var c = r[k]; if (!c || !c.on) return;
-        var hm = c.t.split(':'); if (day === 0 && (+hm[0] * 60 + +hm[1]) <= now.getHours() * 60 + now.getMinutes()) return;
-        var cand = REM_TXT[k].filter(function (x) { return S.name || x.indexOf('{n}') < 0; }), txt = cand[(day + si * 3) % cand.length].replace(/\{n\}/g, S.name || '');
+        var hm = c.t.split(':'); if (isToday && (+hm[0] * 60 + +hm[1]) <= now.getHours() * 60 + now.getMinutes()) return;
+        var seed = Math.floor(d.getTime() / 864e5), cand = REM_TXT[k].filter(function (x) { return S.name || x.indexOf('{n}') < 0; }), txt = cand[(seed + si * 3) % cand.length].replace(/\{n\}/g, S.name || '');
+        if (day === CAL_DAYS - 1 && k === (lastK || 'streak')) txt = '📅 ' + (S.name ? S.name + ', l' : 'L') + 'etzte Lern-Erinnerung! Öffne OS lernen → Profil → Erinnerungen → „Verlängern“';
         var end = new Date(d.getFullYear(), d.getMonth(), d.getDate(), +hm[0], +hm[1] + 15);
         ev.push(['BEGIN:VEVENT', 'UID:ostep-' + k + '-' + icsDate(d, c.t) + '@os-lernen', 'DTSTAMP:' + stamp, 'DTSTART:' + icsDate(d, c.t), 'DTEND:' + icsDate(end, pad(end.getHours()) + ':' + pad(end.getMinutes())),
           'SUMMARY:' + icsEsc(txt), 'DESCRIPTION:' + icsEsc((k === 'streak' ? 'Falls du heute noch nicht gelernt hast: Schon 5 Fragen halten deine Streak am Leben.\n\n' : 'Zeit für eine kurze Lernrunde in OS lernen.\n\n') + url), 'URL:' + url,
@@ -550,22 +575,30 @@
     return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//OS lernen//Lernzeiten//DE', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'X-WR-CALNAME:OS lernen'].concat(ev).concat(['END:VCALENDAR']).join('\r\n');
   }
   function bindRem() {
-    $$('[data-rk]').forEach(function (c) { c.onchange = function () { remCfg()[c.dataset.rk].on = c.checked; save(); syncPush(); }; });
-    $$('[data-rt]').forEach(function (c) { c.onchange = function () { if (c.value) { remCfg()[c.dataset.rt].t = c.value; save(); syncPush(); } }; });
-    $('#remcal').onclick = function () {
-      var ics = buildIcs(), n = (ics.match(/BEGIN:VEVENT/g) || []).length;
-      if (!n) { toast('Bitte mindestens eine Lernzeit einschalten.'); return; }
-      var blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' }), file;
-      try { file = new File([blob], 'os-lernen-lernzeiten.ics', { type: 'text/calendar' }); } catch (e) {}
-      if (file && navigator.canShare && navigator.canShare({ files: [file] }) && /iPhone|iPad/.test(navigator.userAgent)) {
-        navigator.share({ files: [file], title: 'OS lernen – Lernzeiten' }).catch(function () {});
-      } else {
-        var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'os-lernen-lernzeiten.ics'; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
-      }
-      toast('📅 ' + n + ' Erinnerungen erstellt – jetzt „Alle hinzufügen“ tippen');
+    $$('[data-rk]').forEach(function (c) { c.onchange = function () { remCfg()[c.dataset.rk].on = c.checked; save(); syncPush(); calState(); }; });
+    $$('[data-rt]').forEach(function (c) { c.onchange = function () { if (c.value) { remCfg()[c.dataset.rt].t = c.value; save(); syncPush(); calState(); } }; });
+    var make = function () {
+      var ci = calInfo(), ics = buildIcs(ci.start), n = (ics.match(/BEGIN:VEVENT/g) || []).length;
+      if (!n) { toast('Bitte mindestens eine Lernzeit einschalten.'); return null; }
+      var until = new Date(ci.start.getFullYear(), ci.start.getMonth(), ci.start.getDate() + CAL_DAYS - 1);
+      return { ics: ics, n: n, done: function () { S.cal = { until: dkey(until), cfg: ci.cfg }; save(); calState(); } };
     };
-    $('#rempush').onclick = enablePush;
-    pushInfo();
+    $('#remcal').onclick = function () {
+      var m = make(); if (!m) return;
+      var url = URL.createObjectURL(new Blob([m.ics], { type: 'text/calendar;charset=utf-8' }));
+      var w = /iPhone|iPad|Macintosh/.test(navigator.userAgent) ? window.open(url, '_blank') : null;
+      if (!w) { var a = document.createElement('a'); a.href = url; a.download = 'os-lernen-lernzeiten.ics'; document.body.appendChild(a); a.click(); setTimeout(function () { a.remove(); }, 1000); }
+      setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+      m.done(); sfx('win');
+      toast('📅 ' + m.n + ' Erinnerungen – jetzt „Alle hinzufügen“ tippen', 4200);
+    };
+    $('#calshare').onclick = function () {
+      var m = make(); if (!m) return;
+      var file; try { file = new File([m.ics], 'os-lernen-lernzeiten.ics', { type: 'text/calendar' }); } catch (e) {}
+      if (file && navigator.canShare && navigator.canShare({ files: [file] })) navigator.share({ files: [file], title: 'OS lernen – Lernzeiten' }).then(m.done).catch(function () {});
+      else { var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([m.ics], { type: 'text/calendar' })); a.download = 'os-lernen-lernzeiten.ics'; document.body.appendChild(a); a.click(); m.done(); setTimeout(function () { a.remove(); }, 1000); }
+    };
+    calState();
   }
   /* Push-Benachrichtigungen: brauchen einen kleinen Server (PUSH_API). Ist keiner eingerichtet, erklärt die App das. */
   var PUSH_API = window.OSTEP_PUSH_API || '';
