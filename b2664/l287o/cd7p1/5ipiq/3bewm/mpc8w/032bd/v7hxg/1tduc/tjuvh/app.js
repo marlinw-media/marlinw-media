@@ -71,7 +71,7 @@
     var key = n + '-' + tid; if (poolCache[key]) return poolCache[key];
     var ch = O.chapters[n], t = ch.topics.filter(function (x) { return x.id === tid; })[0], items = [];
     var EX = (O.ex || {})[key] || [];
-    (t.q || []).forEach(function (q, i) { var x = EX[i]; items.push({ id: key + '-q' + i + (q[5] ? '-' + q[5] : ''), n: n, t: tid, q: q[0], a: q[1], e: x ? x[0] : q[2], w: x ? x[1] : null, s: q[3] || 0, m: q[4] || '' }); });
+    (t.q || []).forEach(function (q, i) { var x = EX[i]; items.push({ id: key + '-q' + i + (q[5] ? '-' + q[5] : ''), n: n, t: tid, q: q[0], a: q[1], e: x ? x[0] : q[2], w: x ? x[1] : null, dw: ((O.dw || {})[key] || [])[i] || null, s: q[3] || 0, m: q[4] || '' }); });
     if (t.st && t.st.T.length >= 3 && t.st.F.length >= 3) {
       var cnt = t.st.n || Math.min(18, Math.min(t.st.T.length, t.st.F.length) * 3);
       for (var v = 0; v < cnt; v++) {
@@ -790,14 +790,14 @@
       html += (!right ? '<div class="xopt bad"><span class="ans bad">' + strip(it.a[1] || '') + '</span>' + (reason ? '<div>' + strip(reason) + '</div>' : '') + '</div>' : '') + '<div class="xopt ok"><span class="ans ok">' + strip(it.a[0]) + '</span></div>' +
         '<div class="xopt hint"><b>Format:</b> ' + esc(it.hint || '') + (it.unit ? ' · Einheit: ' + esc(it.unit) : '') + '</div>';
     }
-    html += '<h3 style="margin-top:16px">Erklärung & Rechenweg</h3><div class="xexp">' + md(it.e) + '</div>';
-    var voc = vocab(plain(it.q) + ' ' + it.a.map(plain).join(' ') + ' ' + plain(it.e));
+    if (it.dw) html += '<h3 style="margin-top:16px">🧭 So kommst du drauf</h3><ol class="dw">' + it.dw.split('|').map(function (st) { return '<li>' + strip(st.trim()) + '</li>'; }).join('') + '</ol>' +
+      '<h3 style="margin-top:16px">Warum das stimmt</h3><div class="xexp">' + md(it.e) + '</div>';
+    else html += '<h3 style="margin-top:16px">' + (/Rechenweg|=/.test(it.e) ? '🧭 Rechenweg' : 'Erklärung') + '</h3><div class="xexp">' + md(it.e) + '</div>';
+    var voc = vocab(plain(it.q) + ' ' + it.a.map(plain).join(' ') + ' ' + plain(it.e) + ' ' + plain(it.dw || ''));
     if (voc.length) html += '<details class="vocabbox"><summary><span>📖 Fachbegriffe <small>(' + voc.length + ')</small></span><i class="plus"></i></summary><div class="vocab">' + voc.map(function (g) {
       var href = termLink(g[3]);
       return '<div class="vrow"><div><b>' + esc(g[1]) + '</b><span>' + esc(g[2]) + '</span></div>' + (href ? '<a class="vi" href="' + href + '" title="Zum Begriff">i</a>' : '') + '</div>';
     }).join('') + '</div></details>';
-    var seg = t.segs[it.s || 0];
-    if (seg) html += '<h3 style="margin-top:16px">Hintergrund: ' + esc(seg.h) + '</h3><div class="xexp bg">' + md(seg.t) + '</div>';
     html += '<a class="tlink" style="display:block;margin-top:14px" target="_blank" href="#/k/' + it.n + '/text/' + it.t + '/' + (it.s || 0) + (it.m ? '?m=' + encodeURIComponent(it.m) : '') + '">📄 Stelle im Lerntext öffnen ›</a>' +
       '<button class="btn main block" style="margin-top:14px" id="xclose">Verstanden 👍</button>';
     openSheetHtml(html, function (box) {
