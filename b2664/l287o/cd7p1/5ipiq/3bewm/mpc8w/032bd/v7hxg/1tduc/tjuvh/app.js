@@ -283,13 +283,14 @@
     if (!MERK(n)) { viewChapter(n); return; }
     var m = O.meta.filter(function (x) { return x.n === +n; })[0];
     app.innerHTML = '<a class="back" href="#/k/' + n + '">‹ Kapitel ' + n + '</a><h1 style="font-size:24px;font-weight:900;margin:4px 2px 4px">💡 Merksätze</h1><div style="color:#c9c3ff;font-weight:800;margin:0 2px 10px">Kapitel ' + n + ' · ' + esc(m ? m.title : '') + '</div>' + merkCards(n);
+    animateSvgs($$('.merk svg.vis'), function (s) { return MERK(n)[+s.dataset.m][4]; });
   }
   function merkCards(n) {
     var ch = O.chapters[n];
     return '<p class="merk-lead">Die wichtigsten Merksätze aus Kapitel ' + n + ' – ideal zum Wiederholen nach dem Lernen. Tippe auf einen Satz für die Erklärung.</p><div class="merks">' + MERK(n).map(function (m, i) {
       var t = ch.topics.filter(function (x) { return x.id === m[2]; })[0];
       return '<details class="merk"' + (i === 0 ? ' open' : '') + '><summary><span class="mn">' + (i + 1) + '</span><span class="ms">' + md(m[0]).replace(/^<p>|<\/p>$/g, '') + '</span></summary>' +
-        '<div class="mx">' + md(m[1]) + '<a class="tlink" href="#/k/' + n + '/text/' + m[2] + '/' + (m[3] || 0) + '">📄 ' + esc(t ? t.title : 'Lerntext') + ' nachlesen ›</a></div></details>';
+        '<div class="mx">' + (m[4] ? '<div class="mstage"><svg class="vis" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid meet" data-m="' + i + '"></svg></div>' : '') + md(m[1]) + '<a class="tlink" href="#/k/' + n + '/text/' + m[2] + '/' + (m[3] || 0) + '">📄 ' + esc(t ? t.title : 'Lerntext') + ' nachlesen ›</a></div></details>';
     }).join('') + '</div>';
   }
   function TERMS(n) { return (O.terms || {})[n] || null; }
@@ -302,20 +303,22 @@
         '<a class="tlink" href="#/k/' + n + '/text/' + x.k + '/' + (x.s || 0) + '">📄 Im Lerntext nachlesen ›</a></div></article>';
     }).join('') + '</div>';
   }
-  function animateTerms(n) {
+  function animateTerms(n) { var list = TERMS(n); animateSvgs($$('.term svg.vis'), function (s) { return list[+s.dataset.i].v; }); }
+  /* Grafiken in Endlosschleife abspielen (wie ein GIF), nur solange sichtbar */
+  function animateSvgs(svgs, getV) {
     stopTerms();
-    var list = TERMS(n), svgs = $$('.term svg.vis'), vis = {}, t0 = performance.now();
-    svgs.forEach(function (s) { OSTEP_VIS.render(s, list[+s.dataset.i].v, 1, 0); });
+    var vis = [], t0 = performance.now();
+    svgs.forEach(function (s, k) { s.dataset.k = k; vis[k] = false; OSTEP_VIS.render(s, getV(s), 1, 0); });
     if ('IntersectionObserver' in window) {
-      TERM_OBS = new IntersectionObserver(function (es) { es.forEach(function (e) { vis[e.target.dataset.i] = e.isIntersecting; }); }, { rootMargin: '60px' });
+      TERM_OBS = new IntersectionObserver(function (es) { es.forEach(function (e) { vis[+e.target.dataset.k] = e.isIntersecting; }); }, { rootMargin: '60px' });
       svgs.forEach(function (s) { TERM_OBS.observe(s); });
-    } else svgs.forEach(function (s) { vis[s.dataset.i] = true; });
+    } else svgs.forEach(function (s, k) { vis[k] = true; });
     var LOOP = 6200, PLAY = 4300, last = 0;
     (function frame(now) {
       TERM_RAF = requestAnimationFrame(frame);
       if (now - last < 33) return; last = now;
       var tt = (now - t0) % LOOP, p = Math.min(1, tt / PLAY);
-      svgs.forEach(function (s) { if (vis[s.dataset.i]) OSTEP_VIS.render(s, list[+s.dataset.i].v, p, (now - t0) / 1000); });
+      svgs.forEach(function (s, k) { if (vis[k]) OSTEP_VIS.render(s, getV(s), p, (now - t0) / 1000); });
     })(t0);
   }
   function viewBadges() {

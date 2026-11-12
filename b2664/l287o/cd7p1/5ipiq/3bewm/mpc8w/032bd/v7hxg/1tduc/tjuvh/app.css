@@ -320,4 +320,6 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px;
 .merk .ms { font-weight: 800; font-size: 15.5px; line-height: 1.45; }
 .merk .mx { padding: 0 16px 14px 54px; color: #dcdcf2; font-size: 15px; line-height: 1.6; -webkit-user-select: text; user-select: text; }
 .merk .mx p { margin: 0 0 8px; }
+.merk .mstage { position: relative; aspect-ratio: 4 / 3; margin: 0 0 10px -38px; border-radius: 14px; overflow: hidden; background: radial-gradient(ellipse at 50% 0%, #1f2450, #121530 70%); border: 1px solid var(--line); }
+.merk .mstage svg { position: absolute; inset: 0; width: 100%; height: 100%; }
 

@@ -355,6 +355,67 @@
     return out;
   };
 
+  /* ---------- Seiten → Frames (Pfeile erscheinen nacheinander) ---------- */
+  V.pagemap = function (v, p) {
+    var n = v.pages || 4, m = v.frames || 8, map = v.map || {}, out = '', top = v.title ? 46 : 26;
+    var bot = v.note ? 46 : 20, ph = Math.min(40, (H - top - bot - 10) / n - 8), fh = Math.min(26, (H - top - bot) / m - 4);
+    if (v.title) out += T(W / 2, 26, v.title, { size: 14, w: 900 });
+    out += T(70, top - 6, v.left || 'virtuell (Seiten)', { size: 10.5, w: 900, fill: '#9aa0d6' }) + T(320, top - 6, v.right || 'physisch (Frames)', { size: 10.5, w: 900, fill: '#9aa0d6' });
+    var py = function (i) { return top + 4 + i * (ph + 8) + (H - top - bot - n * (ph + 8)) / 2; }, fy = function (j) { return top + 4 + j * (fh + 4); };
+    var used = {}; Object.keys(map).forEach(function (k) { used[map[k]] = +k; });
+    for (var j = 0; j < m; j++) {
+      var k = used[j], show = k !== undefined ? ease(p * (n + 1) * 1.1 - k - .6) : 0, os = v.os && v.os.indexOf(j) >= 0;
+      out += R(270, fy(j), 100, fh, { fill: os ? '#2a4a66' : show > .5 ? PAL[k % 8] : 'rgba(255,255,255,.05)', stroke: '#3a3f6b', rx: 6 }) +
+        T(320, fy(j) + fh / 2 + 4, os ? 'F' + j + ': OS' : show > .5 ? 'F' + j + ': VP ' + k : 'F' + j + (v.free ? ' frei' : ''), { size: 10, w: 800, fill: show > .5 || os ? '#fff' : '#6f7399' });
+    }
+    for (var i = 0; i < n; i++) {
+      var a = ease(p * (n + 1) * 1.1 - i);
+      out += R(20, py(i), 100, ph, { fill: PAL[i % 8], rx: 8 }) + T(70, py(i) + ph / 2 + 5, 'VP ' + i, { size: 13, w: 900, fill: '#fff' });
+      if (map[i] !== undefined && a > 0) {
+        var x1 = 122, y1 = py(i) + ph / 2, x2 = 268, y2 = fy(map[i]) + fh / 2;
+        out += L(x1, y1, x1 + (x2 - x1) * a, y1 + (y2 - y1) * a, { stroke: PAL[i % 8], sw: 2.5, arrow: a > .95 });
+      }
+    }
+    if (v.note) out += TW(W / 2, H - 30, v.note, 52, { size: 11.5, fill: '#ffd9a8', w: 800, op: ease(p * 2 - 1) });
+    return out;
+  };
+
+  /* ---------- Weg eines Speicherzugriffs: CPU → TLB → (Page Table) → Speicher ---------- */
+  V.tlbflow = function (v, p, t) {
+    var out = '', hit = !!v.hit, B = { cpu: [20, 110, 70, 50, 'CPU'], tlb: [165, 60, 80, 50, 'TLB'], pt: [165, 200, 80, 50, 'Page Table'], mem: [310, 110, 72, 50, 'Speicher'] };
+    var c = function (k) { var b = B[k]; return [b[0] + b[2] / 2, b[1] + b[3] / 2]; };
+    var path = hit ? ['cpu', 'tlb', 'mem'] : ['cpu', 'tlb', 'pt', 'tlb', 'cpu', 'tlb', 'mem'];
+    var notes = hit ? ['VPN im TLB nachsehen …', '✓ Hit: PFN gefunden', '→ direkt zum Speicher: 1 Zugriff'] : ['VPN im TLB nachsehen …', '✗ Miss: Page Table lesen (+1 Zugriff)', 'Übersetzung in den TLB laden', 'Instruktion wiederholen', '✓ jetzt ein Hit', '→ Speicherzugriff'];
+    var segs = path.length - 1, q = clamp(p * 1.08, 0, 1) * segs, si = Math.min(segs - 1, Math.floor(q)), f = ease(q - si);
+    for (var i = 0; i < segs; i++) { var a = c(path[i]), b2 = c(path[i + 1]); out += L(a[0], a[1], b2[0], b2[1], { stroke: i < si ? '#ffd166' : '#3a3f6b', sw: i < si ? 2.5 : 1.5, op: .8 }); }
+    Object.keys(B).forEach(function (k) {
+      var b = B[k], on = path[si] === k || path[si + 1] === k, col = k === 'tlb' ? (hit || si >= 3 ? '#2fd17c' : si >= 1 ? '#ff5d6c' : '#7c5cff') : k === 'pt' ? '#ffb347' : k === 'mem' ? '#4cc9ff' : '#b18cff';
+      if (k === 'pt' && hit) { out += '<g opacity=".25">'; }
+      out += R(b[0], b[1], b[2], b[3], { fill: on ? col : '#1d2246', stroke: col, sw: 2, rx: 12 }) + T(b[0] + b[2] / 2, b[1] + b[3] / 2 + 5, b[4], { size: 12, w: 900, fill: on ? '#0b0d1c' : '#e9e9ff' });
+      if (k === 'pt' && hit) out += '</g>';
+    });
+    var a0 = c(path[si]), b0 = c(path[si + 1]), x = a0[0] + (b0[0] - a0[0]) * f, y = a0[1] + (b0[1] - a0[1]) * f;
+    out += '<circle cx="' + x + '" cy="' + y + '" r="14" fill="url(#glow)"/><circle cx="' + x + '" cy="' + y + '" r="6" fill="#ffd166"/>';
+    out += T(W / 2, 30, hit ? 'TLB-Hit' : 'TLB-Miss', { size: 15, w: 900, fill: hit ? '#9df0c4' : '#ff8a95' });
+    var ni = Math.min(notes.length - 1, Math.floor(clamp(p * 1.08, 0, .999) * notes.length));
+    out += R(60, 262, 280, 28, { fill: 'rgba(124,92,255,.18)', stroke: '#7c5cff', rx: 14 }) + T(W / 2, 281, notes[ni], { size: 12, w: 900, fill: '#e5e1ff' });
+    return out;
+  };
+
+  /* ---------- Vergleich zweier Zustände nebeneinander (links → rechts) ---------- */
+  V.versus = function (v, p) {
+    var out = '', a = ease(p * 2.2), b = ease(p * 2.2 - 1.1);
+    out += T(W / 2, 26, v.title || '', { size: 14, w: 900 });
+    [[v.l, a, 20, '#ff5d6c'], [v.r, b, 210, '#2fd17c']].forEach(function (s) {
+      var d = s[0], x = s[2];
+      out += '<g opacity="' + s[1] + '">' + R(x, 46, 170, 196, { fill: 'rgba(255,255,255,.05)', stroke: s[3], rx: 16 }) + T(x + 85, 72, d[0], { size: 13, w: 900, fill: s[3] }) + T(x + 85, 130, d[1], { size: 34 }) +
+        TW(x + 85, 168, d[2], 24, { size: 11.5, w: 800 }) + '</g>';
+    });
+    out += L(192, 144, 208, 144, { arrow: true, op: b });
+    if (v.note) out += TW(W / 2, 266, v.note, 60, { size: 11.5, fill: '#ffd9a8', w: 800, op: ease(p * 2.2 - 1.6) });
+    return out;
+  };
+
   window.OSTEP_VIS = {
     render: function (svg, v, p, t) {
       var fn = V[v.type] || V.points, html;

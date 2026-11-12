@@ -54,3 +54,37 @@
      'LRU nutzt Lokalität, versagt aber bei einer Schleife über n+1 Seiten mit n Einträgen; Random vermeidet diesen Grenzfall. **TLB-Abdeckung**: 64 Einträge · 4 KB = 256 KB – wer mehr Speicher aktiv nutzt, bekommt viele Misses.', 't4', 3]
   ];
 })();
+/* Animation je Merksatz (Reihenfolge wie oben) */
+(function () {
+  var M = OSTEP.merk, MAP = { 0: 3, 1: 7, 2: 5, 3: 2 };
+  var V18 = [
+    { type: 'pagemap', title: 'Gleich große Seiten → gleich große Frames', pages: 4, frames: 8, map: MAP, os: [0], free: true, note: 'Jedes Stück ist gleich groß – jede Seite passt in jeden Frame.' },
+    { type: 'pagemap', title: 'Beliebige freie Frames', pages: 4, frames: 8, map: { 0: 6, 1: 1, 2: 4, 3: 7 }, os: [0], free: true, note: 'Die Seiten müssen nicht zusammenhängend oder in Reihenfolge liegen.' },
+    { type: 'table', cmp: true, cols: ['VPN', 'Prozess A', 'Prozess B'], rows: [[0, 'VP 0'], [1, '→ PF 3'], [2, '→ PF 6'], [0, 'VP 1'], [1, '→ PF 7'], [2, '→ PF 1'], [0, 'VP 2'], [1, '→ PF 5'], [2, '→ PF 4'], [0, 'VP 3'], [1, '→ PF 2'], [2, '(ungültig)']] },
+    { type: 'bits', title: '32-Bit-Adresse, 4-KB-Seiten', split: [20, 12], labels: ['VPN (20 Bit)', 'Offset (12 Bit)'], note: 'Offset = log2(4096) = 12 · VPN = 32 − 12 = 20' },
+    { type: 'xlate', va: 21, vbits: 2, obits: 4, pt: MAP },
+    { type: 'bars', title: 'Seiten und Frames (16-Byte-Stücke)', items: [['Seiten (64 B)', 4], ['Frames (128 B)', 8]], unit: '' },
+    { type: 'bars', title: 'Lineare Page Table (32 Bit, 4 KB, 4-Byte-PTE)', items: [['1 Prozess', 4], ['10', 40], ['100 Prozesse', 400]], unit: ' MB' },
+    { type: 'bits', title: 'Ein PTE (x86, 32 Bit)', split: [20, 3, 9], labels: ['PFN', 'frei', 'Flags'], note: 'Flags: Present, R/W, U/S, Accessed, Dirty …' },
+    { type: 'mem', title: 'Nur gültige Seiten brauchen Frames', regions: [['Code ✓', 0, 14, '#7c5cff'], ['Heap ✓', 14, 30, '#2fd17c'], ['ungültig – kein Frame', 30, 84, '#ff5d6c', 'free'], ['Stack ✓', 84, 100, '#ffb347']] },
+    { type: 'code', title: 'PTE-Adresse berechnen', code: 'VPN     = (VA & VPN_MASK) >> SHIFT\nPTEAddr = PTBR + VPN * sizeof(PTE)\n\n// Beispiel: PTBR = 4096, VPN = 5, PTE = 4 B\n// PTEAddr = 4096 + 5 * 4 = 4116', steps: [0, 1, 3, 4] },
+    { type: 'bars', title: 'Speicherzugriffe pro Schleifendurchlauf', items: [['ohne Paging', 5], ['mit Paging', 10]], unit: '' },
+    { type: 'versus', title: 'Zwei Probleme – zwei Lösungen', l: ['zu langsam', '🐢', 'jeder Zugriff braucht einen Page-Table-Zugriff'], r: ['Lösung: TLB', '⚡', 'Übersetzungen cachen (Kapitel 19)'], note: 'Zu viel Speicher → kleinere Page Tables (Kapitel 20)' }
+  ];
+  var V19 = [
+    { type: 'tlbflow', hit: true },
+    { type: 'bits', title: 'Hit: PFN aus dem TLB + Offset', bits: '1110101', split: [3, 4], labels: ['PFN 7 (aus TLB)', 'Offset 5'], note: 'physisch = 7 · 16 + 5 = 117 – ganz ohne Page-Table-Zugriff' },
+    { type: 'tlbflow', hit: false },
+    { type: 'tlb', n: 10, per: 8, off: 1, vpn0: 3 },
+    { type: 'tlb', n: 10, per: 4, off: 1, vpn0: 6 },
+    { type: 'bars', title: 'Misses für 10 Integer (je nach Seitengröße)', items: [['16 B', 3], ['32 B', 2], ['4 KB', 1]], unit: '' },
+    { type: 'points', title: 'Hardwareverwaltet (x86)', items: [['🧭', 'CR3 zeigt auf die Page Table'], ['📐', 'Format ist fest vorgegeben'], ['🚶', 'Hardware durchläuft die Tabelle'], ['🔁', 'lädt Eintrag, wiederholt Instruktion']] },
+    { type: 'code', title: 'TLB-Miss-Handler des OS', code: 'TLB_MISS:            // Trap ins OS\n  PTE = PT[VPN]       // OS sucht\n  TLB_Write(VPN, PTE) // privilegiert\n  return-from-trap    // gleiche Instr.', steps: [0, 1, 2, 3] },
+    { type: 'table', cmp: true, cols: ['Trap-Grund', 'weiter bei'], rows: [[0, 'TLB-Miss'], [1, 'derselben Instruktion ↺'], [0, 'Systemaufruf'], [1, 'der nächsten Instruktion ↓'], [0, 'Handler-Code'], [1, 'wired / ungemappt']] },
+    { type: 'versus', title: 'Kontextwechsel', l: ['Flush', '🧹', 'TLB leeren → danach viele Misses'], r: ['ASID', '🏷️', 'Einträge mehrerer Prozesse bleiben gültig'], note: '8 Bit ASID → 2^8 = 256 Adressräume' },
+    { type: 'bits', title: 'Ein TLB-Eintrag', split: [6, 6, 4], labels: ['VPN', 'PFN', 'Bits'], note: 'voll assoziativ: alle Einträge werden parallel durchsucht' },
+    { type: 'bars', title: 'TLB-Abdeckung bei 64 Einträgen', items: [['4-KB-Seiten', 0.25], ['2-MB-Seiten', 128]], unit: ' MB' }
+  ];
+  M[18].forEach(function (m, i) { m[4] = V18[i]; });
+  M[19].forEach(function (m, i) { m[4] = V19[i]; });
+})();
