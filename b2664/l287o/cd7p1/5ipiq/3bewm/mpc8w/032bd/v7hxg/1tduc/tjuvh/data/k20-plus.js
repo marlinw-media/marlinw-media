@@ -25,7 +25,7 @@
   } });
   add('t3', { n: 3, f: function (r) {
     var ob = u.ri(r, 5, 7), ix = 4, vb = 8, vpn = u.ri(r, 0, 255), off = u.ri(r, 0, (1 << ob) - 1), va = (vpn << ob) | off, pdi = vpn >> ix, wr = {};
-    wr[vpn & 15] = 'Das ist der **PT-Index** (untere 4 Bits der VPN).'; wr[vpn] = 'Das ist die ganze VPN – der PD-Index sind nur ihre oberen 4 Bits.';
+    wr[vpn & 15] = 'Das ist der **PT-Index** (untere 4 Bits der VPN).'; wr[vpn] = 'Das ist die ganze VPN – der PD-Index sind nur ihre oberen 4 Bits.'; delete wr[pdi];
     return { q: 'Zweistufige Page Table: ' + (vb + ob) + '-Bit-Adressen, ' + (1 << ob) + '-Byte-Seiten, 4 Bit PD-Index + 4 Bit PT-Index. Welcher **PD-Index** gehört zur virtuellen Adresse **' + va + '**?', num: pdi, unit: '', hint: 'Ganze Zahl (dezimal) zwischen 0 und 15', e: '**Rechenweg:** ' + va + ' = ' + u.bin(va, vb + ob) + '.\nVPN = obere 8 Bit = ' + u.bin(vpn, 8) + ' = ' + vpn + '.\nPD-Index = obere 4 Bit der VPN = ' + u.bin(pdi, 4) + ' = **' + pdi + '**.', s: 2, wr: wr };
   } });
   add('t3', { n: 2, f: function (r) {

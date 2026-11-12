@@ -15,7 +15,7 @@
   var add = function (tid, g) { (T(tid).gen = T(tid).gen || []).push(g); };
   add('t1', { n: 3, f: function (r) {
     var a = u.ri(r, 1, 30) * 4, len = u.ri(r, 8, 40), k = u.ri(r, 1, len - 1), v = a + k, wr = {};
-    wr[a] = 'Die vorderen ' + k + ' Bytes gehen an den Aufrufer – der freie Rest beginnt dahinter.'; wr[len - k] = 'Das ist die neue Länge, nicht die Startadresse.'; wr[a + len] = 'Das ist das Ende des Stücks.';
+    wr[a] = 'Die vorderen ' + k + ' Bytes gehen an den Aufrufer – der freie Rest beginnt dahinter.'; wr[len - k] = 'Das ist die neue Länge, nicht die Startadresse.'; wr[a + len] = 'Das ist das Ende des Stücks.'; delete wr[v];
     return { q: 'Free-List-Eintrag **[Adresse ' + a + ', Länge ' + len + ']**. malloc(' + k + ') wird daraus bedient (ohne Header). Bei welcher **Adresse** beginnt der freie Rest?', num: v, unit: '', hint: 'Ganze Zahl (Adresse in Bytes)', e: '**Rechenweg:** Splitting gibt die ersten ' + k + ' Bytes (ab ' + a + ') an den Aufrufer.\nDer Rest beginnt bei ' + a + ' + ' + k + ' = **' + v + '** und ist noch ' + (len - k) + ' Bytes lang.', s: 2, wr: wr };
   } });
   add('t2', { n: 3, f: function (r) {
@@ -194,7 +194,7 @@
   ];
 
   /* ---------- Vokabelheft ---------- */
-  OSTEP.gloss.forEach(function (g) { if (g[1] === 'Interne Fragmentierung') g[3] = [17, 'Interne Fragmentierung']; if (g[1] === 'Free List') g[3] = [17, 'Free List']; });
+  OSTEP.gloss.forEach(function (g) { if (g[1] === 'Interne Fragmentierung') g[3] = [17, 'Interne Fragmentierung']; if (g[1] === 'Free List') g[3] = [17, 'Free List']; if (g[1] === 'brk/sbrk' && !g[3]) g[3] = [17, 'sbrk']; });
   OSTEP.gloss.push(
     ['Splitting|gesplittet|Teilen eines', 'Splitting', 'Ein freies Stück teilen: vorne an den Aufrufer, der Rest bleibt in der Free List.', [17, 'Splitting']],
     ['Coalescing|verschmelz|verschmilzt', 'Coalescing', 'Benachbarte freie Stücke beim Freigeben zu einem größeren zusammenführen.', [17, 'Coalescing']],
@@ -211,12 +211,10 @@
     ['Object Caches?', 'Object Cache', 'Segregated Free List für einen Typ von Kernel-Objekt (z. B. Locks, Inodes) im Slab Allocator.', [17, 'Segregated Lists & Slab']],
     ['Buddy|Buddies', 'Buddy-Allokator', 'Vergibt Zweierpotenz-Blöcke durch Halbieren; freie Buddies verschmelzen rekursiv.', [17, 'Buddy-Allokator']],
     ['Zweierpotenz', 'Zweierpotenz', 'Zahl der Form 2^k (1, 2, 4, 8, 16 …).', null],
-    ['\\bsbrk\\b', 'sbrk', 'Unix-Systemaufruf, mit dem ein Allokator den Heap vergrößert.', [17, 'sbrk']],
-    ['\\bmmap\\b', 'mmap()', 'Systemaufruf, der einen Speicherbereich in den Adressraum abbildet – im Buch Grundlage des Beispiel-Heaps.', [17, 'Eingebettete Free List']],
     ['\\bNULL\\b', 'NULL', 'Ungültiger Zeiger – malloc gibt ihn zurück, wenn kein Speicher frei ist.', null]
   );
   var GR = OSTEP.glossReq = OSTEP.glossReq || {};
   GR.Splitting = ['Free List']; GR.Coalescing = ['Free List', 'Externe Fragmentierung']; GR.Header = ['malloc()']; GR['Magic Number'] = ['Header'];
   GR['node_t'] = ['Free List']; GR['Best Fit'] = ['Free List']; GR['Worst Fit'] = ['Free List']; GR['First Fit'] = ['Free List']; GR['Next Fit'] = ['First Fit'];
-  GR['Segregated Lists'] = ['Free List']; GR['Slab Allocator'] = ['Segregated Lists']; GR['Object Cache'] = ['Slab Allocator']; GR['Buddy-Allokator'] = ['Zweierpotenz', 'Interne Fragmentierung', 'Coalescing']; GR.sbrk = ['Heap'];
+  GR['Segregated Lists'] = ['Free List']; GR['Slab Allocator'] = ['Segregated Lists']; GR['Object Cache'] = ['Slab Allocator']; GR['Buddy-Allokator'] = ['Zweierpotenz', 'Interne Fragmentierung', 'Coalescing'];
 })();
