@@ -193,8 +193,7 @@
     ['\\bnice\\b', 'nice', 'Werkzeug, mit dem man die Priorität eines Jobs etwas erhöht oder senkt.', [8, 'nice & Advice']],
     ['Decay-Usage|decay', 'Decay-Usage', 'FreeBSD-Ansatz: gezählte CPU-Nutzung klingt mit der Zeit ab.', [8, 'Tuning & Solaris']],
     ['\\bSolaris\\b', 'Solaris', 'Unix-System von Sun; seine MLFQ (TS-Klasse) nutzt standardmäßig 60 Queues.', [8, 'Tuning & Solaris']],
-    ['Feedback', 'Feedback', 'Rückkopplung: Das bisherige Verhalten eines Jobs bestimmt seine Priorität.', [8, 'Feedback']],
-    ['Zeitscheibe|Time Slice|Quantum', 'Zeitscheibe', 'Zeit, die ein Job im Round Robin am Stück laufen darf.', null]
+    ['Feedback', 'Feedback', 'Rückkopplung: Das bisherige Verhalten eines Jobs bestimmt seine Priorität.', [8, 'Feedback']]
   );
   OSTEP.gloss.forEach(function (g) { if (g[1] === 'MLFQ' && !g[3]) g[3] = [8, 'MLFQ']; });
   var GF = OSTEP.glossFull = OSTEP.glossFull || {}; GF.MLFQ = 'Multi-Level Feedback Queue'; GF.CTSS = 'Compatible Time-Sharing System';
