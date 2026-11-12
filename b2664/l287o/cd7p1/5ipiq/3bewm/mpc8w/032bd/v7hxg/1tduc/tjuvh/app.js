@@ -35,6 +35,7 @@
   if (TIMING.ki && S.voice === 'geraet') S.voice = 'ki';
   function voiceInfo(id) { return VOICES.filter(function (v) { return v[0] === id; })[0] || VOICES[0]; }
   function tmOf(voice, key) { return voice === 'geraet' ? null : (TIMING[voice] || {})[key] || null; }
+  var GAP = (function () { var l = S.lastVisit; S.lastVisit = Date.now(); return l ? Math.floor((Date.now() - l) / 864e5) : 0; })();
   function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
   function today() { var d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
   function dayXp() { return S.days[today()] || 0; }
@@ -48,7 +49,10 @@
   function addXp(n, el) {
     if (n <= 0) return;
     var before = lvlInfo(S.xp).lvl;
+    var dBefore = dayXp();
     S.xp += n; S.days[today()] = dayXp() + n; save();
+    if (!dBefore) setTimeout(syncPush, 50);
+    if (dBefore < S.goal && dayXp() >= S.goal && S.goalShown !== today()) { S.goalShown = today(); save(); setTimeout(function () { cheer({ kicker: 'TAGESZIEL', title: 'Tagesziel geschafft! 🎯', text: (streak() >= 2 ? '🔥 ' + streak() + ' Tage in Folge! ' : '') + 'Alles, was du jetzt noch machst, ist Bonus fürs Gehirn.', mood: 'strong', btn: 'Noch ein bisschen 💪' }); }, 1300); }
     if (el) floatXp('+' + n + ' XP', el);
     var after = lvlInfo(S.xp).lvl;
     if (after > before) setTimeout(function () { levelUp(after); }, 500);
@@ -155,6 +159,51 @@
     document.body.appendChild(d); setTimeout(function () { d.remove(); }, 1000);
   }
   var cf = $('#confetti'), cfx = cf.getContext('2d'), parts = [], cfRun = false;
+  /* ================= Motivation: Maskottchen „Chippy“ ================= */
+  function chippy(mood, size) {
+    size = size || 64; mood = mood || 'happy';
+    var eyes = mood === 'sleep' ? '<path d="M21 31 q4 3 8 0 M35 31 q4 3 8 0" stroke="#1a1040" stroke-width="2.6" fill="none" stroke-linecap="round"/>'
+      : mood === 'cool' ? '<rect x="17" y="26" width="14" height="8" rx="3" fill="#11112a"/><rect x="33" y="26" width="14" height="8" rx="3" fill="#11112a"/><path d="M31 29 h2" stroke="#11112a" stroke-width="2"/>'
+      : '<circle cx="25" cy="30" r="4.2" fill="#fff"/><circle cx="39" cy="30" r="4.2" fill="#fff"/><circle cx="26" cy="31" r="2.2" fill="#1a1040"/><circle cx="40" cy="31" r="2.2" fill="#1a1040"/>';
+    var mouth = mood === 'think' ? '<path d="M26 42 h12" stroke="#1a1040" stroke-width="2.6" stroke-linecap="round"/>'
+      : mood === 'sleep' ? '<circle cx="32" cy="42" r="2.4" fill="#1a1040"/>'
+      : mood === 'wow' ? '<ellipse cx="32" cy="42" rx="4" ry="5" fill="#1a1040"/>'
+      : '<path d="M24 39 q8 8 16 0" stroke="#1a1040" stroke-width="2.8" fill="#ff8fb8" stroke-linecap="round"/>';
+    var extra = mood === 'party' ? '<path d="M24 12 L32 -6 L40 12 z" fill="#ffd166" stroke="#ff5fa2" stroke-width="2"/><circle cx="32" cy="-6" r="3" fill="#ff5fa2"/>'
+      : mood === 'strong' ? '<path d="M8 36 q-8 -10 2 -16" stroke="#ffb347" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M56 36 q8 -10 -2 -16" stroke="#ffb347" stroke-width="5" fill="none" stroke-linecap="round"/>'
+      : mood === 'think' ? '<circle cx="54" cy="10" r="3" fill="#c9c3ff"/><circle cx="60" cy="2" r="4.5" fill="#c9c3ff"/>'
+      : mood === 'sleep' ? '<text x="48" y="10" font-size="12" font-weight="900" fill="#c9c3ff">z</text><text x="55" y="2" font-size="9" font-weight="900" fill="#c9c3ff">z</text>' : '';
+    var pins = ''; for (var i = 0; i < 4; i++) { var o = 16 + i * 10.7; pins += '<rect x="' + o + '" y="2" width="4" height="7" rx="1.5" fill="#b9a8ff"/><rect x="' + o + '" y="55" width="4" height="7" rx="1.5" fill="#b9a8ff"/><rect x="2" y="' + o + '" width="7" height="4" rx="1.5" fill="#b9a8ff"/><rect x="55" y="' + o + '" width="7" height="4" rx="1.5" fill="#b9a8ff"/>'; }
+    return '<svg class="chippy ' + mood + '" width="' + size + '" height="' + size + '" viewBox="-6 -14 76 80" aria-hidden="true">' + pins +
+      '<rect x="8" y="8" width="48" height="48" rx="12" fill="url(#chipg)" stroke="#d9d0ff" stroke-width="1.5"/>' +
+      '<circle cx="18" cy="38" r="3.4" fill="#ff8fb8" opacity=".55"/><circle cx="46" cy="38" r="3.4" fill="#ff8fb8" opacity=".55"/>' + eyes + mouth + extra + '</svg>';
+  }
+  var pepT = 0, pepLast = 0;
+  function pep(msg, mood, force) {
+    var now = Date.now(); if (!force && now - pepLast < 4500) return; pepLast = now;
+    var el = $('#pep'); if (!el) { el = document.createElement('div'); el.id = 'pep'; document.body.appendChild(el); }
+    el.innerHTML = chippy(mood || 'happy', 46) + '<div>' + msg + '</div>';
+    el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
+    clearTimeout(pepT); pepT = setTimeout(function () { el.classList.remove('on'); }, 3600);
+    el.onclick = function () { el.classList.remove('on'); };
+  }
+  function cheer(o) {
+    sfx('lvl'); confetti(o.confetti || 140);
+    var d = document.createElement('div'); d.className = 'levelup';
+    d.innerHTML = '<div class="box cheer">' + chippy(o.mood || 'party', 96) + '<div style="font-weight:900;color:#ffd166;letter-spacing:.15em;font-size:13px;margin-top:6px">' + (o.kicker || 'MEILENSTEIN') + '</div><h2 style="font-size:24px;font-weight:900;margin:6px 0">' + o.title + '</h2><p style="color:#d8d5f5;margin:0 0 14px">' + o.text + '</p>' +
+      (o.progress != null ? '<div class="xpbar" style="height:12px;margin:0 0 16px;width:100%"><i style="width:0%"></i></div>' : '') + '<button class="btn main block">' + (o.btn || 'Weiter so 🚀') + '</button></div>';
+    document.body.appendChild(d);
+    if (o.progress != null) setTimeout(function () { var i = d.querySelector('.xpbar i'); if (i) i.style.width = Math.round(o.progress * 100) + '%'; }, 120);
+    d.querySelector('button').onclick = function () { d.remove(); };
+  }
+  function rnd(a) { return a[Math.floor(Math.random() * a.length)]; }
+  var MOT = {
+    combo: { 3: ['3 richtig in Folge – du bist warm! 🔥', 'Hattrick! Weiter so ⚡'], 5: ['5er-Combo! Dein Gehirn cached gerade alles 🧠', 'Fünf am Stück – TLB-Hit-Rate: 100 % 😎'], 8: ['8 in Folge! Du bist schneller als ein TLB-Hit ⚡'], 10: ['10er-Combo!! Professor-Level erreicht 🎓'], 15: ['15 am Stück – das ist Kernel-Modus! 👑'] },
+    wrong: ['Fehler sind nur Page Faults – danach sitzt es im Speicher 💾', 'Kein Stress – falsche Fragen kommen gezielt wieder, bis sie sitzen 💪', 'Durchatmen. Lies die Erklärung – genau so lernt man 🌱', 'Auch Prozessoren brauchen manchmal einen Retry ↺'],
+    half: ['Halbzeit! {ok} von {n} richtig – zieh durch! 🏃', 'Die Hälfte ist geschafft – {ok} Treffer bisher 💪'],
+    listened: ['Thema gehört! 🎧 Jetzt im Quiz festigen – so bleibt es hängen.', 'Podcast geschafft! Ein kurzes Quiz macht daraus echtes Wissen 🎯'],
+    home: ['Jede Frage heute ist ein Punkt weniger Prüfungsstress 📚', 'Kleine Schritte, großer Fortschritt – 10 Minuten reichen heute 🚀', 'Du lernst nicht für die Prüfung, du lernst, wie Computer wirklich denken 🧠', 'Der beste Zeitpunkt zu lernen war gestern. Der zweitbeste ist jetzt ⏰', 'Wiederholung schlägt Talent – und du wiederholst gerade 💪', 'Ein Kapitel nach dem anderen – genau wie ein Scheduler 😉']
+  };
   function confetti(n) {
     cf.width = innerWidth * (devicePixelRatio || 1); cf.height = innerHeight * (devicePixelRatio || 1);
     var cols = ['#7c5cff', '#ff5fa2', '#ffb347', '#4cc9ff', '#2fd17c', '#ffd166'];
@@ -170,7 +219,7 @@
   function levelUp(l) {
     sfx('lvl'); confetti(180);
     var d = document.createElement('div'); d.className = 'levelup';
-    d.innerHTML = '<div class="box"><div style="font-weight:900;color:#ffd166;letter-spacing:.15em;font-size:13px">LEVEL UP</div><div class="lv grad-text">' + l + '</div><p style="color:#d8d5f5;margin:10px 0 18px">Stark! Du bist jetzt auf Level ' + l + '.</p><button class="btn main block">Weiter so 🚀</button></div>';
+    d.innerHTML = '<div class="box cheer">' + chippy('party', 88) + '<div style="font-weight:900;color:#ffd166;letter-spacing:.15em;font-size:13px">LEVEL UP</div><div class="lv grad-text">' + l + '</div><p style="color:#d8d5f5;margin:10px 0 18px">Stark! Du bist jetzt auf Level ' + l + '.</p><button class="btn main block">Weiter so 🚀</button></div>';
     document.body.appendChild(d); d.querySelector('button').onclick = function () { d.remove(); };
   }
 
@@ -239,11 +288,24 @@
       '<div class="hero"><div class="row"><h1>' + hi + '! 👋</h1><p>' + (dayXp() >= S.goal ? 'Tagesziel geschafft – stark! Jede weitere Frage festigt dein Wissen.' : 'Noch ' + (S.goal - dayXp()) + ' XP bis zu deinem Tagesziel.') + '</p></div>' +
       '<div class="goal">' + ring(g, 70, 8, '#ffd166', Math.round(g * 100) + '%') + '<div style="flex:1">' +
       (rec ? '<div style="font-size:13px;color:#d8d5f5;font-weight:700">Als Nächstes · Kapitel ' + rec.n + '</div><div style="font-weight:900;font-size:17px;margin:2px 0 10px">' + esc(rec.t.title) + '</div><a class="btn main block" href="#/k/' + rec.n + '/' + rec.mode + '/' + rec.t.id + '">' + rec.label + '</a>'
-        : '<div style="font-weight:900">Alles gemeistert! 🏆</div>') + '</div></div></div>';
+        : '<div style="font-weight:900">Alles gemeistert! 🏆</div>') + '</div></div></div>' + motCard();
     var started = O.meta.filter(function (m) { return O.chapters[m.n] && chapterProgress(m.n) > 0; });
     if (started.length) html += '<div class="sec-title"><h2>Weitermachen</h2></div><div class="chapters">' + started.slice(0, 4).map(chapterRow).join('') + '</div>';
     html += '<div class="sec-title"><h2>Alle Kapitel</h2><small>' + O.meta.length + ' Kapitel</small></div>' + chapterList();
     app.innerHTML = html;
+  }
+  function motCard() {
+    var st = streak(), msg, mood = 'happy', allOpen = 0, best = null;
+    O.meta.forEach(function (m) { var ch = O.chapters[m.n]; if (!ch || !chapterProgress(m.n)) return; ch.topics.forEach(function (t) { var c = pool(m.n, t.id).filter(function (it) { var r = S.q[it.id]; return r && r.b === 0; }).length; allOpen += c; if (c && (!best || c > best.c)) best = { n: m.n, t: t, c: c }; }); });
+    if (GAP >= 3) { msg = 'Willkommen zurück! 👋 ' + GAP + ' Tage Pause – eine kurze Runde bringt dich sofort wieder rein.'; mood = 'wow'; }
+    else if (st >= 2 && dayXp() < S.goal) { msg = '🔥 <b>' + st + ' Tage</b> in Folge – lass die Serie heute nicht reißen!'; mood = 'strong'; }
+    else if (st >= 2) { msg = '🔥 <b>' + st + ' Tage</b> Streak und Tagesziel erreicht – du bist eine Lernmaschine!'; mood = 'cool'; }
+    else if (best) { msg = '<b>' + best.c + '</b> Fragen in „' + esc(best.t.title) + '“ warten auf eine zweite Chance – die schaffst du jetzt!'; mood = 'strong'; }
+    else msg = rnd(MOT.home);
+    var acc = S.answered ? Math.round(S.correct / S.answered * 100) : 0;
+    return '<div class="motcard home">' + chippy(mood, 62) + '<div><div>' + msg + '</div>' +
+      (S.answered ? '<div class="motstats"><span>✅ ' + S.correct + ' richtig</span><span>🎯 ' + acc + ' % Treffer</span>' + (allOpen ? '<span>↻ ' + allOpen + ' zu wiederholen</span>' : '') + '</div>' : '') +
+      '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">' + (best ? '<a class="btn sm" href="#/k/' + best.n + '/quiz/' + best.t.id + '">Fehler wiederholen ↻</a>' : '') + (S.rem ? '' : '<a class="btn sm" href="#/erfolge">🔔 Erinnerungen</a>') + '</div></div></div>';
   }
   function chapterList() {
     var html = '', part = '';
@@ -329,11 +391,105 @@
       '<div class="sec-title"><h2>Einstellungen</h2></div><div class="card" style="display:grid;gap:10px">' +
       '<label style="display:flex;justify-content:space-between;align-items:center;font-weight:700">Tagesziel <select id="goal" style="font:inherit;background:var(--card2);color:var(--text);border:1px solid var(--line2);border-radius:10px;padding:6px 8px">' + [50, 100, 200, 300].map(function (g) { return '<option ' + (S.goal === g ? 'selected' : '') + ' value="' + g + '">' + g + ' XP</option>'; }).join('') + '</select></label>' +
       '<label style="display:flex;justify-content:space-between;align-items:center;font-weight:700">Podcast-Stimme <select id="vc" style="font:inherit;background:var(--card2);color:var(--text);border:1px solid var(--line2);border-radius:10px;padding:6px 8px">' + VOICES.map(function (v) { return '<option ' + (S.voice === v[0] ? 'selected' : '') + ' value="' + v[0] + '">' + v[2] + ' ' + v[1] + '</option>'; }).join('') + '</select></label>' +
-      '<label style="display:flex;justify-content:space-between;align-items:center;font-weight:700">Soundeffekte <input type="checkbox" id="snd" ' + (S.sound ? 'checked' : '') + ' style="width:22px;height:22px;accent-color:#ff5fa2"></label></div>';
+      '<label style="display:flex;justify-content:space-between;align-items:center;font-weight:700">Soundeffekte <input type="checkbox" id="snd" ' + (S.sound ? 'checked' : '') + ' style="width:22px;height:22px;accent-color:#ff5fa2"></label></div>' + remSection();
     app.innerHTML = html;
+    bindRem();
     $('#goal').onchange = function () { S.goal = +this.value; save(); };
     $('#snd').onchange = function () { S.sound = this.checked; save(); };
     $('#vc').onchange = function () { S.voice = this.value; save(); toast('🗣️ Stimme: ' + voiceInfo(S.voice)[1]); };
+  }
+
+  /* ================= Erinnerungen (Kalender + Benachrichtigungen) ================= */
+  var REM_SLOTS = [['morgens', '🌅 Morgens', '07:30'], ['mittags', '🥪 Mittags', '12:30'], ['abends', '🌆 Abends', '18:30'], ['nachts', '🦉 Late Night', '22:30']];
+  var REM_TXT = {
+    morgens: ['☕ Kaffee + 5 Fragen = perfekter Start in den Tag', '🌅 Guten Morgen! Dein Gehirn ist jetzt am frischesten – nutz es', '🧠 Morgenrunde: Ein Podcast-Thema zum Wachwerden?', '🚀 Wer morgens lernt, hat abends frei', '🐦 Der frühe Vogel cached den Wurm – 10 Minuten OS?', '☀️ Neuer Tag, neue XP. Chippy wartet schon!', '📚 5 Minuten jetzt sparen dir 5 Stunden vor der Prüfung'],
+    mittags: ['🥪 Mittagspause? Ein Podcast-Thema passt genau rein', '🍝 Nudeln + Paging = perfekte Kombi', '⏸️ Kurze Pause vom Alltag: 5 Fragen, dann weiter', '🎧 Ohren frei? Ein Thema hören, während du isst', '⚡ Mittags-Boost: Ein schneller Quiz-Sprint!', '🧩 Halbzeit des Tages – Zeit für ein bisschen Kernel-Wissen'],
+    abends: ['🌆 Feierabend-Runde: 10 Minuten OS, dann Serie', '🔥 Halte deine Streak am Leben – eine Runde reicht', '🎯 Deine falschen Fragen warten auf Revanche', '🧠 Abends gelernt, über Nacht gespeichert – Schlaf ist dein Cache', '📈 Ein Quiz heute = Fortschritt, den du morgen spürst', '🎮 Level-Up in Reichweite? Schau mal rein!'],
+    nachts: ['🦉 Late-Night-Lernsession? 10 Minuten, dann ab ins Bett', '🌙 Noch wach? Ein Podcast zum Einschlafen über TLBs', '⭐ Nachteulen-Bonus: Eine letzte Runde Fragen?', '😴 Kurz lernen, dann schlafen – dein Gehirn sortiert über Nacht', '🌌 Kernel-Modus aktiviert: Late Night Learning'],
+    streak: ['🔥 Deine Streak ist in Gefahr! Noch nicht gelernt? 5 Fragen retten sie', '😱 Chippy macht sich Sorgen um deine Streak – schnell eine Runde!', '⏳ Der Tag ist fast vorbei – lass deine Serie nicht reißen', '🚨 Streak-Alarm! Nur ein paar Fragen bis Mitternacht', '🥺 Chippy vermisst dich. Eine kleine Runde für die Streak?']
+  };
+  function remCfg() {
+    var r = S.rem || {}; REM_SLOTS.forEach(function (x) { if (!r[x[0]]) r[x[0]] = { on: x[0] === 'abends', t: x[2] }; });
+    if (!r.streak) r.streak = { on: true, t: '21:00' };
+    S.rem = r; return r;
+  }
+  function remSection() {
+    var r = remCfg(), inp = 'style="font:inherit;font-weight:800;background:var(--card2);color:var(--text);border:1px solid var(--line2);border-radius:10px;padding:6px 8px"';
+    var row = function (key, label, cfg, sub) {
+      return '<div class="remrow"><label class="remlab"><input type="checkbox" data-rk="' + key + '" ' + (cfg.on ? 'checked' : '') + '><span><b>' + label + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</span></label><input type="time" data-rt="' + key + '" value="' + cfg.t + '" ' + inp + '></div>';
+    };
+    return '<div class="sec-title"><h2>🔔 Erinnerungen</h2></div><div class="card" style="display:grid;gap:12px">' +
+      '<div style="display:flex;gap:10px;align-items:center">' + chippy('happy', 48) + '<div style="font-size:14px;color:#d8d5f5;font-weight:700">Wann lernst du am liebsten? Chippy erinnert dich – jeden Tag mit einem neuen Spruch.</div></div>' +
+      REM_SLOTS.map(function (x) { return row(x[0], x[1], r[x[0]]); }).join('') +
+      row('streak', '🔥 Streak-Warnung', r.streak, 'abends, falls du heute noch nicht gelernt hast') +
+      '<button class="btn main block" id="remcal">📅 In Apple Kalender eintragen</button>' +
+      '<div style="font-size:12.5px;color:var(--dim);line-height:1.45">Trägt deine Lernzeiten für die nächsten 30 Tage mit Weckalarm in deinen Kalender ein – jeden Tag ein anderer motivierender Text. Tippe danach auf „Alle hinzufügen“. Willst du neue Zeiten? Einfach erneut eintragen (alte Termine vorher im Kalender löschen).</div>' +
+      '<button class="btn block" id="rempush">🔔 Push-Benachrichtigungen</button><div id="rempushinfo" style="font-size:12.5px;color:var(--dim);line-height:1.45"></div></div>';
+  }
+  function icsEsc(t) { return String(t).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n'); }
+  function icsDate(d, hm) { var p = hm.split(':'); return d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + 'T' + pad(+p[0]) + pad(+p[1]) + '00'; }
+  function buildIcs() {
+    var r = remCfg(), url = location.href.split('#')[0], now = new Date(), stamp = now.toISOString().replace(/[-:]/g, '').replace(/\.\d+/, ''), ev = [];
+    var slots = REM_SLOTS.map(function (x) { return x[0]; }).concat(['streak']);
+    for (var day = 0; day < 30; day++) {
+      var d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + day);
+      slots.forEach(function (k, si) {
+        var c = r[k]; if (!c || !c.on) return;
+        var hm = c.t.split(':'); if (day === 0 && (+hm[0] * 60 + +hm[1]) <= now.getHours() * 60 + now.getMinutes()) return;
+        var txt = REM_TXT[k][(day + si * 3) % REM_TXT[k].length];
+        var end = new Date(d.getFullYear(), d.getMonth(), d.getDate(), +hm[0], +hm[1] + 15);
+        ev.push(['BEGIN:VEVENT', 'UID:ostep-' + k + '-' + icsDate(d, c.t) + '@os-lernen', 'DTSTAMP:' + stamp, 'DTSTART:' + icsDate(d, c.t), 'DTEND:' + icsDate(end, pad(end.getHours()) + ':' + pad(end.getMinutes())),
+          'SUMMARY:' + icsEsc(txt), 'DESCRIPTION:' + icsEsc((k === 'streak' ? 'Falls du heute noch nicht gelernt hast: Schon 5 Fragen halten deine Streak am Leben.\n\n' : 'Zeit für eine kurze Lernrunde in OS lernen.\n\n') + url), 'URL:' + url,
+          'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:' + icsEsc(txt), 'TRIGGER:PT0M', 'END:VALARM', 'END:VEVENT'].join('\r\n'));
+      });
+    }
+    return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//OS lernen//Lernzeiten//DE', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'X-WR-CALNAME:OS lernen'].concat(ev).concat(['END:VCALENDAR']).join('\r\n');
+  }
+  function bindRem() {
+    $$('[data-rk]').forEach(function (c) { c.onchange = function () { remCfg()[c.dataset.rk].on = c.checked; save(); syncPush(); }; });
+    $$('[data-rt]').forEach(function (c) { c.onchange = function () { if (c.value) { remCfg()[c.dataset.rt].t = c.value; save(); syncPush(); } }; });
+    $('#remcal').onclick = function () {
+      var ics = buildIcs(), n = (ics.match(/BEGIN:VEVENT/g) || []).length;
+      if (!n) { toast('Bitte mindestens eine Lernzeit einschalten.'); return; }
+      var blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' }), file;
+      try { file = new File([blob], 'os-lernen-lernzeiten.ics', { type: 'text/calendar' }); } catch (e) {}
+      if (file && navigator.canShare && navigator.canShare({ files: [file] }) && /iPhone|iPad/.test(navigator.userAgent)) {
+        navigator.share({ files: [file], title: 'OS lernen – Lernzeiten' }).catch(function () {});
+      } else {
+        var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'os-lernen-lernzeiten.ics'; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+      }
+      toast('📅 ' + n + ' Erinnerungen erstellt – jetzt „Alle hinzufügen“ tippen');
+    };
+    $('#rempush').onclick = enablePush;
+    pushInfo();
+  }
+  /* Push-Benachrichtigungen: brauchen einen kleinen Server (PUSH_API). Ist keiner eingerichtet, erklärt die App das. */
+  var PUSH_API = window.OSTEP_PUSH_API || '';
+  function standalone() { return window.navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches); }
+  function pushInfo(msg) {
+    var el = $('#rempushinfo'); if (!el) return;
+    if (msg) { el.innerHTML = msg; return; }
+    if (S.pushOn) el.innerHTML = '✅ Push ist aktiv. Änderungen an den Zeiten werden automatisch übernommen.';
+    else if (!PUSH_API) el.innerHTML = 'Echte Push-Nachrichten (inkl. „Streak in Gefahr“ nur, wenn du heute noch nicht gelernt hast) werden gerade eingerichtet. Bis dahin: Kalender-Erinnerungen nutzen.';
+    else if (!standalone()) el.innerHTML = 'Push funktioniert auf dem iPhone nur in der App vom Home-Bildschirm: Teilen → „Zum Home-Bildschirm“, dann dort aktivieren.';
+    else el.innerHTML = 'Tippe oben, um Benachrichtigungen zu erlauben.';
+  }
+  function b64u(s) { var p = '='.repeat((4 - s.length % 4) % 4), b = atob((s + p).replace(/-/g, '+').replace(/_/g, '/')), a = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) a[i] = b.charCodeAt(i); return a; }
+  function enablePush() {
+    if (!PUSH_API) { pushInfo(); toast('Push wird noch eingerichtet – nutze solange den Kalender 📅'); return; }
+    if (!standalone()) { pushInfo(); return; }
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) { pushInfo('Dieses Gerät unterstützt keine Web-Push-Nachrichten (iOS 16.4 oder neuer nötig).'); return; }
+    Notification.requestPermission().then(function (perm) {
+      if (perm !== 'granted') { pushInfo('Benachrichtigungen wurden nicht erlaubt. Ändern kannst du das in den iOS-Einstellungen → Mitteilungen.'); return; }
+      return navigator.serviceWorker.register('sw.js').then(function (reg) { return navigator.serviceWorker.ready.then(function () { return reg; }); }).then(function (reg) {
+        return fetch(PUSH_API + '/key').then(function (r) { return r.text(); }).then(function (key) { return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64u(key.trim()) }); });
+      }).then(function (sub) { S.pushSub = sub.toJSON(); S.pushOn = true; save(); return syncPush(); }).then(function () { pushInfo(); toast('🔔 Erinnerungen aktiv!'); sfx('win'); });
+    }).catch(function (e) { pushInfo('Das hat nicht geklappt: ' + esc(e && e.message || e)); });
+  }
+  function syncPush() {
+    if (!PUSH_API || !S.pushOn || !S.pushSub) return Promise.resolve();
+    var body = { sub: S.pushSub, rem: remCfg(), tz: Intl.DateTimeFormat().resolvedOptions().timeZone, lastDay: S.days[today()] ? today() : null, streak: streak() };
+    return fetch(PUSH_API + '/sync', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).catch(function () {});
   }
 
   /* ================= Podcast-Player ================= */
@@ -479,7 +635,7 @@
     var before = S.listen[key] || 0;
     if (f > before) {
       S.listen[key] = Math.min(1, f);
-      if (before < .9 && f >= .9) { addXp(30, $('#play')); confetti(80); sfx('win'); }
+      if (before < .9 && f >= .9) { addXp(30, $('#play')); confetti(80); sfx('win'); pep(rnd(MOT.listened), 'cool', true); }
       if (Math.floor(f * 20) !== Math.floor(before * 20)) save();
     }
   }
@@ -552,8 +708,10 @@
       Q.ok++; Q.combo++; Q.maxCombo = Math.max(Q.maxCombo, Q.combo); S.bestCombo = Math.max(S.bestCombo, Q.combo);
       gain = 10 + Math.min(Q.combo - 1, 5) * 2;
       sfx('ok', Q.combo);
-      if (Q.combo === 5 || Q.combo === 10 || Q.combo === 15) { confetti(60); toast('🔥 ' + Q.combo + 'er-Combo! Bonus-XP!'); }
-    } else { r.b = 0; Q.combo = 0; Q.wrong.push(it); sfx('bad'); if (navigator.vibrate) navigator.vibrate(60); }
+      Q.wrongRow = 0;
+      if (MOT.combo[Q.combo]) { if (Q.combo >= 5) confetti(60); pep(rnd(MOT.combo[Q.combo]), Q.combo >= 8 ? 'cool' : 'party', true); }
+    } else { r.b = 0; Q.combo = 0; Q.wrong.push(it); sfx('bad'); if (navigator.vibrate) navigator.vibrate(60); Q.wrongRow = (Q.wrongRow || 0) + 1; if (Q.wrongRow === 2 || Q.wrongRow === 4) pep(rnd(MOT.wrong), 'think', true); }
+    if (Q.i + 1 === Math.ceil(Q.items.length / 2) && Q.items.length >= 10) setTimeout(function () { pep(rnd(MOT.half).replace('{ok}', Q.ok).replace('{n}', Q.i + 1), Q.ok >= (Q.i + 1) * .7 ? 'cool' : 'strong'); }, 900);
     S.q[it.id] = r; save();
     if (gain) { Q.xp += gain; addXp(gain, btn); }
     var c = $('#combo'); c.textContent = Q.combo >= 2 ? '🔥×' + Q.combo : ''; c.classList.remove('pop'); void c.offsetWidth; if (Q.combo >= 2) c.classList.add('pop');
@@ -576,10 +734,15 @@
     S.tests++; if (perfect) S.perfect++; save();
     addXp(bonus);
     var after = Q.tid === 'alle' ? chapterProgress(Q.n) : mastery(Q.n, Q.tid);
+    var openList = Q.tid === 'alle' ? O.chapters[Q.n].topics.reduce(function (a, t) { return a.concat(pool(Q.n, t.id)); }, []) : pool(Q.n, Q.tid);
+    var openN = openList.filter(function (it) { var r = S.q[it.id]; return !r || r.b === 0; }).length;
+    var ms = [.25, .5, .75, 1].filter(function (m) { return Q.masteryBefore < m && after >= m; }).pop();
+    if (ms) setTimeout(function () { cheer({ title: ms === 1 ? 'Komplett gemeistert! 👑' : Math.round(ms * 100) + ' % gemeistert!', text: ms === 1 ? 'Du hast ' + (Q.tid === 'alle' ? 'das ganze Kapitel' : 'dieses Thema') + ' gemeistert. Respekt!' : 'Schon ' + Math.round(ms * 100) + ' % ' + (Q.tid === 'alle' ? 'von Kapitel ' + Q.n : 'dieses Themas') + ' sitzen. Noch ' + openN + ' offene Fragen bis zum Ziel.', progress: after, mood: ms === 1 ? 'cool' : 'party' }); }, 1200);
     var emoji = perfect ? '🏆' : pct >= .8 ? '🎉' : pct >= .6 ? '💪' : pct >= .4 ? '📈' : '🌱';
     var msg = perfect ? 'Fehlerfrei! Das ist Meisterklasse.' : pct >= .8 ? 'Richtig stark – fast alles sitzt!' : pct >= .6 ? 'Gute Basis! Die Wiederholungen bringen dich auf 100 %.' : pct >= .4 ? 'Du kommst voran. Hör dir den Podcast nochmal an!' : 'Jeder Anfang zählt – die falschen Fragen kommen gezielt wieder.';
     sfx('win'); confetti(perfect ? 240 : pct >= .6 ? 120 : 40);
     app.innerHTML = '<div class="result"><div class="big">' + emoji + '</div><h1>' + Q.ok + ' von ' + total + ' richtig</h1><p style="color:var(--dim)">' + msg + '</p>' +
+      '<div class="motcard">' + chippy(pct >= .8 ? 'party' : pct >= .5 ? 'strong' : 'think', 54) + '<div>' + (openN ? 'Noch <b>' + openN + '</b> offene oder falsche Fragen ' + (Q.tid === 'alle' ? 'im Kapitel' : 'in diesem Thema') + ' – jede Runde werden es weniger!' : 'Keine offenen Fragen mehr – jetzt nur noch auffrischen! 🏆') + '</div></div>' +
       '<div class="stat-grid"><div><b style="color:#ffd166">+' + (Q.xp + bonus) + '</b><small>XP</small></div><div><b>🔥' + Q.maxCombo + '</b><small>beste Combo</small></div><div><b>' + Math.round(after * 100) + '%</b><small>Fortschritt ' + (after > Q.masteryBefore ? '▲' + Math.round((after - Q.masteryBefore) * 100) : '') + '</small></div></div>' +
       '<div style="display:grid;gap:10px"><a class="btn main block" href="#/k/' + Q.n + '/quiz/' + Q.tid + '?r=' + Date.now() + '">Nochmal 15 Fragen ↻</a><a class="btn block" href="#/k/' + Q.n + '">Zurück zum Kapitel</a></div>' +
       (Q.wrong.length ? '<div class="sec-title"><h2>Zum Wiederholen</h2><small>' + Q.wrong.length + '</small></div><div class="review">' + Q.wrong.map(function (it) {
@@ -609,7 +772,7 @@
   }
   window.addEventListener('hashchange', route);
   document.addEventListener('touchstart', function () { audioCtx(); }, { once: true, passive: true });
-  document.body.insertAdjacentHTML('beforeend', '<svg width="0" height="0" style="position:absolute"><defs><linearGradient id="rg" x1="0" x2="1"><stop offset="0" stop-color="#7c5cff"/><stop offset="1" stop-color="#ff5fa2"/></linearGradient></defs></svg>');
+  document.body.insertAdjacentHTML('beforeend', '<svg width="0" height="0" style="position:absolute"><defs><linearGradient id="rg" x1="0" x2="1"><stop offset="0" stop-color="#7c5cff"/><stop offset="1" stop-color="#ff5fa2"/></linearGradient><linearGradient id="chipg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a48bff"/><stop offset="1" stop-color="#6a4cf0"/></linearGradient></defs></svg>');
   window.OSTEP_APP = { pool: pool };
   route();
 })();
