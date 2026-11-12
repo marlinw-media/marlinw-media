@@ -50,10 +50,80 @@
     S.time = S.time || {}; S.dayTime = S.dayTime || {};
     var k = n + '-' + tid, r = S.time[k] = S.time[k] || { l: 0, q: 0 };
     r[kind] = (r[kind] || 0) + sec; S.dayTime[today()] = (S.dayTime[today()] || 0) + sec;
+    tlog(0, sec, 0); checkGoal();
   }
   function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} if (window.OSTEP_SYNC_SOON) window.OSTEP_SYNC_SOON(); }
   function today() { var d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
   function dayXp() { return S.days[today()] || 0; }
+  /* ---------- Tagesziel: XP, Lernzeit oder Kapitel-Prozent ---------- */
+  var GOAL_OPTS = { xp: [50, 100, 200, 300, 500], min: [10, 15, 20, 30, 45, 60, 90, 120], pct: [1, 2, 3, 5, 10, 15, 20] };
+  var GOAL_NAMES = { xp: ['⭐', 'XP'], min: ['⏱️', 'Zeit'], pct: ['📈', 'Prozent'] };
+  function goalType() { return GOAL_OPTS[S.goalType] ? S.goalType : 'xp'; }
+  function goalTarget(t) { t = t || goalType(); return t === 'min' ? (S.goalMin || 20) : t === 'pct' ? (S.goalPct || 3) : (S.goal || 100); }
+  function dayVal(t, k) { k = k || today(); return t === 'min' ? ((S.dayTime || {})[k] || 0) / 60 : t === 'pct' ? ((S.dayPct || {})[k] || 0) : ((S.days || {})[k] || 0); }
+  function fmtGoal(t, v, short) { v = Math.max(0, v); if (t === 'min') return v >= 60 && !short ? (Math.floor(v / 60) + ' Std. ' + (Math.round(v % 60) ? Math.round(v % 60) + ' Min.' : '')).trim() : Math.ceil(v - 1e-9) + (short ? '' : ' Min.'); if (t === 'pct') return String(Math.round(v * 10) / 10).replace('.', ',') + (short ? '' : ' %-Punkte'); return Math.ceil(v - 1e-9) + (short ? '' : ' XP'); }
+  function goalInfo() { var t = goalType(), tg = goalTarget(t), cur = dayVal(t); return { t: t, tg: tg, cur: cur, f: Math.min(1, cur / tg), done: cur >= tg - 1e-9, left: fmtGoal(t, tg - cur) }; }
+  function checkGoal() {
+    var g = goalInfo(); if (!g.done || S.goalShown === today()) return;
+    S.goalShown = today(); save(); pushStateSoon(500);
+    setTimeout(function () { cheer({ kicker: 'TAGESZIEL', title: 'Tagesziel geschafft! 🎯', text: (streak() >= 2 ? '🔥 ' + streak() + ' Tage in Folge! ' : '') + 'Alles, was du jetzt noch machst, ist Bonus fürs Gehirn.', mood: 'strong', btn: 'Noch ein bisschen 💪' }); }, 1300);
+  }
+  function addPct(d) { if (!(d > 0)) return; var v = d * 100; S.dayPct = S.dayPct || {}; S.dayPct[today()] = (S.dayPct[today()] || 0) + v; tlog(0, 0, v); checkGoal(); }
+  /* Zeitgenaues Lernprotokoll (10-Minuten-Blöcke, 15 Tage) – für den Durchschnitt ab Donnerstag 13 Uhr */
+  var DEV = (function () { try { var d = localStorage.getItem('ostep-dev'); if (!d) { d = Math.random().toString(36).slice(2, 8); localStorage.setItem('ostep-dev', d); } return d; } catch (e) { return 'x'; } })();
+  function tlog(xp, sec, pct) {
+    var L = S.tlog = S.tlog || [], b = Math.floor(Date.now() / 6e5) * 6e5, e = null;
+    for (var i = L.length - 1; i >= 0 && i >= L.length - 6; i--) if (L[i][0] === b && L[i][4] === DEV) { e = L[i]; break; }
+    if (!e) { e = [b, 0, 0, 0, DEV]; L.push(e); }
+    e[1] += xp || 0; e[2] = Math.round((e[2] + (sec || 0)) * 10) / 10; e[3] = Math.round((e[3] + (pct || 0)) * 1000) / 1000;
+    var cut = Date.now() - 15 * 864e5; if (L.length && L[0][0] < cut) S.tlog = L.filter(function (x) { return x[0] >= cut; });
+  }
+  function weekStart() { var n = new Date(), w = new Date(n.getFullYear(), n.getMonth(), n.getDate(), 13, 0, 0); w.setDate(w.getDate() - (w.getDay() - 4 + 7) % 7); if (w > n) w.setDate(w.getDate() - 7); return w; }
+  /* Summe einer Kennzahl im Zeitraum [a, b): volle Tage aus den Tageswerten, angeschnittene Tage aus dem zeitgenauen Protokoll */
+  function winTotal(t, a, b) {
+    var ak = dkey(a), bk = dkey(b), v = function (e) { return t === 'min' ? e[2] / 60 : t === 'pct' ? e[3] : e[1]; };
+    var part = function (k, from, to) { var x = 0; (S.tlog || []).forEach(function (e) { if (e[0] >= from && e[0] < to && dkey(new Date(e[0])) === k) x += v(e); }); return x; };
+    if (ak === bk) return part(ak, a.getTime(), b.getTime());
+    var tot = part(ak, a.getTime(), Infinity);
+    for (var d = new Date(a.getFullYear(), a.getMonth(), a.getDate() + 1); dkey(d) !== bk; d.setDate(d.getDate() + 1)) tot += dayVal(t, dkey(d));
+    return tot + Math.max(0, dayVal(t, bk) - part(bk, b.getTime(), Infinity));
+  }
+  function weekAvgs(t) {
+    var ws = weekStart(), now = new Date(), prev = new Date(ws.getFullYear(), ws.getMonth(), ws.getDate() - 7, 13, 0, 0);
+    return { ws: ws, cur: winTotal(t, ws, now) / Math.max(1, Math.ceil((now - ws) / 864e5)), prev: winTotal(t, prev, ws) / 7 };
+  }
+  function histCard(t) {
+    t = t || goalType();
+    var vals = [], d0 = new Date(), i;
+    for (i = 6; i >= 0; i--) { var d = new Date(d0.getFullYear(), d0.getMonth(), d0.getDate() - i); vals.push([d, dayVal(t, dkey(d))]); }
+    var w = weekAvgs(t), tg = goalTarget(t), max = Math.max(tg, w.cur, w.prev, 1); vals.forEach(function (v) { max = Math.max(max, v[1]); }); max *= 1.15;
+    var Y = function (v) { return 116 - v / max * 92; }, svg = '', wk = dkey(w.ws), cx = 6;
+    vals.forEach(function (v, j) {
+      var x = 12 + j * 44, h = Math.max(v[1] > 0 ? 3 : 1.5, 116 - Y(v[1])), isT = j === 6, hit = v[1] >= tg - 1e-9;
+      if (dkey(v[0]) === wk) cx = x + 32 * 13 / 24;
+      svg += '<rect x="' + x + '" y="' + (116 - h) + '" width="32" height="' + h + '" rx="6" class="' + (hit ? 'hb hit' : v[1] > 0 ? 'hb on' : 'hb') + (isT ? ' today' : '') + '"/>' +
+        (v[1] > 0 ? '<text x="' + (x + 16) + '" y="' + (112 - h) + '" class="hv">' + fmtGoal(t, v[1], true) + '</text>' : '') +
+        '<text x="' + (x + 16) + '" y="132" class="hd' + (isT ? ' t' : '') + '">' + (isT ? 'heute' : 'SoMoDiMiDoFrSa'.substr(v[0].getDay() * 2, 2)) + '</text>';
+    });
+    svg += '<line x1="6" x2="314" y1="' + Y(tg) + '" y2="' + Y(tg) + '" class="hg"/>';
+    if (cx > 8) svg += '<line x1="6" x2="' + cx + '" y1="' + Y(w.prev) + '" y2="' + Y(w.prev) + '" class="hp"/>';
+    svg += '<line x1="' + cx + '" x2="314" y1="' + Y(w.cur) + '" y2="' + Y(w.cur) + '" class="ha"/>';
+    if (cx > 8) svg += '<line x1="' + cx + '" x2="' + cx + '" y1="14" y2="118" class="hcut"/><text x="' + cx + '" y="10" class="hcutl">Do 13:00</text>';
+    var nm = GOAL_NAMES[t];
+    return '<div class="card histcard"><div class="hhead"><b>📅 Letzte 7 Tage</b><small>' + nm[0] + ' ' + nm[1] + '</small></div><svg viewBox="0 0 320 138" class="hist">' + svg + '</svg>' +
+      '<div class="hleg"><span><i class="lp"></i>Ø Vorwoche: <b>' + fmtGoal(t, w.prev) + '</b>/Tag</span><span><i class="la"></i>Ø ab Do 13:00: <b>' + fmtGoal(t, w.cur) + '</b>/Tag</span><span><i class="lg"></i>Ziel: <b>' + fmtGoal(t, tg) + '</b></span></div></div>';
+  }
+  function goalHtml() {
+    var t = goalType(), desc = { xp: 'XP gibt es für richtige Antworten, Tests und gehörte Podcasts.', min: 'Gezählt wird die Zeit beim Podcast-Hören und im Quiz.', pct: 'Summe der Prozentpunkte, um die deine Kapitel heute gewachsen sind – durch gemeisterte Fragen und gehörte Podcasts.' }[t];
+    return '<div class="sec-title"><h2>🎯 Tagesziel</h2></div><div class="card goalcard"><div class="seg">' + ['xp', 'min', 'pct'].map(function (k) { return '<button class="segb' + (t === k ? ' on' : '') + '" data-gt="' + k + '">' + GOAL_NAMES[k][0] + ' ' + GOAL_NAMES[k][1] + '</button>'; }).join('') + '</div>' +
+      '<div class="gq">' + (t === 'xp' ? 'Wie viele XP pro Tag?' : t === 'min' ? 'Wie lange willst du pro Tag lernen?' : 'Wie viele Kapitel-Prozentpunkte pro Tag?') + '</div>' +
+      '<div class="gopts">' + GOAL_OPTS[t].map(function (v) { return '<button class="gopt' + (goalTarget(t) === v ? ' on' : '') + '" data-gv="' + v + '">' + (t === 'min' && v >= 60 ? (v / 60 + ' Std.').replace('.', ',') : t === 'min' ? v + ' Min.' : t === 'pct' ? v + ' %' : v + ' XP') + '</button>'; }).join('') + '</div>' +
+      '<div class="gdesc">' + desc + '</div></div><div id="histbox">' + histCard(t) + '</div>';
+  }
+  function bindGoal(rerender) {
+    $$('[data-gt]').forEach(function (b) { b.onclick = function () { S.goalType = b.dataset.gt; S.goalShown = goalInfo().done ? today() : null; save(); sfx('tap'); pushStateSoon(500); rerender(); }; });
+    $$('[data-gv]').forEach(function (b) { b.onclick = function () { var t = goalType(), v = +b.dataset.gv; if (t === 'min') S.goalMin = v; else if (t === 'pct') S.goalPct = v; else S.goal = v; S.goalShown = goalInfo().done ? today() : null; save(); sfx('tap'); pushStateSoon(500); rerender(); }; });
+  }
   function streak() {
     var n = 0, d = new Date();
     if (!S.days[today()]) d.setDate(d.getDate() - 1);
@@ -65,9 +135,9 @@
     if (n <= 0) return;
     var before = lvlInfo(S.xp).lvl;
     var dBefore = dayXp();
-    S.xp += n; S.days[today()] = dayXp() + n; save();
-    if (!dBefore) setTimeout(syncPush, 50);
-    if (dBefore < S.goal && dayXp() >= S.goal && S.goalShown !== today()) { S.goalShown = today(); save(); setTimeout(function () { cheer({ kicker: 'TAGESZIEL', title: 'Tagesziel geschafft! 🎯', text: (streak() >= 2 ? '🔥 ' + streak() + ' Tage in Folge! ' : '') + 'Alles, was du jetzt noch machst, ist Bonus fürs Gehirn.', mood: 'strong', btn: 'Noch ein bisschen 💪' }); }, 1300); }
+    S.xp += n; S.days[today()] = dayXp() + n; tlog(n, 0, 0); save();
+    if (!dBefore) pushStateSoon(500);
+    checkGoal();
     if (el) floatXp('+' + n + ' XP', el);
     var after = lvlInfo(S.xp).lvl;
     if (after > before) setTimeout(function () { levelUp(after); }, 500);
@@ -303,13 +373,13 @@
 
   /* ================= Ansichten ================= */
   function viewHome() {
-    var g = Math.min(1, dayXp() / S.goal), rec = recommend(), h = new Date().getHours();
+    var gi = goalInfo(), g = gi.f, rec = recommend(), h = new Date().getHours();
     var hi = h < 11 ? 'Guten Morgen' : h < 18 ? 'Hallo' : 'Guten Abend';
     var html = topBar() +
-      '<div class="hero"><div class="row"><h1>' + hi + (S.name ? ', ' + esc(S.name) : '') + '! 👋</h1><p>' + (dayXp() >= S.goal ? 'Tagesziel geschafft – stark! Jede weitere Frage festigt dein Wissen.' : 'Noch ' + (S.goal - dayXp()) + ' XP bis zu deinem Tagesziel.') + '</p></div>' +
+      '<div class="hero"><div class="row"><h1>' + hi + (S.name ? ', ' + esc(S.name) : '') + '! 👋</h1><p>' + (gi.done ? 'Tagesziel geschafft – stark! Jede weitere Frage festigt dein Wissen.' : 'Noch ' + gi.left + ' bis zu deinem Tagesziel.') + '</p></div>' +
       '<div class="goal">' + ring(g, 70, 8, '#ffd166', Math.round(g * 100) + '%') + '<div style="flex:1">' +
       (rec ? '<div style="font-size:13px;color:#d8d5f5;font-weight:700">Als Nächstes · Kapitel ' + rec.n + '</div><div style="font-weight:900;font-size:17px;margin:2px 0 10px">' + esc(rec.t.title) + '</div><a class="btn main block" href="#/k/' + rec.n + '/' + rec.mode + '/' + rec.t.id + '">' + rec.label + '</a>'
-        : '<div style="font-weight:900">Alles gemeistert! 🏆</div>') + '</div></div></div>' + motCard();
+        : '<div style="font-weight:900">Alles gemeistert! 🏆</div>') + '</div></div></div>' + motCard() + '<a href="#/profil/einstellungen" class="histlink">' + histCard() + '</a>';
     var started = O.meta.filter(function (m) { return O.chapters[m.n] && chapterProgress(m.n) > 0; });
     if (started.length) html += '<div class="sec-title"><h2>Weitermachen</h2></div><div class="chapters">' + started.slice(0, 4).map(chapterRow).join('') + '</div>';
     html += '<div class="sec-title"><h2>Alle Kapitel</h2><small>' + O.meta.length + ' Kapitel</small></div>' + chapterList();
@@ -318,10 +388,10 @@
   function motCard() {
     var st = streak(), msg, mood = 'happy', allOpen = 0, best = null;
     O.meta.forEach(function (m) { var ch = O.chapters[m.n]; if (!ch || !chapterProgress(m.n)) return; ch.topics.forEach(function (t) { var c = pool(m.n, t.id).filter(function (it) { var r = S.q[it.id]; return r && r.b === 0; }).length; allOpen += c; if (c && (!best || c > best.c)) best = { n: m.n, t: t, c: c }; }); });
-    var ci = S.cal ? calInfo() : null;
+    var ci = S.cal && !S.pushOn ? calInfo() : null;
     if (ci && ci.state !== 'aktiv' || ci && ci.left <= 5) { msg = '📅 Deine Kalender-Erinnerungen ' + (ci.state === 'abgelaufen' ? 'sind abgelaufen' : ci.state === 'geaendert' ? 'haben noch die alten Zeiten' : 'laufen in ' + ci.left + ' Tag' + (ci.left === 1 ? '' : 'en') + ' aus') + ' – <a href="#/profil/erinnerungen" style="color:#ffd166;text-decoration:underline">jetzt erneuern</a>'; mood = 'wow'; }
     else if (GAP >= 3) { msg = 'Willkommen zurück' + (S.name ? ', ' + esc(S.name) : '') + '! 👋 ' + GAP + ' Tage Pause – eine kurze Runde bringt dich sofort wieder rein.'; mood = 'wow'; }
-    else if (st >= 2 && dayXp() < S.goal) { msg = '🔥 <b>' + st + ' Tage</b> in Folge – lass die Serie heute nicht reißen!'; mood = 'strong'; }
+    else if (st >= 2 && !goalInfo().done) { msg = '🔥 <b>' + st + ' Tage</b> in Folge – lass die Serie heute nicht reißen!'; mood = 'strong'; }
     else if (st >= 2) { msg = '🔥 <b>' + st + ' Tage</b> Streak und Tagesziel erreicht – du bist eine Lernmaschine!'; mood = 'cool'; }
     else if (best) { msg = '<b>' + best.c + '</b> Fragen in „' + esc(best.t.title) + '“ warten auf eine zweite Chance – die schaffst du jetzt!'; mood = 'strong'; }
     else msg = rnd(MOT.home);
@@ -436,7 +506,7 @@
       '<a href="#/profil/erfolge"><span>🏆</span><div><b>Erfolge</b><small>' + got + ' von ' + BADGES.length + ' Abzeichen</small></div>›</a>' +
       '<a href="#/profil/sync"><span>🔄</span><div><b>Geräte-Sync</b><small>' + syncSub() + '</small></div>›</a>' +
       '<a href="#/profil/erinnerungen"><span>🔔</span><div><b>Erinnerungen</b><small>Lernzeiten, Streak-Warnung, Kalender</small></div>›</a>' +
-      '<a href="#/profil/einstellungen"><span>⚙️</span><div><b>Einstellungen & Farbstil</b><small>5 Farbstile, Tagesziel, Stimme, Töne</small></div>›</a></div>';
+      '<a href="#/profil/einstellungen"><span>⚙️</span><div><b>Einstellungen & Farbstil</b><small>Tagesziel & Verlauf, 5 Farbstile, Stimme, Töne</small></div>›</a></div>';
     $('#psave').onclick = function () { var v = $('#pname').value.trim().slice(0, 24); S.name = v || null; save(); sfx('win'); toast(v ? '👋 Hallo ' + esc(v) + '! Chippy merkt sich deinen Namen.' : 'Name entfernt'); viewProfile(); };
     $('#pname').onkeydown = function (e) { if (e.key === 'Enter') $('#psave').click(); };
   }
@@ -496,8 +566,7 @@
   }
   function settingsHtml() {
     var sel = 'style="font:inherit;background:var(--card2);color:var(--text);border:1px solid var(--line2);border-radius:10px;padding:6px 8px"';
-    return themeHtml() + '<div class="sec-title"><h2>⚙️ Einstellungen</h2></div><div class="card" style="display:grid;gap:12px">' +
-      '<label style="display:flex;justify-content:space-between;align-items:center;font-weight:700">Tagesziel <select id="goal" ' + sel + '>' + [50, 100, 200, 300].map(function (g) { return '<option value="' + g + '"' + (S.goal === g ? ' selected' : '') + '>' + g + ' XP</option>'; }).join('') + '</select></label>' +
+    return goalHtml() + themeHtml() + '<div class="sec-title"><h2>⚙️ Einstellungen</h2></div><div class="card" style="display:grid;gap:12px">' +
       '<label style="display:flex;justify-content:space-between;align-items:center;font-weight:700">Podcast-Stimme <select id="vc" ' + sel + '>' + VOICES.map(function (v) { return '<option value="' + v[0] + '"' + (S.voice === v[0] ? ' selected' : '') + '>' + v[2] + ' ' + v[1] + '</option>'; }).join('') + '</select></label>' +
       '<label style="display:flex;justify-content:space-between;align-items:center;font-weight:700">Soundeffekte <input type="checkbox" id="snd" ' + (S.sound ? 'checked' : '') + ' style="width:22px;height:22px;accent-color:var(--a2)"></label></div>';
   }
@@ -515,8 +584,8 @@
     }).join('') + '</div><div style="font-size:12.5px;color:var(--dim);margin:8px 2px 0">✅ Richtige Antworten bleiben in jedem Stil grün, ❌ falsche rot.</div>';
   }
   function bindSettings() {
+    bindGoal(function () { var y = window.scrollY; viewProfile('einstellungen'); window.scrollTo(0, y); });
     $$('.theme').forEach(function (b) { b.onclick = function () { S.theme = b.dataset.th; save(); applyTheme(S.theme); sfx('tap'); $$('.theme').forEach(function (x) { x.classList.toggle('on', x === b); }); }; });
-    $('#goal').onchange = function () { S.goal = +this.value; save(); };
     $('#snd').onchange = function () { S.sound = this.checked; save(); };
     $('#vc').onchange = function () { S.voice = this.value; save(); toast('🗣️ Stimme: ' + voiceInfo(S.voice)[1]); };
   }
@@ -526,12 +595,10 @@
       '<div class="sec-title"><h2>Abzeichen</h2><small>' + got + ' / ' + BADGES.length + '</small></div><div class="badges">' +
       BADGES.map(function (b) { return '<div class="badge ' + (S.badges[b[0]] ? '' : 'off') + '"><div class="e">' + b[1] + '</div><b>' + b[2] + '</b><small>' + b[3] + '</small></div>'; }).join('') + '</div>' +
       '<div class="sec-title"><h2>Einstellungen</h2></div><div class="card" style="display:grid;gap:10px">' +
-      '<label style="display:flex;justify-content:space-between;align-items:center;font-weight:700">Tagesziel <select id="goal" style="font:inherit;background:var(--card2);color:var(--text);border:1px solid var(--line2);border-radius:10px;padding:6px 8px">' + [50, 100, 200, 300].map(function (g) { return '<option ' + (S.goal === g ? 'selected' : '') + ' value="' + g + '">' + g + ' XP</option>'; }).join('') + '</select></label>' +
       '<label style="display:flex;justify-content:space-between;align-items:center;font-weight:700">Podcast-Stimme <select id="vc" style="font:inherit;background:var(--card2);color:var(--text);border:1px solid var(--line2);border-radius:10px;padding:6px 8px">' + VOICES.map(function (v) { return '<option ' + (S.voice === v[0] ? 'selected' : '') + ' value="' + v[0] + '">' + v[2] + ' ' + v[1] + '</option>'; }).join('') + '</select></label>' +
       '<label style="display:flex;justify-content:space-between;align-items:center;font-weight:700">Soundeffekte <input type="checkbox" id="snd" ' + (S.sound ? 'checked' : '') + ' style="width:22px;height:22px;accent-color:var(--a2)"></label></div>' + remSection();
     app.innerHTML = html;
     bindRem();
-    $('#goal').onchange = function () { S.goal = +this.value; save(); };
     $('#snd').onchange = function () { S.sound = this.checked; save(); };
     $('#vc').onchange = function () { S.voice = this.value; save(); toast('🗣️ Stimme: ' + voiceInfo(S.voice)[1]); };
   }
@@ -558,7 +625,9 @@
     return '<div class="sec-title"><h2>🔔 Erinnerungen</h2></div><div class="card" style="display:grid;gap:12px">' +
       '<div style="display:flex;gap:10px;align-items:center">' + chippy('happy', 48) + '<div style="font-size:14px;color:#d8d5f5;font-weight:700">Wann lernst du am liebsten? Chippy erinnert dich – jeden Tag mit einem neuen Spruch.</div></div>' +
       REM_SLOTS.map(function (x) { return row(x[0], x[1], r[x[0]]); }).join('') +
-      row('streak', '🔥 Streak-Warnung', r.streak, 'abends, falls du heute noch nicht gelernt hast') +
+      row('streak', '🔥 Streak-Warnung', r.streak, 'nur falls du heute noch nicht gelernt hast') +
+      '<div class="pushbox"><div class="pushhead">🔔 Push-Benachrichtigungen</div><div id="rempushinfo" class="pushinfo"></div><div class="pushbtns"><button class="btn main block" id="pushbtn">🔔 Benachrichtigungen erlauben</button><button class="btn sm" id="pushtest">Test-Nachricht senden</button><button class="btn sm" id="pushoff">Auf diesem Gerät ausschalten</button></div></div>' +
+      '<div class="pushhead" style="margin-top:6px">📅 Alternative: Apple Kalender</div>' +
       '<div id="calstate" class="calstate"></div>' +
       '<button class="btn main block" id="remcal"></button>' +
       '<a id="calshare" class="calshare" href="javascript:void 0">Kalender öffnet sich nicht? Datei teilen / in „Dateien“ sichern ›</a>' +
@@ -630,34 +699,73 @@
       else { var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([m.ics], { type: 'text/calendar' })); a.download = 'os-lernen-lernzeiten.ics'; document.body.appendChild(a); a.click(); m.done(); setTimeout(function () { a.remove(); }, 1000); }
     };
     calState();
+    $('#pushbtn').onclick = enablePush; $('#pushtest').onclick = pushTest; $('#pushoff').onclick = pushOff;
+    pushInfo();
   }
-  /* Push-Benachrichtigungen: brauchen einen kleinen Server (PUSH_API). Ist keiner eingerichtet, erklärt die App das. */
-  var PUSH_API = window.OSTEP_PUSH_API || '';
+  /* Push-Benachrichtigungen über den eigenen Server (Cloudflare Worker) */
+  var PUSH_API = SYNC_API + '/push';
+  function isIOS() { return /iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1); }
   function standalone() { return window.navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches); }
   function pushInfo(msg) {
     var el = $('#rempushinfo'); if (!el) return;
+    var on = !!S.pushOn, sup = ('serviceWorker' in navigator) && ('PushManager' in window), blockedIOS = isIOS() && !standalone();
+    $('#pushbtn').style.display = on || blockedIOS || !sup ? 'none' : ''; $('#pushtest').style.display = on ? '' : 'none'; $('#pushoff').style.display = on ? '' : 'none';
     if (msg) { el.innerHTML = msg; return; }
-    if (S.pushOn) el.innerHTML = '✅ Push ist aktiv. Änderungen an den Zeiten werden automatisch übernommen.';
-    else if (!PUSH_API) el.innerHTML = 'Echte Push-Nachrichten (inkl. „Streak in Gefahr“ nur, wenn du heute noch nicht gelernt hast) werden gerade eingerichtet. Bis dahin: Kalender-Erinnerungen nutzen.';
-    else if (!standalone()) el.innerHTML = 'Push funktioniert auf dem iPhone nur in der App vom Home-Bildschirm: Teilen → „Zum Home-Bildschirm“, dann dort aktivieren.';
-    else el.innerHTML = 'Tippe oben, um Benachrichtigungen zu erlauben.';
+    if (on) el.innerHTML = '✅ <b>Aktiv auf diesem Gerät.</b> Chippy meldet sich zu deinen Zeiten – die Streak-Warnung nur, wenn du heute noch nicht gelernt hast. Hast du dein Tagesziel schon, gibt es keine Erinnerung, abends höchstens ein Lob.';
+    else if (blockedIOS) el.innerHTML = 'Auf dem iPhone gehen Push-Nachrichten nur in der <b>App vom Home-Bildschirm</b>: in Safari Teilen → „Zum Home-Bildschirm“, dann die App öffnen und hier aktivieren.';
+    else if (!sup) el.innerHTML = 'Dieser Browser unterstützt keine Push-Nachrichten (auf dem iPhone ist iOS 16.4 oder neuer nötig). Nutze solange den Kalender.';
+    else el.innerHTML = 'Echte Mitteilungen wie bei anderen Apps – auch wenn OS lernen geschlossen ist. Tippe auf den Knopf und erlaube die Mitteilungen.';
   }
   function b64u(s) { var p = '='.repeat((4 - s.length % 4) % 4), b = atob((s + p).replace(/-/g, '+').replace(/_/g, '/')), a = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) a[i] = b.charCodeAt(i); return a; }
   function enablePush() {
-    if (!PUSH_API) { pushInfo(); toast('Push wird noch eingerichtet – nutze solange den Kalender 📅'); return; }
-    if (!standalone()) { pushInfo(); return; }
+    if (isIOS() && !standalone()) { pushInfo(); return; }
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) { pushInfo('Dieses Gerät unterstützt keine Web-Push-Nachrichten (iOS 16.4 oder neuer nötig).'); return; }
     Notification.requestPermission().then(function (perm) {
       if (perm !== 'granted') { pushInfo('Benachrichtigungen wurden nicht erlaubt. Ändern kannst du das in den iOS-Einstellungen → Mitteilungen.'); return; }
       return navigator.serviceWorker.register('sw.js').then(function (reg) { return navigator.serviceWorker.ready.then(function () { return reg; }); }).then(function (reg) {
         return fetch(PUSH_API + '/key').then(function (r) { return r.text(); }).then(function (key) { return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64u(key.trim()) }); });
-      }).then(function (sub) { S.pushSub = sub.toJSON(); S.pushOn = true; save(); return syncPush(); }).then(function () { pushInfo(); toast('🔔 Erinnerungen aktiv!'); sfx('win'); });
+      }).then(function (sub) { S.pushSub = sub.toJSON(); S.pushOn = true; save(); return syncPush(); }).then(function () { pushStateSoon(10, true); pushInfo(); toast('🔔 Erinnerungen aktiv!'); sfx('win'); });
     }).catch(function (e) { pushInfo('Das hat nicht geklappt: ' + esc(e && e.message || e)); });
   }
+  /* Gruppe: alle Geräte mit demselben Sync-Code teilen sich den Zustand (heute gelernt? Ziel? Serie?) */
+  var PG = null;
+  function pushGroup() {
+    if (SY.code) { if (PG && PG.code === SY.code) return Promise.resolve(PG.g); return sySha('ostep-push|' + SY.code).then(function (h) { PG = { code: SY.code, g: syHex(h) }; return PG.g; }); }
+    var g; try { g = localStorage.getItem('ostep-pg'); if (!g) { var a = new Uint8Array(16); crypto.getRandomValues(a); g = syHex(a.buffer); localStorage.setItem('ostep-pg', g); } } catch (e) { g = null; }
+    return Promise.resolve(g);
+  }
   function syncPush() {
-    if (!PUSH_API || !S.pushOn || !S.pushSub) return Promise.resolve();
-    var body = { sub: S.pushSub, rem: remCfg(), tz: Intl.DateTimeFormat().resolvedOptions().timeZone, lastDay: S.days[today()] ? today() : null, streak: streak() };
-    return fetch(PUSH_API + '/sync', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).catch(function () {});
+    if (!S.pushOn || !S.pushSub) return Promise.resolve();
+    return pushGroup().then(function (g) {
+      var body = { sub: S.pushSub, rem: remCfg(), tz: Intl.DateTimeFormat().resolvedOptions().timeZone, url: location.href.split('#')[0].split('?')[0], g: g };
+      return fetch(PUSH_API + '/sub', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    }).catch(function () {});
+  }
+  function lastLearnDay() { var ks = Object.keys(S.days || {}).filter(function (k) { return S.days[k] > 0; }).sort(); return ks.length ? ks[ks.length - 1] : null; }
+  var PST = 0;
+  function pushStateSoon(ms, force) { if (!S.pushOn && !SY.code) return; clearTimeout(PST); PST = setTimeout(function () { pushState(force); }, ms || 8000); }
+  function pushState(force) {
+    if (!S.pushOn && !SY.code) return;
+    var gi = goalInfo(), st = { day: today(), learned: dayXp() > 0, goal: gi.done, goalLeft: gi.done ? '' : gi.left, streak: streak(), lastLearn: lastLearnDay() };
+    var prev = null; try { prev = JSON.parse(localStorage.getItem('ostep-pstate')); } catch (e) {}
+    var core = function (x) { return x ? [x.day, x.learned, x.goal, x.streak, x.lastLearn].join('|') : ''; };
+    var stale = !prev || core(prev.s) !== core(st) || (prev.s.goalLeft !== st.goalLeft && Date.now() - prev.t > 90 * 60000);
+    if (!force && !stale) return;
+    pushGroup().then(function (g) {
+      if (!g) return;
+      return fetch(PUSH_API + '/state', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ g: g, state: st }) }).then(function (r) { if (r.ok) try { localStorage.setItem('ostep-pstate', JSON.stringify({ s: st, t: Date.now() })); } catch (e) {} });
+    }).catch(function () {});
+  }
+  function pushTest() {
+    if (!S.pushSub) return;
+    fetch(PUSH_API + '/test', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ endpoint: S.pushSub.endpoint }) }).then(function (r) { return r.json(); })
+      .then(function (j) { toast(j.ok ? '📨 Test gesendet – gleich sollte die Mitteilung kommen' : '⚠️ Test fehlgeschlagen – bitte Push neu aktivieren'); if (!j.ok) { S.pushOn = false; save(); pushInfo(); } }).catch(function () { toast('Keine Verbindung zum Server'); });
+  }
+  function pushOff() {
+    var ep = S.pushSub && S.pushSub.endpoint;
+    S.pushOn = false; S.pushSub = null; save(); pushInfo(); toast('🔕 Push auf diesem Gerät aus');
+    if (ep) fetch(PUSH_API + '/off', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ endpoint: ep }) }).catch(function () {});
+    if ('serviceWorker' in navigator) navigator.serviceWorker.getRegistration().then(function (reg) { return reg && reg.pushManager.getSubscription(); }).then(function (sub) { if (sub) sub.unsubscribe(); }).catch(function () {});
   }
 
   /* ================= Podcast-Player ================= */
@@ -863,7 +971,8 @@
   function markListened(key, f) {
     var before = S.listen[key] || 0;
     if (f > before) {
-      S.listen[key] = Math.min(1, f);
+      var cn = +String(key).split('-')[0], pb = chapterProgress(cn);
+      S.listen[key] = Math.min(1, f); addPct(chapterProgress(cn) - pb);
       if (before < .9 && f >= .9) { syncSoon(1500); addXp(30, $('#play')); confetti(80); sfx('win'); pep(rnd(MOT.listened), 'cool', true); }
       if (Math.floor(f * 20) !== Math.floor(before * 20)) save();
     }
@@ -927,7 +1036,7 @@
     }
   }
   function answer(ai, btn) {
-    var it = Q.items[Q.i], right = ai === 0;
+    var it = Q.items[Q.i], right = ai === 0, pctBefore = chapterProgress(it.n);
     $$('.opt').forEach(function (b) { b.disabled = true; var a = +b.dataset.a; if (a === 0) b.classList.add('right'); else if (b === btn) b.classList.add('wrong'); else b.classList.add('dim'); });
     var r = S.q[it.id] || { b: 0, n: 0, c: 0, t: 0 };
     r.n++; r.t = Date.now();
@@ -943,7 +1052,7 @@
       if (MOT.combo[Q.combo]) { if (Q.combo >= 5) confetti(60); pep(rnd(MOT.combo[Q.combo]), Q.combo >= 8 ? 'cool' : 'party', true); }
     } else { r.b = 0; Q.combo = 0; Q.wrong.push(it); sfx('bad'); if (navigator.vibrate) navigator.vibrate(60); Q.wrongRow = (Q.wrongRow || 0) + 1; if (Q.wrongRow === 2 || Q.wrongRow === 4) pep(rnd(MOT.wrong), 'think', true); }
     if (Q.i + 1 === Math.ceil(Q.items.length / 2) && Q.items.length >= 10) setTimeout(function () { pep(rnd(MOT.half).replace('{ok}', Q.ok).replace('{cnt}', Q.i + 1), Q.ok >= (Q.i + 1) * .7 ? 'cool' : 'strong'); }, 900);
-    S.q[it.id] = r; save(); syncSoon(1500);
+    S.q[it.id] = r; addPct(chapterProgress(it.n) - pctBefore); save(); syncSoon(1500);
     if (gain) { Q.xp += gain; addXp(gain, btn); }
     var c = $('#combo'); c.textContent = Q.combo >= 2 ? '🔥×' + Q.combo : ''; c.classList.remove('pop'); void c.offsetWidth; if (Q.combo >= 2) c.classList.add('pop');
     var praise = ['Richtig!', 'Super!', 'Stark!', 'Genau so!', 'Perfekt!', 'Klasse!', 'Volltreffer!'], comfort = ['Nicht ganz.', 'Knapp daneben.', 'Fast!', 'Das sitzt beim nächsten Mal.'];
@@ -1063,7 +1172,7 @@
       var bv = b[k], lv = l[k], rv = r[k];
       if (SY_LOCAL[k]) { if (lv !== undefined) out[k] = lv; return; }
       if (SY_ADD[k]) { out[k] = syAdd(bv, lv, rv); return; }
-      if (k === 'days' || k === 'dayTime') { out[k] = {}; syKeysOf(bv, lv, rv).forEach(function (d) { out[k][d] = syAdd((bv || {})[d], (lv || {})[d], (rv || {})[d]); }); return; }
+      if (k === 'days' || k === 'dayTime' || k === 'dayPct') { out[k] = {}; syKeysOf(bv, lv, rv).forEach(function (d) { out[k][d] = syAdd((bv || {})[d], (lv || {})[d], (rv || {})[d]); }); return; }
       if (k === 'time') { out[k] = {}; syKeysOf(bv, lv, rv).forEach(function (t) { var B = (bv || {})[t] || {}, Lx = (lv || {})[t] || {}, R = (rv || {})[t] || {}; out[k][t] = { l: syAdd(B.l, Lx.l, R.l), q: syAdd(B.q, Lx.q, R.q) }; }); return; }
       if (k === 'bestCombo') { out[k] = Math.max(syN(lv), syN(rv)); return; }
       if (k === 'listen') { out[k] = {}; syKeysOf(lv, rv).forEach(function (t) { out[k][t] = Math.max(syN((lv || {})[t]), syN((rv || {})[t])); }); return; }
@@ -1078,6 +1187,11 @@
           if (v) out[k][id] = v;
         });
         return;
+      }
+      if (k === 'tlog') {
+        var tm = {};
+        (rv || []).concat(lv || []).forEach(function (e) { var key = e[0] + '|' + e[4], o = tm[key]; tm[key] = !o ? e.slice() : [e[0], Math.max(o[1], e[1]), Math.max(o[2], e[2]), Math.max(o[3], e[3]), e[4]]; });
+        out[k] = Object.keys(tm).map(function (x) { return tm[x]; }).sort(function (a, c) { return a[0] - c[0]; }).filter(function (e) { return e[0] >= Date.now() - 15 * 864e5; }); return;
       }
       if (k === 'hist') {
         var seen = {}, all = [];
@@ -1128,10 +1242,11 @@
     clearTimeout(SY_TIMER); SY_DUE = due; SY_TIMER = setTimeout(function () { SY_TIMER = 0; SY_DUE = 0; syncNow(); }, ms);
   }
   function syWrites(add) { var d = today(); if (SY.wd !== d) { SY.wd = d; SY.wn = 0; } if (add) { SY.wn = (SY.wn || 0) + 1; sySave(); } return SY.wn || 0; }
-  window.OSTEP_SYNC_SOON = function () { syncSoon(120000); };
+  window.OSTEP_SYNC_SOON = function () { syncSoon(120000); pushStateSoon(); };
+  setTimeout(function () { pushStateSoon(3000); if (S.pushOn) syncPush(); }, 2500);
   /* solange die App offen ist: regelmäßig nachsehen, ob ein anderes Gerät etwas hochgeladen hat (nur lesen) */
   setInterval(function () { if (syOn() && document.visibilityState === 'visible' && !SY_BUSY && !/\/quiz\//.test(location.hash)) syncNow(); }, 45000);
-  document.addEventListener('visibilitychange', function () { if (!syOn()) return; if (document.visibilityState === 'visible') syncSoon(800); else syncNow(); });
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState !== 'visible') { clearTimeout(PST); pushState(); } if (!syOn()) return; if (document.visibilityState === 'visible') syncSoon(800); else syncNow(); });
   function syAgo(t) { if (!t) return 'noch nie'; var m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'gerade eben' : m < 60 ? 'vor ' + m + ' Min.' : m < 1440 ? 'vor ' + Math.round(m / 60) + ' Std.' : 'vor ' + Math.round(m / 1440) + ' Tagen'; }
   function syncSub() { return syOn() ? 'aktiv · abgeglichen ' + syAgo(SY.last) : 'Lernstand auf iPhone, iPad & Mac gleich halten'; }
   function syStat(t) { var el = document.getElementById('systat'); if (el) el.innerHTML = t ? '🔄 Abgleich ' + t : (SY.err ? '⚠️ Letzter Versuch fehlgeschlagen (' + esc(SY.err) + ') – wird automatisch wiederholt.' : '✅ Abgeglichen ' + syAgo(SY.last)); }
@@ -1151,7 +1266,7 @@
   function syStart(code, isNew) {
     SY = { code: code, last: 0 }; sySave(); sySetBase(null); SY_K = null;
     toast(isNew ? '🔄 Sync gestartet' : '🔗 Verbunden – Lernstand wird abgeglichen …'); sfx('win');
-    return syncNow().then(function () { if (/#\/profil\/sync/.test(location.hash)) viewProfile('sync'); else location.hash = '#/profil/sync'; if (!SY.err && !isNew) toast('✅ Lernstand abgeglichen'); });
+    return syncNow().then(function () { if (S.pushOn) syncPush(); pushStateSoon(1000, true); if (/#\/profil\/sync/.test(location.hash)) viewProfile('sync'); else location.hash = '#/profil/sync'; if (!SY.err && !isNew) toast('✅ Lernstand abgeglichen'); });
   }
   function bindSync() {
     if (!syOn()) {
