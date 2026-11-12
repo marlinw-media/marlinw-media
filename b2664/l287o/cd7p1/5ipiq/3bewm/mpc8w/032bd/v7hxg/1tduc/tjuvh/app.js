@@ -70,8 +70,8 @@
   function pool(n, tid) {
     var key = n + '-' + tid; if (poolCache[key]) return poolCache[key];
     var ch = O.chapters[n], t = ch.topics.filter(function (x) { return x.id === tid; })[0], items = [];
-    var EX = (O.ex || {})[key] || [];
-    (t.q || []).forEach(function (q, i) { var x = EX[i]; items.push({ id: key + '-q' + i + (q[5] ? '-' + q[5] : ''), n: n, t: tid, q: q[0], a: q[1], e: x ? x[0] : q[2], w: x ? x[1] : null, dw: ((O.dw || {})[key] || [])[i] || null, s: q[3] || 0, m: q[4] || '' }); });
+    var EX = (O.ex || {})[key] || [], LG = (O.lang || {})[key] || {};
+    (t.q || []).forEach(function (q, i) { var x = EX[i]; items.push({ id: key + '-q' + i + (q[5] ? '-' + q[5] : ''), n: n, t: tid, q: q[0], a: q[1], e: x ? x[0] : q[2], w: x ? x[1] : null, dw: ((O.dw || {})[key] || [])[i] || null, lang: (LG.q || [])[i] || null, s: q[3] || 0, m: q[4] || '' }); });
     if (t.st && t.st.T.length >= 3 && t.st.F.length >= 3) {
       var cnt = t.st.n || Math.min(18, Math.min(t.st.T.length, t.st.F.length) * 3);
       for (var v = 0; v < cnt; v++) {
@@ -82,11 +82,13 @@
           item = { q: 'Welche Aussage zum Thema „' + t.st.about + '“ ist **richtig**?', a: [tr[0]].concat(fs.map(function (f) { return f[0]; })),
             e: '✔ ' + tr[0] + '\n\nDie anderen Aussagen sind falsch:\n' + fs.map(function (f) { return '✘ „' + f[0] + '“ – ' + f[1]; }).join('\n'), s: tr[1] || 0, m: '', wr: {} };
           fs.forEach(function (f) { item.wr[f[0]] = 'Diese Aussage ist falsch: ' + f[1]; });
+          item.lang = (LG.T || [])[t.st.T.map(function (x) { return x[0]; }).indexOf(tr[0])] || null;
         } else {
           var fl = F[0], ts = T.slice(0, 3);
           item = { q: 'Welche Aussage zum Thema „' + t.st.about + '“ ist **falsch**?', a: [fl[0]].concat(ts.map(function (x) { return x[0]; })),
             e: '✘ Falsch ist: „' + fl[0] + '“\n\nRichtig wäre: ' + fl[1], s: fl[2] || 0, m: '', wr: {} };
           ts.forEach(function (x) { item.wr[x[0]] = 'Diese Aussage **stimmt** – gesucht war aber die **falsche** Aussage.'; });
+          item.lang = (LG.F || [])[t.st.F.map(function (x) { return x[0]; }).indexOf(fl[0])] || null;
         }
         item.id = key + '-s' + v; item.n = n; item.t = tid; items.push(item);
       }
@@ -95,7 +97,7 @@
       for (var v = 0; v < (g.n || 5); v++) {
         var r = rng(hash(key + 'g' + gi + '-' + v)), x;
         try { x = g.f(r, v); } catch (e) { continue; }
-        var it0 = { id: key + '-g' + gi + '-' + v, n: n, t: tid, q: x.q, a: x.a, e: x.e, wr: x.wr || null, s: x.s || 0, m: x.m || '' };
+        var it0 = { id: key + '-g' + gi + '-' + v, n: n, t: tid, q: x.q, a: x.a, e: x.e, wr: x.wr || null, s: x.s || 0, m: x.m || '', lang: (LG.g || [])[gi] || null, gen: true };
         if (x.num != null) { it0.num = x.num; it0.unit = x.unit || ''; it0.hint = x.hint || ''; it0.a = [fmtNum(x.num) + (x.unit ? ' ' + x.unit : '')]; }
         items.push(it0);
       }
@@ -799,10 +801,10 @@
       html += (!right ? '<div class="xopt bad"><span class="ans bad">' + strip(it.a[1] || '') + '</span>' + (reason ? '<div>' + strip(reason) + '</div>' : '') + '</div>' : '') + '<div class="xopt ok"><span class="ans ok">' + strip(it.a[0]) + '</span></div>' +
         '<div class="xopt hint"><b>Format:</b> ' + esc(it.hint || '') + (it.unit ? ' · Einheit: ' + esc(it.unit) : '') + '</div>';
     }
-    if (it.dw) html += '<h3 style="margin-top:16px">🧭 So kommst du drauf</h3><ol class="dw">' + it.dw.split('|').map(function (st) { return '<li>' + strip(st.trim()) + '</li>'; }).join('') + '</ol>' +
-      '<h3 style="margin-top:16px">Warum das stimmt</h3><div class="xexp">' + md(it.e) + '</div>';
-    else html += '<h3 style="margin-top:16px">' + (/Rechenweg|=/.test(it.e) ? '🧭 Rechenweg' : 'Erklärung') + '</h3><div class="xexp">' + md(it.e) + '</div>';
-    var voc = vocab(plain(it.q) + ' ' + it.a.map(plain).join(' ') + ' ' + plain(it.e) + ' ' + plain(it.dw || ''));
+    if (it.dw) html += '<h3 style="margin-top:16px">🧭 So kommst du drauf</h3><ol class="dw">' + it.dw.split('|').map(function (st) { return '<li>' + strip(st.trim()) + '</li>'; }).join('') + '</ol>';
+    else if (it.gen || !it.lang) html += '<h3 style="margin-top:16px">' + (it.gen ? '🧭 Rechenweg' : 'Erklärung') + '</h3><div class="xexp">' + md(it.e) + '</div>';
+    if (it.lang) html += '<h3 style="margin-top:16px">📘 Ausführlich erklärt</h3><div class="xexp long">' + md(it.lang) + '</div>';
+    var voc = vocab(plain(it.q) + ' ' + it.a.map(plain).join(' ') + ' ' + plain(it.e) + ' ' + plain(it.dw || '') + ' ' + plain(it.lang || ''));
     if (voc.length) html += '<details class="vocabbox"><summary><span>📖 Fachbegriffe <small>(' + voc.length + ')</small></span><i class="plus"></i></summary><div class="vocab">' + voc.map(function (v) {
       var g = v.g, href = termLink(g[3]), full = (O.glossFull || {})[g[1]];
       return '<div class="vrow"><div><b>' + esc(g[1]) + '</b>' + (full ? '<em class="full">' + esc(full) + '</em>' : '') + '<span>' + esc(full ? g[2].replace(full + ' – ', '').replace(/^./, function (c) { return c.toUpperCase(); }) : g[2]) + '</span></div>' + (href ? '<a class="vi" href="' + href + '" title="Zum Begriff">i</a>' : '') + '</div>';

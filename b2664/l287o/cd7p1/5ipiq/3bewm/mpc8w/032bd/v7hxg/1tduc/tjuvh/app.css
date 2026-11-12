@@ -423,4 +423,5 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px;
 .dw li { counter-increment: dw; position: relative; padding: 10px 12px 10px 44px; border-radius: 12px; background: rgba(76,201,255,.08); border: 1px solid rgba(76,201,255,.25); font-size: 15px; line-height: 1.5; color: #e9f6ff; }
 .dw li::before { content: counter(dw); position: absolute; left: 10px; top: 9px; width: 24px; height: 24px; border-radius: 8px; display: grid; place-items: center; background: #4cc9ff; color: #06202c; font-weight: 900; font-size: 13px; }
 .vrow .full { display: block; font-style: normal; font-size: 11.5px; font-weight: 700; color: #a99ff0; letter-spacing: .01em; margin: -1px 0 2px; }
+.xexp.long { padding: 12px 14px; border-radius: 14px; background: rgba(255,209,102,.07); border: 1px solid rgba(255,209,102,.25); font-size: 15.5px; line-height: 1.65; }
 
