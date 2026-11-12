@@ -36,6 +36,12 @@
   function voiceInfo(id) { return VOICES.filter(function (v) { return v[0] === id; })[0] || VOICES[0]; }
   function tmOf(voice, key) { return voice === 'geraet' ? null : (TIMING[voice] || {})[key] || null; }
   var GAP = (function () { var l = S.lastVisit; S.lastVisit = Date.now(); return l ? Math.floor((Date.now() - l) / 864e5) : 0; })();
+  function addTime(n, tid, kind, sec) {
+    if (!(sec > 0)) return;
+    S.time = S.time || {}; S.dayTime = S.dayTime || {};
+    var k = n + '-' + tid, r = S.time[k] = S.time[k] || { l: 0, q: 0 };
+    r[kind] = (r[kind] || 0) + sec; S.dayTime[today()] = (S.dayTime[today()] || 0) + sec;
+  }
   function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
   function today() { var d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
   function dayXp() { return S.days[today()] || 0; }
@@ -196,13 +202,13 @@
     if (o.progress != null) setTimeout(function () { var i = d.querySelector('.xpbar i'); if (i) i.style.width = Math.round(o.progress * 100) + '%'; }, 120);
     d.querySelector('button').onclick = function () { d.remove(); };
   }
-  function rnd(a) { return a[Math.floor(Math.random() * a.length)]; }
+  function rnd(a) { var l = a.filter(function (x) { return S.name || x.indexOf('{n}') < 0; }); var x = l[Math.floor(Math.random() * l.length)] || a[0]; return x.replace(/\{n\}/g, esc(S.name || '')); }
   var MOT = {
-    combo: { 3: ['3 richtig in Folge – du bist warm! 🔥', 'Hattrick! Weiter so ⚡'], 5: ['5er-Combo! Dein Gehirn cached gerade alles 🧠', 'Fünf am Stück – TLB-Hit-Rate: 100 % 😎'], 8: ['8 in Folge! Du bist schneller als ein TLB-Hit ⚡'], 10: ['10er-Combo!! Professor-Level erreicht 🎓'], 15: ['15 am Stück – das ist Kernel-Modus! 👑'] },
-    wrong: ['Fehler sind nur Page Faults – danach sitzt es im Speicher 💾', 'Kein Stress – falsche Fragen kommen gezielt wieder, bis sie sitzen 💪', 'Durchatmen. Lies die Erklärung – genau so lernt man 🌱', 'Auch Prozessoren brauchen manchmal einen Retry ↺'],
-    half: ['Halbzeit! {ok} von {n} richtig – zieh durch! 🏃', 'Die Hälfte ist geschafft – {ok} Treffer bisher 💪'],
-    listened: ['Thema gehört! 🎧 Jetzt im Quiz festigen – so bleibt es hängen.', 'Podcast geschafft! Ein kurzes Quiz macht daraus echtes Wissen 🎯'],
-    home: ['Jede Frage heute ist ein Punkt weniger Prüfungsstress 📚', 'Kleine Schritte, großer Fortschritt – 10 Minuten reichen heute 🚀', 'Du lernst nicht für die Prüfung, du lernst, wie Computer wirklich denken 🧠', 'Der beste Zeitpunkt zu lernen war gestern. Der zweitbeste ist jetzt ⏰', 'Wiederholung schlägt Talent – und du wiederholst gerade 💪', 'Ein Kapitel nach dem anderen – genau wie ein Scheduler 😉']
+    combo: { 3: ['3 richtig in Folge – du bist warm! 🔥', 'Hattrick! Weiter so ⚡'], 5: ['5er-Combo! Dein Gehirn cached gerade alles 🧠', '{n} ist on fire! 5 in Folge 🔥', 'Fünf am Stück – TLB-Hit-Rate: 100 % 😎'], 8: ['8 in Folge! Du bist schneller als ein TLB-Hit ⚡'], 10: ['10er-Combo!! Professor-Level erreicht 🎓', '{n}, das ist Wahnsinn – 10 am Stück! 🎓'], 15: ['15 am Stück – das ist Kernel-Modus! 👑'] },
+    wrong: ['{n}, kein Problem – genau aus Fehlern lernt man am meisten 💡', 'Kopf hoch, {n}! Beim nächsten Mal sitzt die 💪', 'Fehler sind nur Page Faults – danach sitzt es im Speicher 💾', 'Kein Stress – falsche Fragen kommen gezielt wieder, bis sie sitzen 💪', 'Durchatmen. Lies die Erklärung – genau so lernt man 🌱', 'Auch Prozessoren brauchen manchmal einen Retry ↺'],
+    half: ['Halbzeit! {ok} von {cnt} richtig – zieh durch! 🏃', 'Die Hälfte ist geschafft – {ok} Treffer bisher 💪', 'Halbzeit, {n}! {ok} von {cnt} richtig 🔥'],
+    listened: ['Stark, {n}! Thema gehört – jetzt im Quiz festigen 🎯', 'Thema gehört! 🎧 Jetzt im Quiz festigen – so bleibt es hängen.', 'Podcast geschafft! Ein kurzes Quiz macht daraus echtes Wissen 🎯'],
+    home: ['{n}, heute schon gelernt? Chippy wartet auf dich 😊', 'Schön, dass du da bist, {n}! 10 Minuten machen den Unterschied 🚀', 'Jede Frage heute ist ein Punkt weniger Prüfungsstress 📚', 'Kleine Schritte, großer Fortschritt – 10 Minuten reichen heute 🚀', 'Du lernst nicht für die Prüfung, du lernst, wie Computer wirklich denken 🧠', 'Der beste Zeitpunkt zu lernen war gestern. Der zweitbeste ist jetzt ⏰', 'Wiederholung schlägt Talent – und du wiederholst gerade 💪', 'Ein Kapitel nach dem anderen – genau wie ein Scheduler 😉']
   };
   function confetti(n) {
     cf.width = innerWidth * (devicePixelRatio || 1); cf.height = innerHeight * (devicePixelRatio || 1);
@@ -219,7 +225,7 @@
   function levelUp(l) {
     sfx('lvl'); confetti(180);
     var d = document.createElement('div'); d.className = 'levelup';
-    d.innerHTML = '<div class="box cheer">' + chippy('party', 88) + '<div style="font-weight:900;color:#ffd166;letter-spacing:.15em;font-size:13px">LEVEL UP</div><div class="lv grad-text">' + l + '</div><p style="color:#d8d5f5;margin:10px 0 18px">Stark! Du bist jetzt auf Level ' + l + '.</p><button class="btn main block">Weiter so 🚀</button></div>';
+    d.innerHTML = '<div class="box cheer">' + chippy('party', 88) + '<div style="font-weight:900;color:#ffd166;letter-spacing:.15em;font-size:13px">LEVEL UP</div><div class="lv grad-text">' + l + '</div><p style="color:#d8d5f5;margin:10px 0 18px">Stark' + (S.name ? ', ' + esc(S.name) : '') + '! Du bist jetzt auf Level ' + l + '.</p><button class="btn main block">Weiter so 🚀</button></div>';
     document.body.appendChild(d); d.querySelector('button').onclick = function () { d.remove(); };
   }
 
@@ -285,7 +291,7 @@
     var g = Math.min(1, dayXp() / S.goal), rec = recommend(), h = new Date().getHours();
     var hi = h < 11 ? 'Guten Morgen' : h < 18 ? 'Hallo' : 'Guten Abend';
     var html = topBar() +
-      '<div class="hero"><div class="row"><h1>' + hi + '! 👋</h1><p>' + (dayXp() >= S.goal ? 'Tagesziel geschafft – stark! Jede weitere Frage festigt dein Wissen.' : 'Noch ' + (S.goal - dayXp()) + ' XP bis zu deinem Tagesziel.') + '</p></div>' +
+      '<div class="hero"><div class="row"><h1>' + hi + (S.name ? ', ' + esc(S.name) : '') + '! 👋</h1><p>' + (dayXp() >= S.goal ? 'Tagesziel geschafft – stark! Jede weitere Frage festigt dein Wissen.' : 'Noch ' + (S.goal - dayXp()) + ' XP bis zu deinem Tagesziel.') + '</p></div>' +
       '<div class="goal">' + ring(g, 70, 8, '#ffd166', Math.round(g * 100) + '%') + '<div style="flex:1">' +
       (rec ? '<div style="font-size:13px;color:#d8d5f5;font-weight:700">Als Nächstes · Kapitel ' + rec.n + '</div><div style="font-weight:900;font-size:17px;margin:2px 0 10px">' + esc(rec.t.title) + '</div><a class="btn main block" href="#/k/' + rec.n + '/' + rec.mode + '/' + rec.t.id + '">' + rec.label + '</a>'
         : '<div style="font-weight:900">Alles gemeistert! 🏆</div>') + '</div></div></div>' + motCard();
@@ -297,7 +303,7 @@
   function motCard() {
     var st = streak(), msg, mood = 'happy', allOpen = 0, best = null;
     O.meta.forEach(function (m) { var ch = O.chapters[m.n]; if (!ch || !chapterProgress(m.n)) return; ch.topics.forEach(function (t) { var c = pool(m.n, t.id).filter(function (it) { var r = S.q[it.id]; return r && r.b === 0; }).length; allOpen += c; if (c && (!best || c > best.c)) best = { n: m.n, t: t, c: c }; }); });
-    if (GAP >= 3) { msg = 'Willkommen zurück! 👋 ' + GAP + ' Tage Pause – eine kurze Runde bringt dich sofort wieder rein.'; mood = 'wow'; }
+    if (GAP >= 3) { msg = 'Willkommen zurück' + (S.name ? ', ' + esc(S.name) : '') + '! 👋 ' + GAP + ' Tage Pause – eine kurze Runde bringt dich sofort wieder rein.'; mood = 'wow'; }
     else if (st >= 2 && dayXp() < S.goal) { msg = '🔥 <b>' + st + ' Tage</b> in Folge – lass die Serie heute nicht reißen!'; mood = 'strong'; }
     else if (st >= 2) { msg = '🔥 <b>' + st + ' Tage</b> Streak und Tagesziel erreicht – du bist eine Lernmaschine!'; mood = 'cool'; }
     else if (best) { msg = '<b>' + best.c + '</b> Fragen in „' + esc(best.t.title) + '“ warten auf eine zweite Chance – die schaffst du jetzt!'; mood = 'strong'; }
@@ -305,7 +311,7 @@
     var acc = S.answered ? Math.round(S.correct / S.answered * 100) : 0;
     return '<div class="motcard home">' + chippy(mood, 62) + '<div><div>' + msg + '</div>' +
       (S.answered ? '<div class="motstats"><span>✅ ' + S.correct + ' richtig</span><span>🎯 ' + acc + ' % Treffer</span>' + (allOpen ? '<span>↻ ' + allOpen + ' zu wiederholen</span>' : '') + '</div>' : '') +
-      '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">' + (best ? '<a class="btn sm" href="#/k/' + best.n + '/quiz/' + best.t.id + '">Fehler wiederholen ↻</a>' : '') + (S.rem ? '' : '<a class="btn sm" href="#/erfolge">🔔 Erinnerungen</a>') + '</div></div></div>';
+      '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">' + (best ? '<a class="btn sm" href="#/k/' + best.n + '/quiz/' + best.t.id + '">Fehler wiederholen ↻</a>' : '') + (S.rem ? '' : '<a class="btn sm" href="#/profil/erinnerungen">🔔 Erinnerungen</a>') + '</div></div></div>';
   }
   function chapterList() {
     var html = '', part = '';
@@ -383,6 +389,104 @@
       svgs.forEach(function (s, k) { if (vis[k]) OSTEP_VIS.render(s, getV(s), p, (now - t0) / 1000); });
     })(t0);
   }
+  function fmtDur(sec) { sec = Math.round(sec || 0); if (sec < 60) return sec + ' s'; var m = Math.round(sec / 60); if (m < 60) return m + ' Min.'; return Math.floor(m / 60) + ' Std. ' + (m % 60) + ' Min.'; }
+  function topicStats(n, t) {
+    var tm = (S.time || {})[n + '-' + t.id] || { l: 0, q: 0 }, pl = pool(n, t.id), seen = 0, ans = 0, cor = 0;
+    pl.forEach(function (it) { var r = S.q[it.id]; if (r) { seen++; ans += r.n || 0; cor += r.c || 0; } });
+    return { l: tm.l || 0, q: tm.q || 0, tot: (tm.l || 0) + (tm.q || 0), seen: seen, size: pl.length, acc: ans ? cor / ans : null, ma: mastery(n, t.id) };
+  }
+  function profHead() {
+    var L = lvlInfo(S.xp);
+    return '<div class="profhead">' + chippy(streak() >= 3 ? 'cool' : 'happy', 74) + '<div style="flex:1;min-width:0"><div class="pname">' + (S.name ? esc(S.name) : 'Dein Profil') + '</div><div class="psub">Level ' + L.lvl + ' · ' + S.xp + ' XP · 🔥 ' + streak() + ' Tage</div><div class="xpbar"><i style="width:' + Math.round(L.cur / L.need * 100) + '%"></i></div></div></div>';
+  }
+  function viewProfile(sub) {
+    var back = '<a class="back" href="#/profil">‹ Profil</a>';
+    if (sub === 'erfolge') { app.innerHTML = back + badgesHtml(); return; }
+    if (sub === 'erinnerungen') { app.innerHTML = back + remSection(); bindRem(); return; }
+    if (sub === 'einstellungen') { app.innerHTML = back + settingsHtml(); bindSettings(); return; }
+    if (sub === 'stats') { app.innerHTML = back + statsHtml(); return; }
+    if (sub === 'noten') { app.innerHTML = back + gradesHtml(); return; }
+    var tot = 0, today0 = (S.dayTime || {})[today()] || 0; Object.keys(S.time || {}).forEach(function (k) { tot += (S.time[k].l || 0) + (S.time[k].q || 0); });
+    var got = BADGES.filter(function (b) { return S.badges[b[0]]; }).length;
+    app.innerHTML = topBar() + profHead() +
+      '<div class="card namecard"><label for="pname">Wie dürfen Chippy und die Erinnerungen dich nennen?</label><div class="numrow" style="padding:2px 12px"><input id="pname" type="text" maxlength="24" autocomplete="given-name" placeholder="Dein Vorname" value="' + esc(S.name || '') + '"><button class="btn sm main" id="psave">Speichern</button></div></div>' +
+      '<div class="stat-grid"><div><b>' + fmtDur(today0) + '</b><small>heute gelernt</small></div><div><b>' + fmtDur(tot) + '</b><small>gesamt</small></div><div><b>' + (S.answered ? Math.round(S.correct / S.answered * 100) : 0) + '%</b><small>Trefferquote</small></div></div>' +
+      gradeCard() +
+      '<div class="menu">' +
+      '<a href="#/profil/noten"><span>🎓</span><div><b>Noten & Quiz-Übersicht</b><small>alle 20-Fragen-Quizze und deine Gesamtnote</small></div>›</a>' +
+      '<a href="#/profil/stats"><span>📊</span><div><b>Fortschritt & Analytics</b><small>Lernzeit, Noten, Zeit pro Thema und Kapitel</small></div>›</a>' +
+      '<a href="#/profil/erfolge"><span>🏆</span><div><b>Erfolge</b><small>' + got + ' von ' + BADGES.length + ' Abzeichen</small></div>›</a>' +
+      '<a href="#/profil/erinnerungen"><span>🔔</span><div><b>Erinnerungen</b><small>Lernzeiten, Streak-Warnung, Kalender</small></div>›</a>' +
+      '<a href="#/profil/einstellungen"><span>⚙️</span><div><b>Einstellungen</b><small>Tagesziel, Stimme, Töne</small></div>›</a></div>';
+    $('#psave').onclick = function () { var v = $('#pname').value.trim().slice(0, 24); S.name = v || null; save(); sfx('win'); toast(v ? '👋 Hallo ' + esc(v) + '! Chippy merkt sich deinen Namen.' : 'Name entfernt'); viewProfile(); };
+    $('#pname').onkeydown = function (e) { if (e.key === 'Enter') $('#psave').click(); };
+  }
+  function chQuizzes() { return (S.hist || []).filter(function (h) { return h.tid === 'alle'; }); }
+  function gnum(h) { return parseFloat(grade(h.ok / h.total).replace(',', '.')); }
+  function overall() { var q = chQuizzes(); if (!q.length) return null; var g = q.reduce(function (a, h) { return a + gnum(h); }, 0) / q.length; return { g: g, n: q.length, pct: q.reduce(function (a, h) { return a + h.ok / h.total; }, 0) / q.length }; }
+  function gcolor(g) { return g <= 1.7 ? '#7ff0b2' : g <= 2.7 ? '#ffd166' : g <= 4 ? '#ffb347' : '#ff8a95'; }
+  function gradeCard() {
+    var o = overall();
+    return '<a class="gradecard" href="#/profil/noten"><div><small>🎓 Gesamtnote</small><b class="gv" style="color:' + (o ? gcolor(o.g) : 'var(--dim)') + '">' + (o ? o.g.toFixed(1).replace('.', ',') : '–') + '</b></div><div style="flex:1;font-size:13.5px;font-weight:700;color:#d8d5f5">' +
+      (o ? 'Durchschnitt aus <b>' + o.n + '</b> Kapitelquiz' + (o.n === 1 ? '' : 'zen') + ' · Ø ' + Math.round(o.pct * 100) + ' % richtig' : 'Mach ein großes 20-Fragen-Kapitelquiz, um deine erste Note zu bekommen.') + '</div><span>›</span></a>';
+  }
+  function gradesHtml() {
+    var q = chQuizzes().slice().reverse(), o = overall();
+    var html = '<h1 style="font-size:24px;font-weight:900;margin:4px 2px 10px">🎓 Noten</h1>' + gradeCard().replace('<a class="gradecard" href="#/profil/noten">', '<div class="gradecard">').replace(/<span>›<\/span><\/a>$/, '</div>');
+    if (!q.length) return html + '<div class="empty">Noch keine Kapitelquizze. Im Kapitel unter 🎯 Quiz → „Großes Kapitel-Quiz“ starten.</div>';
+    var by = {}; chQuizzes().forEach(function (h) { (by[h.n] = by[h.n] || []).push(h); });
+    html += '<div class="sec-title"><h2>Pro Kapitel</h2></div><div class="card" style="display:grid;gap:8px">' + Object.keys(by).sort(function (a, b) { return a - b; }).map(function (n) {
+      var l = by[n], g = l.reduce(function (a, h) { return a + gnum(h); }, 0) / l.length, best = Math.min.apply(null, l.map(gnum)), m = O.meta.filter(function (x) { return x.n === +n; })[0];
+      return '<div class="grow"><div class="num" style="background:' + (m ? m.color : '#7c5cff') + '">' + n + '</div><div style="flex:1;min-width:0"><b>' + esc(m ? m.title : 'Kapitel ' + n) + '</b><small>' + l.length + '× angetreten · beste Note ' + String(best.toFixed(1)).replace('.', ',') + '</small></div><b style="font-size:20px;color:' + gcolor(g) + '">' + g.toFixed(1).replace('.', ',') + '</b></div>';
+    }).join('') + '</div><div class="sec-title"><h2>Alle Quizze</h2><small>' + q.length + '</small></div><div class="card" style="display:grid;gap:8px">' + q.map(function (h) {
+      var d = new Date(h.d), g = grade(h.ok / h.total);
+      return '<div class="grow"><div style="flex:1;min-width:0"><b>Kapitel ' + h.n + '</b><small>' + pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + '.' + d.getFullYear() + ', ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ' · ' + h.ok + '/' + h.total + ' · ' + Math.round(h.ok / h.total * 100) + ' %' + (h.sec ? ' · ' + fmtDur(h.sec) : '') + '</small></div><b style="font-size:20px;color:' + gcolor(parseFloat(g.replace(',', '.'))) + '">' + g + '</b></div>';
+    }).join('') + '</div>';
+    return html;
+  }
+  function badgesHtml() {
+    var got = BADGES.filter(function (b) { return S.badges[b[0]]; }).length;
+    return '<div class="sec-title"><h2>🏆 Erfolge</h2><small>' + got + ' / ' + BADGES.length + '</small></div><div class="badges">' +
+      BADGES.map(function (b) { return '<div class="badge ' + (S.badges[b[0]] ? '' : 'off') + '"><div class="e">' + b[1] + '</div><b>' + b[2] + '</b><small>' + b[3] + '</small></div>'; }).join('') + '</div>';
+  }
+  function statsHtml() {
+    var days = [], max = 1, d0 = new Date();
+    for (var i = 13; i >= 0; i--) { var d = new Date(d0.getFullYear(), d0.getMonth(), d0.getDate() - i), k = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()), v = (S.dayTime || {})[k] || 0; days.push([d, v, (S.days || {})[k] || 0]); max = Math.max(max, v); }
+    var week = days.slice(7).reduce(function (a, x) { return a + x[1]; }, 0), hist = S.hist || [], chq = hist.filter(function (h) { return h.tid === 'alle'; });
+    var ov = overall(), avgGrade = ov ? ov.g : null;
+    var avgTest = hist.length ? hist.reduce(function (a, h) { return a + (h.sec || 0); }, 0) / hist.length : 0;
+    var html = '<h1 style="font-size:24px;font-weight:900;margin:4px 2px 10px">📊 Fortschritt & Analytics</h1>' +
+      '<div class="stat-grid"><div><b>' + fmtDur(week) + '</b><small>letzte 7 Tage</small></div><div><b>' + fmtDur(week / 7) + '</b><small>Ø pro Tag</small></div><div><b>' + (avgGrade ? avgGrade.toFixed(1).replace('.', ',') : '–') + '</b><small>Gesamtnote</small></div></div>' +
+      '<div class="stat-grid"><div><b>' + S.tests + '</b><small>Tests</small></div><div><b>' + fmtDur(avgTest) + '</b><small>Ø Dauer pro Test</small></div><div><b>' + S.answered + '</b><small>Fragen beantwortet</small></div></div>' +
+      '<div class="card"><div style="font-weight:900;margin-bottom:8px">Lernzeit der letzten 14 Tage</div><div class="daybars">' + days.map(function (x) {
+        return '<div><i style="height:' + Math.max(2, Math.round(x[1] / max * 100)) + '%" class="' + (x[1] ? 'on' : '') + '"></i><small>' + 'SMDMDFS'[x[0].getDay()] + '</small></div>';
+      }).join('') + '</div><div style="font-size:12px;color:var(--faint);margin-top:6px">Gemessen wird Podcast-Hören und Quiz-Zeit (seit diesem Update).</div></div>' +
+      '<div class="sec-title"><h2>Pro Kapitel</h2></div>';
+    O.meta.forEach(function (m) {
+      var ch = O.chapters[m.n]; if (!ch) return;
+      var ts = ch.topics.map(function (t) { return [t, topicStats(m.n, t)]; }), tot = ts.reduce(function (a, x) { return a + x[1].tot; }, 0), act = ts.filter(function (x) { return x[1].tot > 0; });
+      var mq = chq.filter(function (h) { return h.n === m.n; }).pop(), pr = chapterProgress(m.n);
+      if (!tot && !pr) return;
+      html += '<details class="kstat"><summary><div class="num" style="background:' + m.color + '">' + m.n + '</div><div style="flex:1;min-width:0"><b>' + esc(m.title) + '</b><small>' + Math.round(pr * 100) + ' % · ' + fmtDur(tot) + (act.length ? ' · Ø ' + fmtDur(tot / act.length) + ' pro Thema' : '') + (mq ? ' · letzte Note ' + grade(mq.ok / mq.total) : '') + '</small><div class="mini-bar"><i style="width:' + Math.round(pr * 100) + '%"></i></div></div></summary>' +
+        ts.map(function (x) {
+          var st = x[1];
+          return '<div class="tstat"><div><b>' + x[0].icon + ' ' + esc(x[0].title) + '</b><small>🎧 ' + fmtDur(st.l) + ' · 🎯 ' + fmtDur(st.q) + ' · ' + st.seen + '/' + st.size + ' Fragen gesehen' + (st.acc != null ? ' · ' + Math.round(st.acc * 100) + ' % richtig' : '') + '</small></div><span>' + Math.round(st.ma * 100) + '%</span></div>';
+        }).join('') + '</details>';
+    });
+    return html;
+  }
+  function settingsHtml() {
+    var sel = 'style="font:inherit;background:var(--card2);color:var(--text);border:1px solid var(--line2);border-radius:10px;padding:6px 8px"';
+    return '<div class="sec-title"><h2>⚙️ Einstellungen</h2></div><div class="card" style="display:grid;gap:12px">' +
+      '<label style="display:flex;justify-content:space-between;align-items:center;font-weight:700">Tagesziel <select id="goal" ' + sel + '>' + [50, 100, 200, 300].map(function (g) { return '<option value="' + g + '"' + (S.goal === g ? ' selected' : '') + '>' + g + ' XP</option>'; }).join('') + '</select></label>' +
+      '<label style="display:flex;justify-content:space-between;align-items:center;font-weight:700">Podcast-Stimme <select id="vc" ' + sel + '>' + VOICES.map(function (v) { return '<option value="' + v[0] + '"' + (S.voice === v[0] ? ' selected' : '') + '>' + v[2] + ' ' + v[1] + '</option>'; }).join('') + '</select></label>' +
+      '<label style="display:flex;justify-content:space-between;align-items:center;font-weight:700">Soundeffekte <input type="checkbox" id="snd" ' + (S.sound ? 'checked' : '') + ' style="width:22px;height:22px;accent-color:#ff5fa2"></label></div>';
+  }
+  function bindSettings() {
+    $('#goal').onchange = function () { S.goal = +this.value; save(); };
+    $('#snd').onchange = function () { S.sound = this.checked; save(); };
+    $('#vc').onchange = function () { S.voice = this.value; save(); toast('🗣️ Stimme: ' + voiceInfo(S.voice)[1]); };
+  }
   function viewBadges() {
     var L = lvlInfo(S.xp), got = BADGES.filter(function (b) { return S.badges[b[0]]; }).length;
     var html = topBar() + '<div class="stat-grid"><div><b>' + L.lvl + '</b><small>Level</small></div><div><b>' + streak() + '🔥</b><small>Tage Serie</small></div><div><b>' + (S.answered ? Math.round(S.correct / S.answered * 100) : 0) + '%</b><small>Trefferquote</small></div><div><b>' + S.answered + '</b><small>Antworten</small></div><div><b>' + S.tests + '</b><small>Tests</small></div><div><b>' + S.bestCombo + '</b><small>beste Combo</small></div></div>' +
@@ -402,11 +506,11 @@
   /* ================= Erinnerungen (Kalender + Benachrichtigungen) ================= */
   var REM_SLOTS = [['morgens', '🌅 Morgens', '07:30'], ['mittags', '🥪 Mittags', '12:30'], ['abends', '🌆 Abends', '18:30'], ['nachts', '🦉 Late Night', '22:30']];
   var REM_TXT = {
-    morgens: ['☕ Kaffee + 5 Fragen = perfekter Start in den Tag', '🌅 Guten Morgen! Dein Gehirn ist jetzt am frischesten – nutz es', '🧠 Morgenrunde: Ein Podcast-Thema zum Wachwerden?', '🚀 Wer morgens lernt, hat abends frei', '🐦 Der frühe Vogel cached den Wurm – 10 Minuten OS?', '☀️ Neuer Tag, neue XP. Chippy wartet schon!', '📚 5 Minuten jetzt sparen dir 5 Stunden vor der Prüfung'],
-    mittags: ['🥪 Mittagspause? Ein Podcast-Thema passt genau rein', '🍝 Nudeln + Paging = perfekte Kombi', '⏸️ Kurze Pause vom Alltag: 5 Fragen, dann weiter', '🎧 Ohren frei? Ein Thema hören, während du isst', '⚡ Mittags-Boost: Ein schneller Quiz-Sprint!', '🧩 Halbzeit des Tages – Zeit für ein bisschen Kernel-Wissen'],
-    abends: ['🌆 Feierabend-Runde: 10 Minuten OS, dann Serie', '🔥 Halte deine Streak am Leben – eine Runde reicht', '🎯 Deine falschen Fragen warten auf Revanche', '🧠 Abends gelernt, über Nacht gespeichert – Schlaf ist dein Cache', '📈 Ein Quiz heute = Fortschritt, den du morgen spürst', '🎮 Level-Up in Reichweite? Schau mal rein!'],
-    nachts: ['🦉 Late-Night-Lernsession? 10 Minuten, dann ab ins Bett', '🌙 Noch wach? Ein Podcast zum Einschlafen über TLBs', '⭐ Nachteulen-Bonus: Eine letzte Runde Fragen?', '😴 Kurz lernen, dann schlafen – dein Gehirn sortiert über Nacht', '🌌 Kernel-Modus aktiviert: Late Night Learning'],
-    streak: ['🔥 Deine Streak ist in Gefahr! Noch nicht gelernt? 5 Fragen retten sie', '😱 Chippy macht sich Sorgen um deine Streak – schnell eine Runde!', '⏳ Der Tag ist fast vorbei – lass deine Serie nicht reißen', '🚨 Streak-Alarm! Nur ein paar Fragen bis Mitternacht', '🥺 Chippy vermisst dich. Eine kleine Runde für die Streak?']
+    morgens: ['☀️ Guten Morgen, {n}! Zeit für 5 schnelle Fragen', '☕ Kaffee + 5 Fragen = perfekter Start in den Tag', '🌅 Guten Morgen! Dein Gehirn ist jetzt am frischesten – nutz es', '🧠 Morgenrunde: Ein Podcast-Thema zum Wachwerden?', '🚀 Wer morgens lernt, hat abends frei', '🐦 Der frühe Vogel cached den Wurm – 10 Minuten OS?', '☀️ Neuer Tag, neue XP. Chippy wartet schon!', '📚 5 Minuten jetzt sparen dir 5 Stunden vor der Prüfung'],
+    mittags: ['🥪 {n}, Mittagspause? Ein Podcast-Thema passt genau rein', '🥪 Mittagspause? Ein Podcast-Thema passt genau rein', '🍝 Nudeln + Paging = perfekte Kombi', '⏸️ Kurze Pause vom Alltag: 5 Fragen, dann weiter', '🎧 Ohren frei? Ein Thema hören, während du isst', '⚡ Mittags-Boost: Ein schneller Quiz-Sprint!', '🧩 Halbzeit des Tages – Zeit für ein bisschen Kernel-Wissen'],
+    abends: ['🌆 {n}, Feierabend-Runde: 10 Minuten OS, dann Serie', '🌆 Feierabend-Runde: 10 Minuten OS, dann Serie', '🔥 Halte deine Streak am Leben – eine Runde reicht', '🎯 Deine falschen Fragen warten auf Revanche', '🧠 Abends gelernt, über Nacht gespeichert – Schlaf ist dein Cache', '📈 Ein Quiz heute = Fortschritt, den du morgen spürst', '🎮 Level-Up in Reichweite? Schau mal rein!'],
+    nachts: ['🦉 {n}, noch wach? Late-Night-Lernsession gefällig?', '🦉 Late-Night-Lernsession? 10 Minuten, dann ab ins Bett', '🌙 Noch wach? Ein Podcast zum Einschlafen über TLBs', '⭐ Nachteulen-Bonus: Eine letzte Runde Fragen?', '😴 Kurz lernen, dann schlafen – dein Gehirn sortiert über Nacht', '🌌 Kernel-Modus aktiviert: Late Night Learning'],
+    streak: ['🔥 {n}, deine Streak ist in Gefahr! 5 Fragen retten sie', '🥺 {n}, Chippy vermisst dich – eine kleine Runde für die Streak?', '🔥 Deine Streak ist in Gefahr! Noch nicht gelernt? 5 Fragen retten sie', '😱 Chippy macht sich Sorgen um deine Streak – schnell eine Runde!', '⏳ Der Tag ist fast vorbei – lass deine Serie nicht reißen', '🚨 Streak-Alarm! Nur ein paar Fragen bis Mitternacht', '🥺 Chippy vermisst dich. Eine kleine Runde für die Streak?']
   };
   function remCfg() {
     var r = S.rem || {}; REM_SLOTS.forEach(function (x) { if (!r[x[0]]) r[x[0]] = { on: x[0] === 'abends', t: x[2] }; });
@@ -436,7 +540,7 @@
       slots.forEach(function (k, si) {
         var c = r[k]; if (!c || !c.on) return;
         var hm = c.t.split(':'); if (day === 0 && (+hm[0] * 60 + +hm[1]) <= now.getHours() * 60 + now.getMinutes()) return;
-        var txt = REM_TXT[k][(day + si * 3) % REM_TXT[k].length];
+        var cand = REM_TXT[k].filter(function (x) { return S.name || x.indexOf('{n}') < 0; }), txt = cand[(day + si * 3) % cand.length].replace(/\{n\}/g, S.name || '');
         var end = new Date(d.getFullYear(), d.getMonth(), d.getDate(), +hm[0], +hm[1] + 15);
         ev.push(['BEGIN:VEVENT', 'UID:ostep-' + k + '-' + icsDate(d, c.t) + '@os-lernen', 'DTSTAMP:' + stamp, 'DTSTART:' + icsDate(d, c.t), 'DTEND:' + icsDate(end, pad(end.getHours()) + ':' + pad(end.getMinutes())),
           'SUMMARY:' + icsEsc(txt), 'DESCRIPTION:' + icsEsc((k === 'streak' ? 'Falls du heute noch nicht gelernt hast: Schon 5 Fragen halten deine Streak am Leben.\n\n' : 'Zeit für eine kurze Lernrunde in OS lernen.\n\n') + url), 'URL:' + url,
@@ -496,6 +600,7 @@
   var P = null;
   function stopPlayer() {
     if (!P) return;
+    if (P.acc && P.tn) { addTime(P.tn[0], P.tn[1], 'l', P.acc); P.acc = 0; save(); }
     if (P.audio) { P.audio.pause(); P.audio.src = ''; }
     if (window.speechSynthesis) speechSynthesis.cancel();
     cancelAnimationFrame(P.raf); P = null;
@@ -517,7 +622,7 @@
       '<div class="segs" id="segs">' + t.segs.map(function (s, i) { return '<button data-i="' + i + '">' + (i + 1) + '. ' + esc(s.h) + '</button>'; }).join('') + '</div></div>' +
       '<div class="sheet" id="sheet"><div class="panel"><div class="grab"></div><div class="article" id="art"></div></div></div>';
     var svg = $('.vis'), segh = $('#segh'), cap = $('#cap'), seek = $('#seek'), playB = $('#play');
-    P = { n: n, t: t, tm: tm, cur: 0, segP: 0, speed: 1, playing: false, seeking: false, startT: performance.now() };
+    P = { n: n, t: t, tm: tm, cur: 0, segP: 0, speed: 1, playing: false, seeking: false, startT: performance.now(), tn: [n, tid], acc: 0, lt: 0 };
     var key = n + '-' + tid;
     if (tm) {
       var au = new Audio(); au.preload = 'metadata'; au.src = 'audio/' + S.voice + '/' + kid(n) + '-' + tid + '.m4a?v=' + (tm.v || 1);
@@ -539,7 +644,9 @@
     function curTime() { return P.audio ? P.audio.currentTime : 0; }
     function frame() {
       if (!P) return;
-      var time, i, p;
+      var time, i, p, nowT = performance.now();
+      if (P.playing && P.lt) { P.acc += Math.min(1, (nowT - P.lt) / 1000); if (P.acc >= 15) { addTime(P.tn[0], P.tn[1], 'l', P.acc); P.acc = 0; save(); } }
+      P.lt = nowT;
       if (tm) {
         time = curTime(); i = segAt(time);
         var s0 = tm.s[i], s1 = i + 1 < tm.s.length ? tm.s[i + 1] : tm.d; p = (time - s0) / Math.max(.1, s1 - s0);
@@ -671,6 +778,7 @@
     renderQ();
   }
   function renderQ() {
+    Q.qStart = Date.now();
     var it = Q.items[Q.i], ch = O.chapters[Q.n], t = ch.topics.filter(function (x) { return x.id === it.t; })[0];
     var isNew = box(it.id) < 0;
     app.innerHTML = '<div class="qtop"><a class="x" href="#/k/' + Q.n + '" aria-label="Beenden">✕</a><div class="qprog"><i style="width:' + (Q.i / Q.items.length * 100) + '%"></i></div><div class="combo" id="combo">' + (Q.combo >= 2 ? '🔥×' + Q.combo : '') + '</div></div>' +
@@ -701,6 +809,7 @@
     $$('.opt').forEach(function (b) { b.disabled = true; var a = +b.dataset.a; if (a === 0) b.classList.add('right'); else if (b === btn) b.classList.add('wrong'); else b.classList.add('dim'); });
     var r = S.q[it.id] || { b: 0, n: 0, c: 0, t: 0 };
     r.n++; r.t = Date.now();
+    var qsec = Math.min(180, (Date.now() - (Q.qStart || Date.now())) / 1000); Q.sec = (Q.sec || 0) + qsec; addTime(it.n, it.t, 'q', qsec);
     S.answered++;
     var gain = 0;
     if (right) {
@@ -711,7 +820,7 @@
       Q.wrongRow = 0;
       if (MOT.combo[Q.combo]) { if (Q.combo >= 5) confetti(60); pep(rnd(MOT.combo[Q.combo]), Q.combo >= 8 ? 'cool' : 'party', true); }
     } else { r.b = 0; Q.combo = 0; Q.wrong.push(it); sfx('bad'); if (navigator.vibrate) navigator.vibrate(60); Q.wrongRow = (Q.wrongRow || 0) + 1; if (Q.wrongRow === 2 || Q.wrongRow === 4) pep(rnd(MOT.wrong), 'think', true); }
-    if (Q.i + 1 === Math.ceil(Q.items.length / 2) && Q.items.length >= 10) setTimeout(function () { pep(rnd(MOT.half).replace('{ok}', Q.ok).replace('{n}', Q.i + 1), Q.ok >= (Q.i + 1) * .7 ? 'cool' : 'strong'); }, 900);
+    if (Q.i + 1 === Math.ceil(Q.items.length / 2) && Q.items.length >= 10) setTimeout(function () { pep(rnd(MOT.half).replace('{ok}', Q.ok).replace('{cnt}', Q.i + 1), Q.ok >= (Q.i + 1) * .7 ? 'cool' : 'strong'); }, 900);
     S.q[it.id] = r; save();
     if (gain) { Q.xp += gain; addXp(gain, btn); }
     var c = $('#combo'); c.textContent = Q.combo >= 2 ? '🔥×' + Q.combo : ''; c.classList.remove('pop'); void c.offsetWidth; if (Q.combo >= 2) c.classList.add('pop');
@@ -728,10 +837,17 @@
     };
     $('#next').onclick = function () { Q.i++; if (Q.i < Q.items.length) renderQ(); else result(); };
   }
+  function grade(pct) {
+    var t = [[.95, '1,0'], [.9, '1,3'], [.85, '1,7'], [.8, '2,0'], [.75, '2,3'], [.7, '2,7'], [.65, '3,0'], [.6, '3,3'], [.55, '3,7'], [.5, '4,0']];
+    for (var i = 0; i < t.length; i++) if (pct >= t[i][0] - 1e-9) return t[i][1];
+    return '5,0';
+  }
   function result() {
     var total = Q.items.length, pct = Q.ok / total, perfect = Q.ok === total;
     var bonus = 20 + (perfect ? 50 : 0);
-    S.tests++; if (perfect) S.perfect++; save();
+    S.tests++; if (perfect) S.perfect++;
+    (S.hist = S.hist || []).push({ d: Date.now(), n: Q.n, tid: Q.tid, ok: Q.ok, total: total, sec: Math.round(Q.sec || 0) }); if (S.hist.length > 400) S.hist = S.hist.slice(-400);
+    save();
     addXp(bonus);
     var after = Q.tid === 'alle' ? chapterProgress(Q.n) : mastery(Q.n, Q.tid);
     var openList = Q.tid === 'alle' ? O.chapters[Q.n].topics.reduce(function (a, t) { return a.concat(pool(Q.n, t.id)); }, []) : pool(Q.n, Q.tid);
@@ -741,10 +857,12 @@
     var emoji = perfect ? '🏆' : pct >= .8 ? '🎉' : pct >= .6 ? '💪' : pct >= .4 ? '📈' : '🌱';
     var msg = perfect ? 'Fehlerfrei! Das ist Meisterklasse.' : pct >= .8 ? 'Richtig stark – fast alles sitzt!' : pct >= .6 ? 'Gute Basis! Die Wiederholungen bringen dich auf 100 %.' : pct >= .4 ? 'Du kommst voran. Hör dir den Podcast nochmal an!' : 'Jeder Anfang zählt – die falschen Fragen kommen gezielt wieder.';
     sfx('win'); confetti(perfect ? 240 : pct >= .6 ? 120 : 40);
-    app.innerHTML = '<div class="result"><div class="big">' + emoji + '</div><h1>' + Q.ok + ' von ' + total + ' richtig</h1><p style="color:var(--dim)">' + msg + '</p>' +
+    var gr = grade(pct), gcol = pct >= .85 ? '#7ff0b2' : pct >= .65 ? '#ffd166' : pct >= .5 ? '#ffb347' : '#ff8a95';
+    app.innerHTML = '<div class="result"><div class="big">' + emoji + '</div><h1>' + Q.ok + ' von ' + total + ' richtig</h1>' +
+      (Q.tid === 'alle' ? '<div class="gradebox"><div><small>Deine Note</small><b style="color:' + gcol + '">' + gr + '</b></div><div><small>richtig</small><b>' + Math.round(pct * 100) + ' %</b></div><div><small>Zeit</small><b>' + fmt(Q.sec || 0) + '</b></div></div><div style="font-size:12px;color:var(--faint);margin-top:-4px">Notenschlüssel wie an Unis üblich: ab 50 % bestanden (4,0), ab 95 % 1,0</div>' : '<div style="font-weight:800;color:#c9c3ff">' + Math.round(pct * 100) + ' % richtig · ' + fmt(Q.sec || 0) + ' Min.</div>') + '<p style="color:var(--dim)">' + msg + '</p>' +
       '<div class="motcard">' + chippy(pct >= .8 ? 'party' : pct >= .5 ? 'strong' : 'think', 54) + '<div>' + (openN ? 'Noch <b>' + openN + '</b> offene oder falsche Fragen ' + (Q.tid === 'alle' ? 'im Kapitel' : 'in diesem Thema') + ' – jede Runde werden es weniger!' : 'Keine offenen Fragen mehr – jetzt nur noch auffrischen! 🏆') + '</div></div>' +
       '<div class="stat-grid"><div><b style="color:#ffd166">+' + (Q.xp + bonus) + '</b><small>XP</small></div><div><b>🔥' + Q.maxCombo + '</b><small>beste Combo</small></div><div><b>' + Math.round(after * 100) + '%</b><small>Fortschritt ' + (after > Q.masteryBefore ? '▲' + Math.round((after - Q.masteryBefore) * 100) : '') + '</small></div></div>' +
-      '<div style="display:grid;gap:10px"><a class="btn main block" href="#/k/' + Q.n + '/quiz/' + Q.tid + '?r=' + Date.now() + '">Nochmal 15 Fragen ↻</a><a class="btn block" href="#/k/' + Q.n + '">Zurück zum Kapitel</a></div>' +
+      '<div style="display:grid;gap:10px"><a class="btn main block" href="#/k/' + Q.n + '/quiz/' + Q.tid + '?r=' + Date.now() + '">Nochmal ' + total + ' Fragen ↻</a><a class="btn block" href="#/k/' + Q.n + '">Zurück zum Kapitel</a></div>' +
       (Q.wrong.length ? '<div class="sec-title"><h2>Zum Wiederholen</h2><small>' + Q.wrong.length + '</small></div><div class="review">' + Q.wrong.map(function (it) {
         return '<div class="r"><b>' + md(it.q).replace(/<\/?p>/g, ' ') + '</b><div class="ans">✔ ' + md(it.a[0]).replace(/<\/?p>/g, '') + '</div><div style="margin-top:6px;color:var(--dim)">' + md(it.e).replace(/<\/?p>/g, ' ') + '</div><a class="btn sm" style="margin-top:8px" target="_blank" href="#/k/' + it.n + '/text/' + it.t + '/' + (it.s || 0) + (it.m ? '?m=' + encodeURIComponent(it.m) : '') + '">ℹ︎ Nachlesen</a></div>';
       }).join('') + '</div>' : '') + '</div>';
@@ -762,7 +880,8 @@
     $$('.tabbar a').forEach(function (a) { a.classList.toggle('on', (p[0] || 'home') === a.dataset.tab || (!p[0] && a.dataset.tab === 'home')); });
     if (!p.length) viewHome();
     else if (p[0] === 'kapitel') viewChapters();
-    else if (p[0] === 'erfolge') viewBadges();
+    else if (p[0] === 'erfolge') viewProfile('erfolge');
+    else if (p[0] === 'profil') viewProfile(p[1]);
     else if (p[0] === 'k' && p.length === 2) viewChapter(+p[1]);
     else if (p[0] === 'k' && p[2] === 'lernen') viewLearn(+p[1], p[3]);
     else if (p[0] === 'k' && p[2] === 'text') viewText(+p[1], p[3], +(p[4] || 0), params.m || '');
