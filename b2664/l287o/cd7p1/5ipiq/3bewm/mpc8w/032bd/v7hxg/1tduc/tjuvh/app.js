@@ -73,7 +73,7 @@
     var key = n + '-' + tid; if (poolCache[key]) return poolCache[key];
     var ch = O.chapters[n], t = ch.topics.filter(function (x) { return x.id === tid; })[0], items = [];
     var EX = (O.ex || {})[key] || [], LG = (O.lang || {})[key] || {};
-    (t.q || []).forEach(function (q, i) { var x = EX[i]; items.push({ id: key + '-q' + i + (q[5] ? '-' + q[5] : ''), n: n, t: tid, q: q[0], a: q[1], e: x ? x[0] : q[2], w: x ? x[1] : null, dw: ((O.dw || {})[key] || [])[i] || null, lang: (LG.q || [])[i] || null, s: q[3] || 0, m: q[4] || '' }); });
+    (t.q || []).forEach(function (q, i) { var x = EX[i]; items.push({ id: key + '-q' + i + (q[5] ? '-' + q[5] : ''), n: n, t: tid, q: q[0], a: q[1], e: (x && x[0]) || q[2], w: x ? x[1] : null, dw: ((O.dw || {})[key] || [])[i] || null, lang: (LG.q || [])[i] || null, s: q[3] || 0, m: q[4] || '' }); });
     if (t.st && t.st.T.length >= 3 && t.st.F.length >= 3) {
       var cnt = t.st.n || Math.min(18, Math.min(t.st.T.length, t.st.F.length) * 3);
       for (var v = 0; v < cnt; v++) {
