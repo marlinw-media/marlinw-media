@@ -664,7 +664,7 @@
   var P = null;
   function stopPlayer() {
     if (!P) return;
-    if (P.acc && P.tn) { addTime(P.tn[0], P.tn[1], 'l', P.acc); P.acc = 0; save(); }
+    if (P.acc && P.tn) { addTime(P.tn[0], P.tn[1], 'l', P.acc); P.acc = 0; save(); syncSoon(1500); }
     if (P.audio) { P.audio.pause(); P.audio.src = ''; }
     if (window.speechSynthesis) speechSynthesis.cancel();
     cancelAnimationFrame(P.raf); P = null;
@@ -864,7 +864,7 @@
     var before = S.listen[key] || 0;
     if (f > before) {
       S.listen[key] = Math.min(1, f);
-      if (before < .9 && f >= .9) { addXp(30, $('#play')); confetti(80); sfx('win'); pep(rnd(MOT.listened), 'cool', true); }
+      if (before < .9 && f >= .9) { syncSoon(1500); addXp(30, $('#play')); confetti(80); sfx('win'); pep(rnd(MOT.listened), 'cool', true); }
       if (Math.floor(f * 20) !== Math.floor(before * 20)) save();
     }
   }
@@ -943,7 +943,7 @@
       if (MOT.combo[Q.combo]) { if (Q.combo >= 5) confetti(60); pep(rnd(MOT.combo[Q.combo]), Q.combo >= 8 ? 'cool' : 'party', true); }
     } else { r.b = 0; Q.combo = 0; Q.wrong.push(it); sfx('bad'); if (navigator.vibrate) navigator.vibrate(60); Q.wrongRow = (Q.wrongRow || 0) + 1; if (Q.wrongRow === 2 || Q.wrongRow === 4) pep(rnd(MOT.wrong), 'think', true); }
     if (Q.i + 1 === Math.ceil(Q.items.length / 2) && Q.items.length >= 10) setTimeout(function () { pep(rnd(MOT.half).replace('{ok}', Q.ok).replace('{cnt}', Q.i + 1), Q.ok >= (Q.i + 1) * .7 ? 'cool' : 'strong'); }, 900);
-    S.q[it.id] = r; save();
+    S.q[it.id] = r; save(); syncSoon(1500);
     if (gain) { Q.xp += gain; addXp(gain, btn); }
     var c = $('#combo'); c.textContent = Q.combo >= 2 ? '🔥×' + Q.combo : ''; c.classList.remove('pop'); void c.offsetWidth; if (Q.combo >= 2) c.classList.add('pop');
     var praise = ['Richtig!', 'Super!', 'Stark!', 'Genau so!', 'Perfekt!', 'Klasse!', 'Volltreffer!'], comfort = ['Nicht ganz.', 'Knapp daneben.', 'Fast!', 'Das sitzt beim nächsten Mal.'];
@@ -964,7 +964,7 @@
   function result() {
     var total = Q.items.length, pct = Q.ok / total, perfect = Q.ok === total;
     var bonus = 20 + (perfect ? 50 : 0);
-    S.tests++; if (perfect) S.perfect++;
+    S.tests++; if (perfect) S.perfect++; syncSoon(800);
     (S.hist = S.hist || []).push({ d: Date.now(), n: Q.n, tid: Q.tid, ok: Q.ok, total: total, sec: Math.round(Q.sec || 0) }); if (S.hist.length > 400) S.hist = S.hist.slice(-400);
     save();
     addXp(bonus);
@@ -1017,8 +1017,11 @@
   route();
   (function () {
     var sp = document.getElementById('splash'); if (!sp) return;
-    var shown = Math.max(0, 1500 - (performance.now() - (window.SPLASH_T0 || 0)));
-    setTimeout(function () { window.SPLASH_DONE = true; setTimeout(function () { sp.classList.add('out'); setTimeout(function () { sp.remove(); }, 800); }, 450); }, shown);
+    function hide() { var shown = Math.max(0, 1500 - (performance.now() - (window.SPLASH_T0 || 0))); setTimeout(function () { window.SPLASH_DONE = true; setTimeout(function () { sp.classList.add('out'); setTimeout(function () { sp.remove(); }, 800); }, 450); }, shown); }
+    if (!syOn()) { hide(); return; }
+    /* Geräte-Sync: neuesten Lernstand schon während des Ladebildschirms holen (max. 5 s, offline geht es sofort weiter) */
+    window.SPLASH_MSG = '🔄 Lernstand wird abgeglichen …';
+    Promise.race([syncNow(), new Promise(function (r) { setTimeout(r, 5000); })]).then(function () { window.SPLASH_MSG = SY.err ? '📴 Offline – lokaler Lernstand' : '✅ Lernstand ist aktuell'; var el = document.getElementById('sptxt'); if (el) el.textContent = window.SPLASH_MSG; hide(); });
   })();
   /* ================= Geräte-Sync (verschlüsselt, Cloudflare Worker) ================= */
   function sySave() { try { localStorage.setItem('ostep-sync', JSON.stringify(SY)); } catch (e) {} }
@@ -1098,7 +1101,7 @@
   function syncNow() {
     if (!syOn()) return Promise.resolve();
     if (SY_BUSY) { SY_AGAIN = true; return Promise.resolve(); }
-    SY_BUSY = true; clearTimeout(SY_TIMER); syStat('läuft …');
+    SY_BUSY = true; clearTimeout(SY_TIMER); SY_TIMER = 0; SY_DUE = 0; syStat('läuft …');
     var K, snap = syClone(S), baseBox = syBase(), base = baseBox && baseBox.code === SY.code ? baseBox : null;
     return syKeys().then(function (k) { K = k; return fetch(SYNC_API + '/v1/' + K.id, { cache: 'no-store' }); })
       .then(function (res) { if (res.status === 404) return null; if (!res.ok) throw new Error('Server ' + res.status); return res.json(); })
@@ -1112,15 +1115,23 @@
         if (remBox && syJ(remBox.s) === syJ(box.s)) { sySetBase({ v: remBox.v, s: remBox.s, code: SY.code }); return; }
         return syEnc(K.key, { v: box.v, s: box.s }).then(function (data) {
           return fetch(SYNC_API + '/v1/' + K.id, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: data }), keepalive: data.length < 60000 });
-        }).then(function (res) { if (!res.ok) throw new Error('Server ' + res.status); sySetBase(box); });
+        }).then(function (res) { if (!res.ok) throw new Error('Server ' + res.status); sySetBase(box); syWrites(1); });
       })
       .then(function () { SY.last = Date.now(); SY.err = null; sySave(); syStat(); }, function (e) { var m = String(e && e.message || e); if (m !== 'stale') { SY.err = m; sySave(); } syStat(); if (m === 'stale') setTimeout(syncSoon, 20000); })
       .then(function () { SY_BUSY = false; if (SY_AGAIN) { SY_AGAIN = false; syncSoon(); } });
   }
-  function syncSoon(ms) { if (!syOn()) return; clearTimeout(SY_TIMER); SY_TIMER = setTimeout(syncNow, ms || 25000); }
-  window.OSTEP_SYNC_SOON = function () { syncSoon(); };
+  var SY_DUE = 0;
+  function syncSoon(ms) {
+    if (!syOn()) return; ms = ms || 120000;
+    var cnt = syWrites(); if (cnt > 600) ms = Math.max(ms, 300000);
+    var due = Date.now() + ms; if (SY_TIMER && SY_DUE && SY_DUE <= due) return;
+    clearTimeout(SY_TIMER); SY_DUE = due; SY_TIMER = setTimeout(function () { SY_TIMER = 0; SY_DUE = 0; syncNow(); }, ms);
+  }
+  function syWrites(add) { var d = today(); if (SY.wd !== d) { SY.wd = d; SY.wn = 0; } if (add) { SY.wn = (SY.wn || 0) + 1; sySave(); } return SY.wn || 0; }
+  window.OSTEP_SYNC_SOON = function () { syncSoon(120000); };
+  /* solange die App offen ist: regelmäßig nachsehen, ob ein anderes Gerät etwas hochgeladen hat (nur lesen) */
+  setInterval(function () { if (syOn() && document.visibilityState === 'visible' && !SY_BUSY && !/\/quiz\//.test(location.hash)) syncNow(); }, 45000);
   document.addEventListener('visibilitychange', function () { if (!syOn()) return; if (document.visibilityState === 'visible') syncSoon(800); else syncNow(); });
-  if (syOn()) setTimeout(syncNow, 1800);
   function syAgo(t) { if (!t) return 'noch nie'; var m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'gerade eben' : m < 60 ? 'vor ' + m + ' Min.' : m < 1440 ? 'vor ' + Math.round(m / 60) + ' Std.' : 'vor ' + Math.round(m / 1440) + ' Tagen'; }
   function syncSub() { return syOn() ? 'aktiv · abgeglichen ' + syAgo(SY.last) : 'Lernstand auf iPhone, iPad & Mac gleich halten'; }
   function syStat(t) { var el = document.getElementById('systat'); if (el) el.innerHTML = t ? '🔄 Abgleich ' + t : (SY.err ? '⚠️ Letzter Versuch fehlgeschlagen (' + esc(SY.err) + ') – wird automatisch wiederholt.' : '✅ Abgeglichen ' + syAgo(SY.last)); }

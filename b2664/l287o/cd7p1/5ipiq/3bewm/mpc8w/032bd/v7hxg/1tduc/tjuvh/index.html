@@ -68,7 +68,7 @@
 var b=document.getElementById('spbits');for(var k=0;k<22;k++){var e=document.createElement('span');e.textContent=Math.random()<.5?'0':'1';if(Math.random()<.18)e.textContent=['0x3F','VPN','TLB','PFN','101'][k%5];e.style.left=(Math.random()*100)+'%';e.style.animationDuration=(3+Math.random()*4)+'s';e.style.animationDelay=(-Math.random()*5)+'s';e.style.fontSize=(10+Math.random()*8)+'px';b.appendChild(e);}
 var t=['Seiten werden in Frames geladen …','TLB wird aufgewärmt …','Page Tables werden sortiert …','Chippy putzt seine Pins …','Scheduler wählt dich aus …'],i=0,tx=document.getElementById('sptxt'),bar=document.getElementById('spbar'),pc=document.getElementById('sppct'),p=0;
 try{var st=JSON.parse(localStorage.getItem('ostep-lernen-v1')||'{}');if(st.name)t.unshift('Hallo '+String(st.name).replace(/[<>&]/g,'')+'! 👋');}catch(x){}
-tx.textContent=t[0];var iv=setInterval(function(){i=(i+1)%t.length;tx.textContent=t[i];},700);
+tx.textContent=t[0];var iv=setInterval(function(){i=(i+1)%t.length;tx.textContent=window.SPLASH_MSG||t[i];},700);
 var pv=setInterval(function(){p=Math.min(window.SPLASH_DONE?100:92,p+(window.SPLASH_DONE?20:4+Math.random()*7));bar.style.width=p+'%';pc.textContent=Math.round(p)+' %';if(p>=100){clearInterval(pv);clearInterval(iv);}},90);
 })();</script>
 <div id="app"></div>
@@ -109,6 +109,6 @@ var pv=setInterval(function(){p=Math.min(window.SPLASH_DONE?100:92,p+(window.SPL
 <script src="data/k21-plus.js?v=1"></script>
 <script src="data/timing.js?v=6"></script>
 <script src="vis.js?v=10"></script>
-<script src="app.js?v=32"></script>
+<script src="app.js?v=33"></script>
 </body>
 </html>
