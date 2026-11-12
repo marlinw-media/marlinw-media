@@ -765,6 +765,60 @@
     var cum = [], tot = 0; merged.forEach(function (x) { cum.push(tot); tot += x.length + 12; });
     return { list: merged, cum: cum, total: tot };
   }
+  /* ---------- „i“: ausführliche Erklärung zur Frage + Vokabelheft ---------- */
+  function plain(s) { return String(s || '').replace(/```[\s\S]*?```/g, ' ').replace(/[`*]/g, ''); }
+  function vocab(text) {
+    var found = [], seen = {};
+    (O.gloss || []).forEach(function (g) {
+      if (seen[g[1]]) return;
+      var m = new RegExp(g[0], 'i').exec(text); if (!m) return;
+      seen[g[1]] = 1; found.push({ pos: m.index, g: g });
+    });
+    found.sort(function (a, b) { return a.pos - b.pos; });
+    return found.map(function (f) { return f.g; });
+  }
+  function termLink(l) {
+    if (!l || !O.terms || !O.terms[l[0]]) return '';
+    var i = O.terms[l[0]].map(function (x) { return x.t; }).indexOf(l[1]);
+    return i < 0 ? '' : '#/k/' + l[0] + '/begriffe/' + i;
+  }
+  function openExplain(it, ai, right, reason) {
+    var t = O.chapters[it.n].topics.filter(function (x) { return x.id === it.t; })[0], strip = function (h) { return md(h).replace(/^<p>|<\/p>$/g, ''); };
+    var html = '<h1 style="font-size:21px">💡 Ausführliche Erklärung</h1><p class="lead">' + esc(t.title) + ' · Kapitel ' + it.n + '</p>' +
+      '<div class="xq">' + md(it.q) + '</div>';
+    if (it.num != null) {
+      html += '<div class="xopt ok"><b>✔ Richtig:</b> ' + strip(it.a[0]) + '</div>' + (!right ? '<div class="xopt bad"><b>✘ Deine Eingabe:</b> ' + strip(it.a[1] || '') + (reason ? '<div>' + strip(reason) + '</div>' : '') + '</div>' : '') +
+        '<div class="xopt hint"><b>Format:</b> ' + esc(it.hint || '') + (it.unit ? ' · Einheit: ' + esc(it.unit) : '') + '</div>';
+    } else {
+      html += '<h3 style="margin-top:14px">Alle Antworten im Einzelnen</h3>' + it.a.map(function (a, k) {
+        var why = k === 0 ? 'Das ist die richtige Antwort – Begründung siehe unten.' : (it.w ? it.w[k - 1] : it.wr && it.wr[a]) || '';
+        return '<div class="xopt ' + (k === 0 ? 'ok' : 'bad') + (k === ai ? ' mine' : '') + '"><b>' + (k === 0 ? '✔' : '✘') + '</b> ' + strip(a) + (k === ai ? ' <em>(deine Wahl)</em>' : '') + (why ? '<div>' + strip(why) + '</div>' : '') + '</div>';
+      }).join('');
+    }
+    html += '<h3 style="margin-top:16px">Erklärung & Rechenweg</h3><div class="xexp">' + md(it.e) + '</div>';
+    var voc = vocab(plain(it.q) + ' ' + it.a.map(plain).join(' ') + ' ' + plain(it.e));
+    if (voc.length) html += '<details class="vocabbox"><summary><span>📖 Fachbegriffe <small>(' + voc.length + ')</small></span><i class="plus"></i></summary><div class="vocab">' + voc.map(function (g) {
+      var href = termLink(g[3]);
+      return '<div class="vrow"><div><b>' + esc(g[1]) + '</b><span>' + esc(g[2]) + '</span></div>' + (href ? '<a class="vi" href="' + href + '" title="Zum Begriff">i</a>' : '') + '</div>';
+    }).join('') + '</div></details>';
+    var seg = t.segs[it.s || 0];
+    if (seg) html += '<h3 style="margin-top:16px">Hintergrund: ' + esc(seg.h) + '</h3><div class="xexp bg">' + md(seg.t) + '</div>';
+    html += '<a class="tlink" style="display:block;margin-top:14px" target="_blank" href="#/k/' + it.n + '/text/' + it.t + '/' + (it.s || 0) + (it.m ? '?m=' + encodeURIComponent(it.m) : '') + '">📄 Stelle im Lerntext öffnen ›</a>' +
+      '<button class="btn main block" style="margin-top:14px" id="xclose">Verstanden 👍</button>';
+    openSheetHtml(html, function (box) {
+      box.querySelector('#xclose').onclick = function () { box.remove(); };
+      $$('.vi', box).forEach(function (a) { a.onclick = function (e) { e.preventDefault(); var m = a.getAttribute('href').match(/k\/(\d+)\/begriffe\/(\d+)/); if (m) openTerm(+m[1], +m[2]); }; });
+    });
+  }
+  function openTerm(n, i) {
+    var x = TERMS(n)[i]; if (!x) return;
+    openSheetHtml('<article class="term" style="margin-top:4px"><div class="tstage"><svg class="vis" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid meet"></svg></div><div class="tbody"><h3>' + esc(x.t) + '</h3><small>' + esc(x.d) + '</small><div class="ttext">' + md(x.e) + '</div></div></article>' +
+      '<a class="tlink" style="display:block;margin-top:12px" target="_blank" href="#/k/' + n + '/begriffe/' + i + '">📖 Alle Begriffe von Kapitel ' + n + ' ›</a><button class="btn main block" style="margin-top:12px" id="tclose">Zurück zur Erklärung</button>', function (box) {
+      animateSvgs([box.querySelector('svg.vis')], function () { return x.v; });
+      var close = function () { stopTerms(); box.remove(); };
+      box.querySelector('#tclose').onclick = close; box.onclick = function (e) { if (e.target === box) close(); };
+    });
+  }
   function openSheetHtml(html, bind) {
     var d = document.createElement('div'); d.className = 'sheet on voice-sheet';
     d.innerHTML = '<div class="panel"><div class="grab"></div><div class="article">' + html + '</div></div>';
@@ -868,10 +922,7 @@
       (right ? '<div class="why ok"><b>✔ Warum das stimmt</b></div>' : '<div class="why bad"><b>✘ Deine Antwort:</b> ' + md(it.a[ai]).replace(/^<p>|<\/p>$/g, '') + (reason ? '<div class="reason">' + md(reason).replace(/^<p>|<\/p>$/g, '') + '</div>' : '') + '</div><div class="why ok"><b>✔ Richtig ist:</b> ' + md(it.a[0]).replace(/^<p>|<\/p>$/g, '') + '</div><div class="why"><b>Erklärung</b></div>') +
       '<div class="ex">' + md(it.e) + '</div><div class="row"><button class="info" id="info" title="Im Lerntext nachlesen">i</button><button class="btn ' + (right ? 'ok' : 'main') + ' block" id="next">' + (Q.i + 1 < Q.items.length ? 'Weiter' : 'Auswertung') + '</button></div></div>';
     requestAnimationFrame(function () { fb.classList.add('on'); });
-    $('#info').onclick = function () {
-      var url = location.href.split('#')[0] + '#/k/' + it.n + '/text/' + it.t + '/' + (it.s || 0) + (it.m ? '?m=' + encodeURIComponent(it.m) : '');
-      window.open(url, '_blank');
-    };
+    $('#info').onclick = function () { openExplain(it, ai, right, reason); };
     $('#next').onclick = function () { Q.i++; if (Q.i < Q.items.length) renderQ(); else result(); };
   }
   function grade(pct) {
@@ -920,6 +971,7 @@
     else if (p[0] === 'erfolge') viewProfile('erfolge');
     else if (p[0] === 'profil') viewProfile(p[1]);
     else if (p[0] === 'k' && p.length === 2) viewChapter(+p[1]);
+    else if (p[0] === 'k' && p[2] === 'begriffe') { viewChapter(+p[1], 'begriffe'); var tg = document.getElementById('term-' + (p[3] || 0)); if (tg) setTimeout(function () { tg.scrollIntoView({ block: 'start', behavior: 'smooth' }); tg.classList.add('flash'); }, 120); }
     else if (p[0] === 'k' && p[2] === 'lernen') viewLearn(+p[1], p[3]);
     else if (p[0] === 'k' && p[2] === 'text') viewText(+p[1], p[3], +(p[4] || 0), params.m || '');
     else if (p[0] === 'k' && p[2] === 'quiz') viewQuiz(+p[1], p[3]);
