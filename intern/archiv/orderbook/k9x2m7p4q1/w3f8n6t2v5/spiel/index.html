@@ -183,6 +183,10 @@
     .item { width: 54px; height: 54px; font-size: 26px; }
     .stats-mini { display: none; }
   }
+  @media (max-width: 640px) {
+    .hud-tc { top: calc(62px + var(--safe-t)); max-width: calc(100vw - 24px); }
+    .objective { font-size: 13px; white-space: normal; text-align: center; }
+  }
   @media (orientation: portrait) {
     #joyzone { width: 60%; height: 55%; }
     .stats-mini { display: none; }

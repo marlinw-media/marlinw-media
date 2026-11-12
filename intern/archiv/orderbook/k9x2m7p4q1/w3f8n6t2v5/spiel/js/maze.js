@@ -131,7 +131,8 @@
       S.bats.forEach(function (b) {
         b.t += dt; b.a += Math.sin(b.t * 1.3) * dt * 2.4;
         var bx = b.x + Math.cos(b.a) * 70 * dt, by = b.y + Math.sin(b.a) * 70 * dt;
-        if (collides(bx, by, 8)) b.a += Math.PI * .7; else { b.x = bx; b.y = by; }
+        /* Fledermäuse fliegen frei über die Wände – nur am Höhlenrand drehen sie um */
+        if (bx < T || by < T || bx > (GW - 1) * T || by > (GH - 1) * T) b.a += Math.PI * .7; else { b.x = bx; b.y = by; }
         if (d.stun <= 0 && G.dist(d.x, d.y, b.x, b.y) < 20) {
           d.stun = .8; var a = Math.atan2(d.y - b.y, d.x - b.x); d.vx = Math.cos(a) * 260; d.vy = Math.sin(a) * 260;
           b.a += Math.PI; G.sfx('hit'); G.buzz(40); S.cam.shake(8, .3); G.toast('Huch, eine Fledermaus! 🦇', 1200);

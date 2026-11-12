@@ -182,8 +182,10 @@
   };
 
   /* ================= Haptik ================= */
+  /* Vibration erst nach echter Berührung (Chrome blockiert sie vorher) */
+  window.addEventListener('pointerdown', function () { G.touched = true; }, { once: true, capture: true });
   G.buzz = function (ms) {
-    if (!G.data.settings.haptics || !navigator.vibrate) return;
+    if (!G.touched || !G.data.settings.haptics || !navigator.vibrate) return;
     try { navigator.vibrate(ms || 12); } catch (e) {}
   };
 
