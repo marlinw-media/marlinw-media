@@ -98,6 +98,13 @@
     swapCount: ['Vorhandene Seiten', 'Seiten = belegte Frames + belegte Swap-Blöcke'],
     wm: ['Swap-Daemon (LW / HW)', 'Sind weniger als LW Seiten frei, wacht der Daemon auf und lagert aus, bis HW Seiten frei sind:\nauslagern = HW − frei\nSonst schläft er: 0'],
     pfCases: ['TLB-Miss: drei Fälle', 'gültig & present → Übersetzung in den TLB, Instruktion wiederholen\ngültig & nicht present → Page Fault, Seite von der Platte holen\nungültig → Trap, Prozess wird beendet'],
+    amat: ['AMAT (mittlere Zugriffszeit)', 'AMAT = T_M + P_Miss · T_D\nT_M = Speicherzugriff (zahlt man immer), T_D = Plattenzugriff, P_Miss = Missrate als Anteil (10 % = 0,1)'],
+    missTypes: ['Arten von Misses (drei Cs)', 'Compulsory (Cold-Start): erster Zugriff, Cache leer\nCapacity: Cache voll, Seite wurde verdrängt\nConflict: nur in Hardware-Caches – der OS-Seiten-Cache ist voll assoziativ'],
+    repl: ['Ersetzungsstrategien', 'Cache voll und Miss → eine Seite verdrängen:\nOptimal: die Seite, die am spätesten (oder nie mehr) gebraucht wird\nFIFO: die zuerst geladene Seite\nLRU: die am längsten nicht benutzte Seite\nHit = Seite liegt schon im Cache'],
+    loop: ['Looping Sequential', 'Schleife über N Seiten, Cache < N, LRU oder FIFO:\ndie verdrängte Seite kommt immer als Nächstes → jeder Zugriff ein Miss'],
+    noLoc: ['Keine Lokalität', 'Zufällige Zugriffe auf N Seiten:\nTrefferquote ≈ Cachegröße / N (für LRU, FIFO und Random gleich)'],
+    clock: ['Clock-Algorithmus', 'Start beim Zeiger, im Kreis weiter:\nUse-Bit 1 → auf 0 setzen, weiter\nUse-Bit 0 → diese Seite ersetzen'],
+    clockDirty: ['Clock mit Dirty-Bit', 'Zuerst: unbenutzt & sauber (use 0, dirty 0)\nDann: unbenutzt & dirty (use 0, dirty 1)\nDirty Seiten müssen vor dem Verdrängen zurückgeschrieben werden'],
     retry: ['Instruktion wiederholen', 'Nach einem TLB-Miss oder Page Fault wird **dieselbe** Instruktion erneut ausgeführt.']
   };
   window.OSTEP.fx = {
@@ -148,6 +155,10 @@
     '20-t4': { g: { 0: ['inv', 'unitsB'], 1: ['inv', 'unitsB'] } },
     '21-t1': { g: { 0: ['swapTotal', 'unitsB'], 1: ['swapCount'] } },
     '21-t2': { g: { 0: ['pfCases'], 1: ['pfCases', 'retry'] } },
-    '21-t3': { g: { 0: ['wm'], 1: ['wm'] }, q: { 10: ['wm'] } }
+    '21-t3': { g: { 0: ['wm'], 1: ['wm'] }, q: { 10: ['wm'] } },
+    '22-t1': { g: { 0: ['amat', 'units'], 1: ['hitRate'], 2: ['missTypes'] }, q: { 8: ['hitRate'], 9: ['amat', 'units'], 10: ['amat', 'units'], 17: ['pages'] } },
+    '22-t2': { g: { 0: ['repl'], 1: ['repl'], 2: ['hitRate'] }, q: { 5: ['repl'], 7: ['hitRate'], 15: ['repl'] } },
+    '22-t3': { g: { 0: ['repl'], 1: ['loop'], 2: ['noLoc'] }, q: { 7: ['repl'], 17: ['loop'] } },
+    '22-t4': { g: { 0: ['clock'], 1: ['pages', 'unitsB'], 2: ['clockDirty'] }, q: { 2: ['pages', 'unitsB'] } }
   };
 })();

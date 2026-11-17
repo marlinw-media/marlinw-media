@@ -416,6 +416,67 @@
     return out;
   };
 
+  /* ---------- Seitenersetzung Schritt für Schritt (OPT / FIFO / LRU / Random) ---------- */
+  function replSim(v) {
+    var refs = v.refs, size = v.size || 3, fr = [], order = [], last = {}, steps = [], hits = 0;
+    refs.forEach(function (pg, i) {
+      var hit = fr.indexOf(pg) >= 0, ev = null;
+      if (!hit) {
+        if (fr.length < size) fr.push(pg);
+        else {
+          if (v.ev && v.ev[i] != null) ev = v.ev[i];
+          else if (v.pol === 'fifo') ev = order[0];
+          else if (v.pol === 'lru') ev = fr.slice().sort(function (a, b) { return last[a] - last[b]; })[0];
+          else { var best = -1; fr.forEach(function (c) { var nx = refs.indexOf(c, i + 1); nx = nx < 0 ? 1e9 : nx; if (nx >= best) { best = nx; ev = c; } }); }
+          fr[fr.indexOf(ev)] = pg; order.splice(order.indexOf(ev), 1);
+        }
+        order.push(pg);
+      } else hits++;
+      last[pg] = i;
+      steps.push({ hit: hit, ev: ev, fr: fr.slice(), hits: hits });
+    });
+    return steps;
+  }
+  V.repl = function (v, p) {
+    var out = '', st = replSim(v), n = v.refs.length, k = Math.min(n - 1, Math.floor(clamp(p * 1.15, 0, 1) * n - .001)), cw = Math.min(30, 360 / n);
+    out += T(W / 2, 24, v.title || '', { size: 14, w: 900 });
+    v.refs.forEach(function (pg, i) {
+      var x = W / 2 - n * cw / 2 + i * cw, done = i <= k, s = st[i];
+      out += R(x + 2, 40, cw - 4, 30, { fill: !done ? 'rgba(255,255,255,.06)' : s.hit ? 'rgba(47,209,124,.3)' : 'rgba(255,93,108,.3)', stroke: i === k ? '#ffd166' : 'none', rx: 7 }) + T(x + cw / 2, 61, pg, { size: 13, w: 900, op: done ? 1 : .55 });
+      if (done) out += T(x + cw / 2, 84, s.hit ? '✓' : '✗', { size: 11, w: 900, fill: s.hit ? '#2fd17c' : '#ff5d6c' });
+    });
+    var s = st[Math.max(0, k)], size = v.size || 3, fw = 64;
+    out += T(W / 2, 116, 'Cache (' + size + ' Seiten)', { size: 11, w: 800, fill: '#c9c3ff' });
+    for (var j = 0; j < size; j++) {
+      var x = W / 2 - size * (fw + 10) / 2 + j * (fw + 10), pg = s.fr[j];
+      out += R(x, 126, fw, 54, { fill: 'rgba(124,92,255,.18)', stroke: pg === v.refs[k] ? '#ffd166' : 'rgba(255,255,255,.18)', rx: 12 }) + T(x + fw / 2, 161, pg === undefined ? '–' : pg, { size: 22, w: 900 });
+    }
+    if (s.ev !== null) out += T(W / 2, 206, 'verdrängt: Seite ' + s.ev, { size: 12.5, w: 900, fill: '#ff8a95' });
+    out += T(W / 2, 236, 'Hits ' + s.hits + ' · Misses ' + (k + 1 - s.hits), { size: 13, w: 900, fill: '#ffd166' });
+    if (v.note) out += TW(W / 2, 262, v.note, 58, { size: 11, w: 800, fill: '#c9c3ff', op: ease(p * 3 - 2) });
+    return out;
+  };
+
+  /* ---------- Clock-Algorithmus: Zeiger läuft über die Use-Bits ---------- */
+  V.clock = function (v, p) {
+    var pg = v.pages, n = pg.length, h = v.hand || 0, seq = [], use = pg.map(function (x) { return x[1]; }), i = h, guard = 0;
+    while (guard++ < 3 * n) { seq.push([i, use[i]]); if (use[i] === 0) break; use[i] = 0; i = (i + 1) % n; }
+    var k = Math.min(seq.length - 1, Math.floor(clamp(p * 1.2, 0, 1) * seq.length - .001)), out = '', cx = W / 2, cy = 150, rad = 92;
+    var cur = pg.map(function (x) { return x[1]; }); for (var s = 0; s < k; s++) cur[seq[s][0]] = 0;
+    out += T(W / 2, 24, v.title || 'Clock-Algorithmus', { size: 14, w: 900 });
+    out += '<circle cx="' + cx + '" cy="' + cy + '" r="' + rad + '" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="2" stroke-dasharray="4 5"/>';
+    pg.forEach(function (x, j) {
+      var ang = -Math.PI / 2 + j * 2 * Math.PI / n, px = cx + rad * Math.cos(ang), py = cy + rad * Math.sin(ang), vic = k === seq.length - 1 && seq[k][1] === 0 && seq[k][0] === j;
+      out += '<circle cx="' + px + '" cy="' + py + '" r="24" fill="' + (vic ? 'rgba(255,93,108,.35)' : cur[j] ? 'rgba(47,209,124,.22)' : 'rgba(255,255,255,.07)') + '" stroke="' + (seq[k][0] === j ? '#ffd166' : 'rgba(255,255,255,.2)') + '" stroke-width="2"/>' +
+        T(px, py - 2, x[0], { size: 13, w: 900 }) + T(px, py + 13, 'use ' + cur[j], { size: 9.5, w: 800, fill: cur[j] ? '#2fd17c' : '#a9adcf' });
+    });
+    var a = -Math.PI / 2 + seq[k][0] * 2 * Math.PI / n;
+    out += L(cx, cy, cx + (rad - 30) * Math.cos(a), cy + (rad - 30) * Math.sin(a), { stroke: '#ffd166', sw: 3, arrow: true });
+    var last = seq[k], txt = last[1] === 0 ? 'use = 0 → Seite ' + pg[last[0]][0] + ' wird ersetzt' : 'use = 1 → auf 0 setzen, weiter';
+    out += T(W / 2, 278, txt, { size: 12.5, w: 900, fill: last[1] === 0 ? '#ff8a95' : '#ffd166' });
+    return out;
+  };
+
   window.OSTEP_VIS = {
     render: function (svg, v, p, t) {
       var fn = V[v.type] || V.points, html;
