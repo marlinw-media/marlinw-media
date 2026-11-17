@@ -19,7 +19,7 @@
   add('t1', { n: 3, f: function (r) {
     var F = u.pick(r, [4, 8, 16]), B = u.pick(r, [8, 16, 32]), k = u.ri(r, 1, 4), v = F + B - k, wr = {};
     wr[F + B] = 'Die freien Swap-Blöcke enthalten keine Seite – abziehen.'; wr[B - k] = 'Die Seiten in den Frames zählen auch mit.'; wr[F] = 'Die Seiten im Swap Space zählen auch mit.';
-    return { q: 'Der Speicher hat **' + F + ' Frames** (alle belegt), der Swap Space **' + B + ' Blöcke**, davon sind **' + k + '** frei. Wie viele Seiten der Prozesse existieren gerade insgesamt?', num: v, unit: 'Seiten', hint: 'Ganze Zahl: Seiten im Speicher + Seiten im Swap Space', e: '**Rechenweg:** Im Speicher: ' + F + ' Seiten.\nIm Swap Space: ' + B + ' − ' + k + ' = ' + (B - k) + ' Seiten.\nZusammen **' + v + '** – wie im Buchbeispiel (4 Frames + 7 belegte von 8 Blöcken = 11).', s: 1, wr: wr };
+    return { q: 'Der Speicher hat **' + F + ' Frames** (alle belegt), der Swap Space **' + B + ' Blöcke**, davon ' + (k === 1 ? 'ist' : 'sind') + ' **' + k + '** frei. Wie viele Seiten der Prozesse existieren gerade insgesamt?', num: v, unit: 'Seiten', hint: 'Ganze Zahl: Seiten im Speicher + Seiten im Swap Space', e: '**Rechenweg:** Im Speicher: ' + F + ' Seiten.\nIm Swap Space: ' + B + ' − ' + k + ' = ' + (B - k) + ' Seiten.\nZusammen **' + v + '** – wie im Buchbeispiel (4 Frames + 7 belegte von 8 Blöcken = 11).', s: 1, wr: wr };
   } });
   add('t2', { n: 3, f: function (r) {
     var cs = [

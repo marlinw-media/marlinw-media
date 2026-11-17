@@ -10,14 +10,14 @@
 
   var add = function (tid, g) { (T(tid).gen = T(tid).gen || []).push(g); };
   add('t1', { n: 3, f: function (r) {
-    var n = u.ri(r, 1, 5), v = Math.pow(2, n), wr = {};
+    var n = u.ri(r, 2, 5), v = Math.pow(2, n), wr = {};
     wr[n + 1] = 'Jeder Prozess – auch jedes Kind – führt die folgenden fork()-Aufrufe aus. Die Zahl verdoppelt sich.'; wr[2 * n] = 'Nicht addieren: Jeder fork() verdoppelt die Zahl der Prozesse.'; delete wr[v];
     return { q: 'Ein Programm ruft **' + n + '-mal** hintereinander `fork();` auf (alle erfolgreich) und danach einmal `printf("x\\n");`. Wie oft erscheint „x“?', num: v, unit: 'Mal', hint: 'Ganze Zahl', e: '**Rechenweg:** Jeder fork() verdoppelt die Prozesse – Eltern und Kind laufen beide weiter.\n2^' + n + ' = **' + v + '** Prozesse, jeder druckt einmal.', s: 3, wr: wr };
   } });
   add('t1', { n: 3, f: function (r) {
-    var n = u.ri(r, 1, 4), v = Math.pow(2, n + 1) - 2, wr = {};
+    var n = u.ri(r, 2, 4), v = Math.pow(2, n + 1) - 2, wr = {};
     wr[Math.pow(2, n)] = 'Gedruckt wird in jeder Runde, nicht nur am Ende.'; wr[n] = 'Jede Runde druckt jeder existierende Prozess.'; delete wr[v];
-    return { q: '```c\nfor (int i = 0; i < ' + n + '; i++) {\n    fork();\n    printf("x\\n");\n}\n```\nWie oft wird „x“ insgesamt ausgegeben?', num: v, unit: 'Mal', hint: 'Ganze Zahl', e: '**Rechenweg:** In Runde i gibt es nach fork() 2^i Prozesse, und alle drucken.\n2 + 4 + … + 2^' + n + ' = 2^' + (n + 1) + ' − 2 = **' + v + '**.', s: 3, wr: wr };
+    return { q: '```c\nfor (int i = 0; i < ' + n + '; i++) {\n    fork();\n    printf("x\\n");\n}\n```\nWie oft wird „x“ insgesamt ausgegeben?', num: v, unit: 'Mal', hint: 'Ganze Zahl', e: '**Rechenweg:** In Runde i (ab 1) gibt es nach fork() 2^i Prozesse, und alle drucken.\n' + [2, 4, 8, 16].slice(0, n).join(' + ') + ' = **' + v + '** (allgemein 2^(n+1) − 2).', s: 3, wr: wr };
   } });
   add('t2', { n: 3, f: function (r) {
     var k = u.ri(r, 2, 9), wr = {}; wr[1] = 'Ein wait() holt nur ein beendetes Kind ab.'; wr[2 * k] = 'Pro Kind reicht ein wait().';
@@ -27,7 +27,7 @@
     var open = [0, 1, 2], extra = u.ri(r, 0, 3); for (var i = 0; i < extra; i++) open.push(3 + i);
     var cl = u.pick(r, open), rest = open.filter(function (x) { return x !== cl; }), v = 0; while (rest.indexOf(v) >= 0) v++;
     var wr = {}; wr[open.length] = 'open() nimmt nicht den nächsten neuen, sondern den kleinsten freien Deskriptor.'; delete wr[v];
-    return { q: 'Ein Prozess hat die Dateideskriptoren **' + open.join(', ') + '** offen. Er ruft `close(' + cl + ')` und danach `open("x.txt", O_RDONLY)` auf. Welchen Deskriptor liefert open()?', num: v, unit: '', hint: 'Ganze Zahl (Deskriptornummer)', e: '**Rechenweg:** Offen sind danach ' + rest.join(', ') + '.\nUNIX sucht ab 0 den **kleinsten freien** Deskriptor → **' + v + '**. Genau so leitet die Shell in p4.c die Ausgabe um (close(STDOUT_FILENO), dann open).', s: 1, wr: wr };
+    return { q: 'Ein Prozess hat die Dateideskriptoren **' + open.join(', ') + '** offen. Er ruft `close(' + cl + ')` und danach `open("x.txt", O_CREAT|O_WRONLY|O_TRUNC, S_IRWXU)` auf. Welchen Deskriptor liefert open()?', num: v, unit: '', hint: 'Ganze Zahl (Deskriptornummer)', e: '**Rechenweg:** Offen sind danach ' + rest.join(', ') + '.\nUNIX sucht ab 0 den **kleinsten freien** Deskriptor → **' + v + '**. Genau so leitet die Shell in p4.c die Ausgabe um (close(STDOUT_FILENO), dann open).', s: 1, wr: wr };
   } });
 
   C.topics.forEach(function (t) { if (t.st) t.st.n = 4; (t.gen || []).forEach(function (g) { g.n = Math.min(4, Math.max(2, g.n > 4 ? Math.round(g.n / 3) : g.n)); }); });
@@ -50,7 +50,7 @@
     [['10 setzt nur das Kind in seiner Kopie.', '15 ist eine Summe ohne Sinn.', 'Nach wait() ist die Ausgabe sicher.'], 'Kind ändert x in seiner Kopie. | Elternprozess hat eigene Kopie mit 5. | → 5.', 'Nach fork() hat **jeder Prozess seine eigene Kopie** des Adressraums. Das Kind ändert nur seine Kopie; der Elternprozess druckt **5**.'],
     [['n + 1 addiert statt zu verdoppeln.', '2n ebenfalls.', 'n² ist falsch.'], 'Jeder fork() verdoppelt. | → 2^n.', 'Weil jeder Prozess jeden folgenden fork() ausführt, **verdoppelt** sich die Zahl jedes Mal: **2^n** Prozesse.'],
     [['Alle gemeinsam ist falsch.', 'Auch globale nicht.', 'Auch der Heap nicht.'], 'Eigene Kopie des Adressraums. | → keine gemeinsamen Variablen.', 'Das Kind bekommt laut Buch eine **eigene Kopie** des Adressraums – Variablen werden **nicht geteilt**.'],
-    [['open/close sind Dateiaufrufe.', 'malloc/free sind Speicherverwaltung.', 'lock/unlock sind Synchronisation.'], 'Neuen Prozess erzeugen: fork(). | Anderes Programm laden: exec().', 'UNIX erzeugt Prozesse laut Buch mit dem Paar **fork()** und **exec()** (plus wait()).'],
+    [['open/close sind Dateiaufrufe.', 'malloc/free sind Speicherverwaltung.', 'kill/signal gehören zu Signalen, nicht zum Programmstart.'], 'Neuen Prozess erzeugen: fork(). | Anderes Programm laden: exec().', 'UNIX erzeugt Prozesse laut Buch mit dem Paar **fork()** und **exec()** (plus wait()).'],
     [['Ohne Erfolg entsteht kein Kind.', 'Der Aufrufer läuft weiter.', 'Drei ist falsch.'], 'fork() fehlgeschlagen → kein Kind. | → nur der ursprüngliche Prozess.', 'Schlägt fork() fehl, entsteht **kein Kind** – es läuft weiterhin **nur 1** Prozess.'],
     [['Dieselbe PID gibt es nie zweimal.', 'Jeder Prozess hat eine PID.', 'PID 0 ist nicht die des Kindes.'], 'Neuer Prozess → neue PID.', 'Das Kind hat eine **eigene, andere PID** als der Elternprozess (29147 vs. 29146 im Buch).'],
     [['fork() erzeugt ein Kind.', 'wait() wartet.', 'exec() lädt ein Programm.'], 'Eigene PID abfragen. | → getpid().', 'In p1.c gibt jeder Prozess seine PID mit **getpid()** aus.'],
@@ -86,8 +86,8 @@
     [['wc braucht keine Option.', 'execvp leitet nichts um.', 'Der Name ist nicht der Grund.'], 'close(STDOUT_FILENO) gibt Deskriptor 1 frei. | open() sucht ab 0 den kleinsten freien. | → bekommt 1 = stdout.', 'UNIX sucht laut Buch **ab 0** nach freien Dateideskriptoren. Nach close(STDOUT_FILENO) ist das der **erste freie** – open() bekommt ihn, und printf()-Ausgaben gehen in die Datei.'],
     [['Ein Prozess entsteht so nicht.', 'Eine Datei entsteht nicht.', 'Ein Thread entsteht nicht.'], 'Ausgabe von A → Kernel-Puffer → Eingabe von B. | → pipe().', 'Mit **pipe()** verbindet man laut Buch die **Ausgabe** eines Prozesses mit einer **Kernel-Pipe** (Warteschlange) und die **Eingabe** eines anderen mit derselben Pipe.'],
     [['Die Länge liefert wc -c.', 'Nicht passende Zeilen liefert grep -v.', 'Den Dateinamen nicht.'], 'grep -o foo: jedes Vorkommen in eigener Zeile. | wc -l: Zeilen zählen. | → Anzahl der Vorkommen.', 'Das Buch nennt genau dieses Beispiel: **grep -o foo file | wc -l** zählt, **wie oft** ein Wort in einer Datei vorkommt.'],
-    [['SIGTSTP kommt von Strg-Z.', 'SIGKILL sendet die Tastatur nicht.', 'SIGCHLD kommt beim Kindende.'], 'Strg-C = Interrupt. | → SIGINT.', 'Laut Buch sendet **Strg-C** ein **SIGINT** (interrupt) – normalerweise wird der Prozess beendet.'],
-    [['SIGINT ist Strg-C.', 'SIGTERM sendet die Tastatur nicht.', 'SIGSEGV ist ein Speicherfehler.'], 'Strg-Z = stop. | → SIGTSTP, Prozess pausiert.', 'Laut Buch sendet **Strg-Z** ein **SIGTSTP** (stop) und **pausiert** den Prozess; mit fg lässt er sich fortsetzen.'],
+    [['SIGTSTP kommt von Strg-Z.', 'Laut Buch sendet Strg-C sehr wohl ein Signal an den Prozess.', 'exec() ist kein Signal – es lädt ein Programm.'], 'Strg-C = Interrupt. | → SIGINT.', 'Laut Buch sendet **Strg-C** ein **SIGINT** (interrupt) – normalerweise wird der Prozess beendet.'],
+    [['SIGINT ist Strg-C.', 'Laut Buch sendet Strg-Z sehr wohl ein Signal an den Prozess.', 'fork() ist kein Signal – es erzeugt einen Prozess.'], 'Strg-Z = stop. | → SIGTSTP, Prozess pausiert.', 'Laut Buch sendet **Strg-Z** ein **SIGTSTP** (stop) und **pausiert** den Prozess; mit fg lässt er sich fortsetzen.'],
     [['signal() fängt ab.', 'wait() wartet.', 'exec() lädt.'], 'Signal an einen Prozess schicken. | → kill().', 'Mit dem Systemaufruf **kill()** sendet man laut Buch **Signale** an einen Prozess – etwa zum Pausieren, Beenden oder anderen Zwecken.'],
     [['Senden macht kill().', 'Beenden macht exit().', 'Pipes öffnet pipe().'], 'Ein Prozess will auf Signale reagieren. | → signal() richtet einen Handler ein.', 'Mit **signal()** kann ein Prozess laut Buch Signale **abfangen**: Kommt ein Signal, unterbricht er seine Arbeit und führt einen bestimmten Code aus.'],
     [['Nicht jeder Benutzer.', 'Nicht nur der Prozess selbst.', 'Doch – einer darf es.'], 'Ein besonderer Benutzer darf alles. | → Superuser (root).', 'Laut Buch darf ein **Superuser (root)** alle Prozesse steuern – unabhängig davon, wer sie gestartet hat.'],

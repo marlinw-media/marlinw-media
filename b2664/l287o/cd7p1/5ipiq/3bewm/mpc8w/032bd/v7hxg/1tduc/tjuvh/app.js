@@ -149,8 +149,8 @@
   function pool(n, tid) {
     var key = n + '-' + tid; if (poolCache[key]) return poolCache[key];
     var ch = O.chapters[n], t = ch.topics.filter(function (x) { return x.id === tid; })[0], items = [];
-    var EX = (O.ex || {})[key] || [], LG = (O.lang || {})[key] || {};
-    (t.q || []).forEach(function (q, i) { var x = EX[i]; items.push({ id: key + '-q' + i + (q[5] ? '-' + q[5] : ''), n: n, t: tid, q: q[0], a: q[1], e: (x && x[0]) || q[2], w: x ? x[1] : null, dw: ((O.dw || {})[key] || [])[i] || null, lang: (LG.q || [])[i] || null, s: q[3] || 0, m: q[4] || '' }); });
+    var EX = (O.ex || {})[key] || [], LG = (O.lang || {})[key] || {}, FXT = (O.fx || {})[key] || {};
+    (t.q || []).forEach(function (q, i) { var x = EX[i]; items.push({ id: key + '-q' + i + (q[5] ? '-' + q[5] : ''), n: n, t: tid, q: q[0], a: q[1], e: (x && x[0]) || q[2], w: x ? x[1] : null, dw: ((O.dw || {})[key] || [])[i] || null, lang: (LG.q || [])[i] || null, s: q[3] || 0, m: q[4] || '', fx: (FXT.q || {})[i] || null }); });
     if (t.st && t.st.T.length >= 3 && t.st.F.length >= 3) {
       var cnt = t.st.n || Math.min(18, Math.min(t.st.T.length, t.st.F.length) * 3);
       for (var v = 0; v < cnt; v++) {
@@ -176,7 +176,7 @@
       for (var v = 0; v < (g.n || 5); v++) {
         var r = rng(hash(key + 'g' + gi + '-' + v)), x;
         try { x = g.f(r, v); } catch (e) { continue; }
-        var it0 = { id: key + '-g' + gi + '-' + v, n: n, t: tid, q: x.q, a: x.a, e: x.e, wr: x.wr || null, s: x.s || 0, m: x.m || '', lang: (LG.g || [])[gi] || null, gen: true };
+        var it0 = { id: key + '-g' + gi + '-' + v, n: n, t: tid, q: x.q, a: x.a, e: x.e, wr: x.wr || null, s: x.s || 0, m: x.m || '', lang: (LG.g || [])[gi] || null, gen: true, fx: (FXT.g || {})[gi] || null };
         if (x.num != null) { it0.num = x.num; it0.unit = x.unit || ''; it0.hint = x.hint || ''; it0.a = [fmtNum(x.num) + (x.unit ? ' ' + x.unit : '')]; }
         items.push(it0);
       }
@@ -946,7 +946,7 @@
   function renderQ() {
     Q.qStart = Date.now();
     var it = Q.items[Q.i], ch = O.chapters[Q.n], t = ch.topics.filter(function (x) { return x.id === it.t; })[0];
-    var isNew = box(it.id) < 0;
+    var isNew = box(it.id) < 0, fxH = it.fx && it.fx.length ? '<div class="fxwrap"><button class="fxbtn" id="fxbtn" type="button">🧮 Formeln</button></div>' : '';
     app.innerHTML = '<div class="qtop"><a class="x" href="#/k/' + Q.n + '" aria-label="Beenden">✕</a><div class="qprog"><i style="width:' + (Q.i / Q.items.length * 100) + '%"></i></div><div class="combo" id="combo">' + (Q.combo >= 2 ? '🔥×' + Q.combo : '') + '</div></div>' +
       '<div class="qcard"><div class="qmeta"><span>' + (Q.i + 1) + ' / ' + Q.items.length + ' · ' + esc(t.title) + '</span><span>' + (isNew ? '✨ neu' : box(it.id) === 0 ? '↻ Wiederholung' : '') + '</span></div>' +
       '<div class="qtext">' + md(it.q) + '</div>' + (it.num != null ?
@@ -955,6 +955,8 @@
       it.order.map(function (ai, k) { return '<button class="opt" data-a="' + ai + '"><span class="k">' + 'ABCD'[k] + '</span><span>' + md(it.a[ai]).replace(/^<p>|<\/p>$/g, '') + '</span></button>'; }).join('') +
       '</div></div><div class="fb" id="fb"></div>');
     $$('.opt').forEach(function (b) { b.onclick = function () { answer(+b.dataset.a, b); }; });
+    $$('.fxwrap').forEach(function (x) { x.remove(); });
+    if (fxH) { document.body.insertAdjacentHTML('beforeend', fxH); $('#fxbtn').onclick = function () { openFx(it.fx); }; }
     if (it.num != null) {
       var inp = $('#numin'), ok = $('#numok');
       var go = function () {
@@ -970,7 +972,18 @@
       setTimeout(function () { try { inp.focus(); } catch (e) {} }, 350);
     }
   }
+  /* Formel-Hilfe: nur während die Frage gestellt ist, nie in der Lösung */
+  function openFx(keys) {
+    var F = O.FX || {};
+    var rows = (keys || []).filter(function (k) { return F[k]; }).map(function (k) {
+      return '<div class="fxitem"><div class="fxname">' + esc(F[k][0]) + '</div><div class="fxf">' + F[k][1].split('\n').map(function (l) { return '<div' + (/[=≈]/.test(l) ? ' class="eq"' : '') + '>' + md(l).replace(/^<p>|<\/p>$/g, '') + '</div>'; }).join('') + '</div></div>';
+    }).join('');
+    openSheetHtml('<h2 style="margin:0 0 4px">🧮 Formeln</h2><p class="fxsub">Was du für diese Aufgabe brauchst – rechnen musst du selbst 😉</p>' + rows + '<button class="btn main block" style="margin-top:14px" id="fxclose">Zurück zur Aufgabe</button>', function (box) {
+      box.querySelector('#fxclose').onclick = function () { box.remove(); };
+    });
+  }
   function answer(ai, btn) {
+    var fxb = $('.fxwrap'); if (fxb) fxb.remove(); closeSheets();
     var it = Q.items[Q.i], right = ai === 0, pctBefore = chapterProgress(it.n);
     $$('.opt').forEach(function (b) { b.disabled = true; var a = +b.dataset.a; if (a === 0) b.classList.add('right'); else if (b === btn) b.classList.add('wrong'); else b.classList.add('dim'); });
     var r = S.q[it.id] || { b: 0, n: 0, c: 0, t: 0 };
@@ -1034,7 +1047,7 @@
 
   /* ================= Router ================= */
   function route() {
-    stopPlayer(); stopTerms(); closeSheets(); window.scrollTo(0, 0);
+    stopPlayer(); stopTerms(); closeSheets(); $$('.fxwrap').forEach(function (x) { x.remove(); }); window.scrollTo(0, 0);
     var h = location.hash.replace(/^#/, '') || '/', qs = '', qi = h.indexOf('?');
     if (qi >= 0) { qs = h.slice(qi + 1); h = h.slice(0, qi); }
     var params = {}; qs.split('&').forEach(function (kv) { if (!kv) return; var p = kv.split('='); params[p[0]] = decodeURIComponent(p[1] || ''); });

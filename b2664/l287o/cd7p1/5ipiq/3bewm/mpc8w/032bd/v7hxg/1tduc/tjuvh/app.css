@@ -490,3 +490,14 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px;
 .hist .hcut { stroke: rgba(255,255,255,.35); stroke-width: 1; stroke-dasharray: 2 3; }
 .hist .hcutl { font: 800 9px system-ui, sans-serif; fill: var(--faint); text-anchor: middle; }
 .hleg i.lp { border-top: 2px dashed #b9a6ff; }
+/* Formel-Hilfe */
+.fxwrap { position: fixed; right: 16px; bottom: calc(18px + var(--safe-b)); z-index: 30; }
+.fxwrap .fxbtn { box-shadow: 0 6px 20px rgba(0,0,0,.45); background: #2a2440; }
+.fxbtn { display: inline-flex; align-items: center; gap: 6px; margin: 0; padding: 8px 14px; border-radius: 999px; border: 1px solid rgba(255,209,102,.45); background: rgba(255,209,102,.12); color: #ffd166; font: 800 14px system-ui, sans-serif; cursor: pointer; }
+.fxbtn:active { transform: scale(.97); }
+.fxsub { margin: 0 0 12px; color: var(--dim); font-size: 14px; }
+.fxitem { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; margin-bottom: 10px; }
+.fxname { font-weight: 800; font-size: 14px; color: #ffd166; margin-bottom: 6px; }
+.fxf { font-size: 15px; line-height: 1.5; overflow-wrap: anywhere; }
+.fxf .eq { font: 600 14.5px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.fxf > div + div { margin-top: 3px; }

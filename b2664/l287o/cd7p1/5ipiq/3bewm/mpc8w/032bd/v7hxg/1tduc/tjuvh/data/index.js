@@ -38,7 +38,7 @@ OSTEP.u = {
     unit = unit || '';
     var f = function (x) { return typeof x === 'number' ? OSTEP.u.num(x) + unit : x; };
     var out = [f(right)], seen = {}; seen[out[0]] = 1;
-    wrongs.concat([right * 2, right / 2, right + 10, right - 5, right * 1.5, right + 1]).forEach(function (w) {
+    wrongs.concat(typeof right === 'number' ? [right * 2, right / 2, right + 10, right - 5, right * 1.5, right + 1] : []).forEach(function (w) {
       if (out.length >= 4) return;
       if (typeof w === 'number' && (!isFinite(w) || w < 0)) return;
       var s = f(w); if (!seen[s]) { seen[s] = 1; out.push(s); }

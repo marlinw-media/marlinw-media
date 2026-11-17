@@ -29,7 +29,7 @@
   add(18, 't4', { n: 6, f: function (r) {
     var ins = u.ri(r, 3, 6), data = u.ri(r, 1, 2), it = u.pick(r, [10, 50, 100]), v = 2 * (ins + data) * it, wr = {};
     wr[(ins + data) * it] = 'Das sind nur die eigentlichen Zugriffe – ohne die PTE-Zugriffe.';
-    return { q: 'Eine Schleife hat pro Durchlauf **' + ins + ' Instruktionen** und **' + data + ' Datenzugriff(e)**. Lineare Page Table, **kein TLB**. Wie viele **Speicherzugriffe** entstehen in **' + it + '** Durchläufen?', num: v, unit: 'Zugriffe', hint: 'Ganze Zahl (Anzahl aller Speicherzugriffe inkl. Page Table)', e: '**Rechenweg:** pro Durchlauf ' + ins + ' Fetches + ' + data + ' Datenzugriffe = ' + (ins + data) + ' Zugriffe, jeder braucht vorher einen PTE-Zugriff → ' + 2 * (ins + data) + '.\n' + 2 * (ins + data) + ' · ' + it + ' = **' + v + '**.', s: 3, wr: wr };
+    return { q: 'Eine Schleife hat pro Durchlauf **' + ins + ' Instruktionen** und **' + data + (data === 1 ? ' Datenzugriff' : ' Datenzugriffe') + '**. Lineare Page Table, **kein TLB**. Wie viele **Speicherzugriffe** entstehen in **' + it + '** Durchläufen?', num: v, unit: 'Zugriffe', hint: 'Ganze Zahl (Anzahl aller Speicherzugriffe inkl. Page Table)', e: '**Rechenweg:** pro Durchlauf ' + ins + ' Fetches + ' + data + (data === 1 ? ' Datenzugriff' : ' Datenzugriffe') + ' = ' + (ins + data) + ' Zugriffe, jeder braucht vorher einen PTE-Zugriff → ' + 2 * (ins + data) + '.\n' + 2 * (ins + data) + ' · ' + it + ' = **' + v + '**.', s: 3, wr: wr };
   } });
 
   /* ---- Kapitel 19 ---- */

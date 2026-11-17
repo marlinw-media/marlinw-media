@@ -9,10 +9,10 @@
 
   var add = function (tid, g) { (T(tid).gen = T(tid).gen || []).push(g); };
   add('t1', { n: 3, f: function (r) {
-    var nq = u.pick(r, [3, 4, 5]), jobs = ['A', 'B', 'C', 'D', 'E', 'F'], Q = [], top = -1;
-    jobs.forEach(function (j) { var q = u.ri(r, 0, nq - 1); Q.push([j, q]); if (q > top) top = q; });
-    var v = Q.filter(function (x) { return x[1] === top; }).length, wr = {}; wr[6] = 'Nach Regel 1 laufen nur die Jobs der höchsten belegten Queue.'; if (v !== 1) wr[1] = 'Gleiche Priorität → Round Robin (Regel 2), nicht nur ein Job.'; delete wr[v];
-    return { q: 'MLFQ mit ' + nq + ' Queues (Q' + (nq - 1) + ' = höchste). Jobs: ' + Q.map(function (x) { return x[0] + ' in Q' + x[1]; }).join(', ') + '. Wie viele Jobs teilen sich nach Regel 1 und 2 gerade die CPU?', num: v, unit: 'Jobs', hint: 'Ganze Zahl', e: '**Rechenweg:** Höchste belegte Queue: Q' + top + '.\nDort liegen ' + Q.filter(function (x) { return x[1] === top; }).map(function (x) { return x[0]; }).join(', ') + ' → **' + v + '** Job(s) im Round Robin. Alle anderen warten.', s: 1, wr: wr };
+    var nq = u.pick(r, [3, 4, 5]), jobs = ['A', 'B', 'C', 'D', 'E', 'F'], Q, top, v;
+    do { Q = []; top = -1; jobs.forEach(function (j) { var q = u.ri(r, 0, nq - 1); Q.push([j, q]); if (q > top) top = q; }); v = Q.filter(function (x) { return x[1] === top; }).length; } while (v < 2);
+    var wr = {}; wr[6] = 'Nach Regel 1 laufen nur die Jobs der höchsten belegten Queue.'; if (v !== 1) wr[1] = 'Gleiche Priorität → Round Robin (Regel 2), nicht nur ein Job.'; delete wr[v];
+    return { q: 'MLFQ mit ' + nq + ' Queues (Q' + (nq - 1) + ' = höchste). Jobs: ' + Q.map(function (x) { return x[0] + ' in Q' + x[1]; }).join(', ') + '. Wie viele Jobs teilen sich nach Regel 1 und 2 gerade die CPU?', num: v, unit: 'Jobs', hint: 'Ganze Zahl', e: '**Rechenweg:** Höchste belegte Queue: Q' + top + '.\nDort liegen ' + Q.filter(function (x) { return x[1] === top; }).map(function (x) { return x[0]; }).join(', ') + ' → **' + v + '** Jobs im Round Robin. Alle anderen warten.', s: 1, wr: wr };
   } });
   add('t2', { n: 3, f: function (r) {
     var nq = u.ri(r, 3, 8), sl = u.pick(r, [5, 10, 20]), v = (nq - 1) * sl, wr = {};

@@ -39,7 +39,7 @@
     st: { about: 'Adressübersetzung', T: [['Die Hardware übersetzt jeden Speicherzugriff.', 0], ['Das OS richtet die Übersetzungshardware ein.', 0], ['x = x + 3 erzeugt fünf Speicherzugriffe.', 2], ['Im Beispiel liegt der Prozess physisch bei 32 KB.', 3], ['Die Verschiebung soll für das Programm transparent sein.', 3], ['Anfangs nimmt man zusammenhängende Adressräume an.', 1]],
       F: [['Nur Speicherzugriffe auf Daten werden übersetzt, Instruktionen nicht.', 'Auch das Holen von Instruktionen wird übersetzt.', 0], ['Das OS übersetzt jede Adresse in Software.', 'Die Hardware übersetzt; das OS konfiguriert.', 0], ['x = x + 3 erzeugt genau einen Speicherzugriff.', 'Es sind fünf.', 2], ['Das Programm muss wissen, wo es physisch liegt.', 'Die Verschiebung ist transparent.', 3], ['Adressräume dürfen anfangs größer als der Speicher sein.', 'Die Annahme lautet: kleiner als der physische Speicher.', 1], ['Im Beispiel liegt der Prozess bei physisch 0.', 'Dort liegt das OS; der Prozess liegt bei 32 KB.', 3]] },
     gen: [{ n: 8, f: function (r) {
-      var n = u.ri(r, 2, 6), m = u.ri(r, 0, n), v = n + m;
+      var n = u.ri(r, 2, 6), m = u.ri(r, 1, n), v = n + m;
       return { q: 'Ein Codestück besteht aus ' + n + ' Instruktionen; ' + m + ' davon greifen jeweils einmal auf Daten im Speicher zu (Load oder Store). Wie viele Speicherzugriffe – und damit Adressübersetzungen – entstehen insgesamt?', a: u.opts(v, [n, m, n + 2 * m]), e: 'Jede Instruktion muss geholt werden (' + n + ') und jeder Datenzugriff kommt dazu (' + m + '): ' + v + ' Übersetzungen.', s: 2 };
     } }]
   },

@@ -179,7 +179,7 @@
       return { q: 'Ein binärer Buddy-Allokator verwaltet ' + tot + ' KB. Eine Anfrage über ' + req + ' KB kommt. Wie groß ist der vergebene Block, und wie viel interne Fragmentierung entsteht?', a: u.opts(b + ' KB, ' + (b - req) + ' KB verschwendet', [req + ' KB, 0 KB verschwendet', (b * 2) + ' KB, ' + (b * 2 - req) + ' KB verschwendet', (b / 2) + ' KB, ' + Math.abs(req - b / 2) + ' KB verschwendet']), e: 'Kleinste Zweierpotenz ≥ ' + req + ' ist ' + b + ' (' + steps + '× halbieren von ' + tot + '). Verschwendung: ' + b + ' − ' + req + ' = ' + (b - req) + ' KB.', s: 2 };
     } }, { n: 6, f: function (r) {
       var lvl = u.pick(r, [8, 16, 32]), idx = u.ri(r, 0, 7), a = idx * lvl, bud = a ^ lvl;
-      return { q: 'Im Buddy-System liegt ein freigegebener ' + lvl + '-KB-Block bei Adresse ' + a + ' KB (Bereich ab 0). Bei welcher Adresse liegt sein Buddy?', a: u.opts(bud + ' KB', [(a + 2 * lvl) + ' KB', Math.abs(a - 2 * lvl) + ' KB', (a + lvl / 2) + ' KB']), e: 'Buddies unterscheiden sich im Bit der Blockgröße: ' + a + ' XOR ' + lvl + ' = ' + bud + '.', s: 3 };
+      return { q: 'Im Buddy-System liegt ein freigegebener ' + lvl + '-KB-Block bei Adresse ' + a + ' KB (Bereich ab 0). Bei welcher Adresse liegt sein Buddy?', a: u.opts(bud + ' KB', [(a + 2 * lvl) + ' KB', Math.abs(a - 2 * lvl) + ' KB', (a + lvl / 2) + ' KB']), e: 'Buddies unterscheiden sich laut Buch in genau einem Bit – dem Bit der Blockgröße ' + lvl + ' KB. ' + a + ' KB mit gekipptem Bit ergibt ' + bud + ' KB.', s: 3 };
     } }]
   }
   ] });

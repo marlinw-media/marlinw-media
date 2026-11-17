@@ -15,12 +15,13 @@
   } });
   add('t2', { n: 3, f: function (r) {
     var k = u.ri(r, 1, 6), v = 3 + k, wr = {}; wr[k] = 'stdin, stdout und stderr sind von Anfang an offen.'; wr[k + 1] = 'Es sind drei Standard-Deskriptoren, nicht einer.';
-    return { q: 'Ein neuer UNIX-Prozess öffnet nach dem Start **' + k + '** weitere Datei(en) und schließt keine. Wie viele Dateideskriptoren hat er dann offen?', num: v, unit: '', hint: 'Ganze Zahl', e: '**Rechenweg:** Jeder UNIX-Prozess startet mit **3** offenen Deskriptoren (Standardeingabe, -ausgabe, -fehler).\n3 + ' + k + ' = **' + v + '**.', s: 2, wr: wr };
+    return { q: 'Ein neuer UNIX-Prozess öffnet nach dem Start **' + (k === 1 ? 'eine** weitere Datei' : k + '** weitere Dateien') + ' und schließt keine. Wie viele Dateideskriptoren hat er dann offen?', num: v, unit: '', hint: 'Ganze Zahl', e: '**Rechenweg:** Jeder UNIX-Prozess startet mit **3** offenen Deskriptoren (Standardeingabe, -ausgabe, -fehler).\n3 + ' + k + ' = **' + v + '**.', s: 2, wr: wr };
   } });
   add('t3', { n: 3, f: function (r) {
     var a = u.ri(r, 1, 4), b = u.ri(r, 2, 6), c = u.ri(r, 1, 3), d = u.ri(r, 1, 6), v = a + Math.max(b, d) + c, wr = {};
     wr[a + b + c + d] = 'Ohne Überlappung wäre es so lang – aber P1 rechnet, während P0 auf die I/O wartet.'; wr[a + b + c] = d > b ? 'P1 läuft länger als die I/O dauert – P0 muss nach der I/O noch warten.' : wr[a + b + c]; delete wr[v];
-    return { q: 'P0 rechnet **' + a + '** Takte, startet dann eine I/O (**' + b + '** Takte) und rechnet danach noch **' + c + '**. P1 rechnet **' + d + '** Takte. Während der I/O läuft P1; ist P1 noch nicht fertig, wenn die I/O endet, rechnet P1 zu Ende. Nach wie vielen Takten sind beide fertig?', num: v, unit: 'Takte', hint: 'Ganze Zahl', e: '**Rechenweg:** P0 rechnet ' + a + '. Dann blockiert P0, P1 läuft ' + d + ' Takte; die I/O dauert ' + b + '.\nWeiter geht es nach max(' + b + ', ' + d + ') = ' + Math.max(b, d) + ' Takten.\nDann rechnet P0 noch ' + c + ' → ' + a + ' + ' + Math.max(b, d) + ' + ' + c + ' = **' + v + '**.', s: 2, wr: wr };
+    var TK = function (x) { return '**' + x + '**' + (x === 1 ? ' Takt' : ' Takte'); };
+    return { q: 'P0 rechnet ' + TK(a) + ', startet dann eine I/O (' + TK(b) + ') und rechnet danach noch **' + c + '**. P1 rechnet ' + TK(d) + '. Während der I/O läuft P1; ist P1 noch nicht fertig, wenn die I/O endet, rechnet P1 zu Ende. Nach wie vielen Takten sind beide fertig?', num: v, unit: 'Takte', hint: 'Ganze Zahl', e: '**Rechenweg:** P0 rechnet ' + a + '. Dann blockiert P0, P1 läuft ' + d + ' Takte; die I/O dauert ' + b + '.\nWeiter geht es nach max(' + b + ', ' + d + ') = ' + Math.max(b, d) + ' Takten.\nDann rechnet P0 noch ' + c + ' → ' + a + ' + ' + Math.max(b, d) + ' + ' + c + ' = **' + v + '**.', s: 2, wr: wr };
   } });
 
   C.topics.forEach(function (t) { if (t.st) t.st.n = 4; (t.gen || []).forEach(function (g) { g.n = Math.min(4, Math.max(2, g.n > 4 ? Math.round(g.n / 3) : g.n)); }); });
