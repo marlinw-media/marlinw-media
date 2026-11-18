@@ -24,7 +24,8 @@ window.OSTEP = {
     { n: 19, part: 'Virtualisierung: Speicher', title: 'TLBs', short: 'Schnellere Übersetzungen', color: '#ff5fa2' },
     { n: 20, part: 'Virtualisierung: Speicher', title: 'Kleinere Page Tables', short: 'Mehrstufige und invertierte Tabellen', color: '#ff5fa2' },
     { n: 21, part: 'Virtualisierung: Speicher', title: 'Swapping: Mechanismen', short: 'Present-Bit, Page Fault, Swap Space', color: '#ff5fa2' },
-    { n: 22, part: 'Virtualisierung: Speicher', title: 'Swapping: Strategien', short: 'Optimal, FIFO, LRU, Clock, Thrashing', color: '#ff5fa2' }
+    { n: 22, part: 'Virtualisierung: Speicher', title: 'Swapping: Strategien', short: 'Optimal, FIFO, LRU, Clock, Thrashing', color: '#ff5fa2' },
+    { n: 26, part: 'Nebenläufigkeit', title: 'Nebenläufigkeit: Einführung', short: 'Threads, Race Conditions, kritische Abschnitte', color: '#2fd17c' }
   ],
   soon: [],
   add: function (ch) { this.chapters[ch.n] = ch; }

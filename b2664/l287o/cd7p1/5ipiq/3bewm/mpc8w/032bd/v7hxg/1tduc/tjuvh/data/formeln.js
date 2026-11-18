@@ -105,6 +105,9 @@
     noLoc: ['Keine Lokalität', 'Zufällige Zugriffe auf N Seiten:\nTrefferquote ≈ Cachegröße / N (für LRU, FIFO und Random gleich)'],
     clock: ['Clock-Algorithmus', 'Start beim Zeiger, im Kreis weiter:\nUse-Bit 1 → auf 0 setzen, weiter\nUse-Bit 0 → diese Seite ersetzen'],
     clockDirty: ['Clock mit Dirty-Bit', 'Zuerst: unbenutzt & sauber (use 0, dirty 0)\nDann: unbenutzt & dirty (use 0, dirty 1)\nDirty Seiten müssen vor dem Verdrängen zurückgeschrieben werden'],
+    thrCount: ['Threads und ihr Zustand', 'Threads gesamt = main-Thread + erzeugte Threads\nPro Thread: eigener PC, eigene Register, eigener Stack, eigener TCB\nPro Prozess: ein Adressraum, eine Page Table'],
+    race: ['Race Condition: counter + 1', 'mov: counter → eax (eigenes Register je Thread)\nadd: eax + 1\nmov: eax → counter\nWechsel zwischen Laden und Speichern → der zweite Speichervorgang überschreibt den ersten (eine Erhöhung verloren)'],
+    pcX86: ['PC auf x86 (Buchbeispiel)', 'x86 hat variable Instruktionslängen: mov = 5 Bytes, add = 3 Bytes\nPC nach einer Instruktion = Startadresse + Längen der bisher ausgeführten Instruktionen'],
     retry: ['Instruktion wiederholen', 'Nach einem TLB-Miss oder Page Fault wird **dieselbe** Instruktion erneut ausgeführt.']
   };
   window.OSTEP.fx = {
@@ -159,6 +162,9 @@
     '22-t1': { g: { 0: ['amat', 'units'], 1: ['hitRate'], 2: ['missTypes'] }, q: { 8: ['hitRate'], 9: ['amat', 'units'], 10: ['amat', 'units'], 17: ['pages'] } },
     '22-t2': { g: { 0: ['repl'], 1: ['repl'], 2: ['hitRate'] }, q: { 5: ['repl'], 7: ['hitRate'], 15: ['repl'] } },
     '22-t3': { g: { 0: ['repl'], 1: ['loop'], 2: ['noLoc'] }, q: { 7: ['repl'], 17: ['loop'] } },
-    '22-t4': { g: { 0: ['clock'], 1: ['pages', 'unitsB'], 2: ['clockDirty'] }, q: { 2: ['pages', 'unitsB'] } }
+    '22-t4': { g: { 0: ['clock'], 1: ['pages', 'unitsB'], 2: ['clockDirty'] }, q: { 2: ['pages', 'unitsB'] } },
+    '26-t1': { g: { 0: ['thrCount'] }, q: { 6: ['thrCount'], 14: ['thrCount'], 15: ['thrCount'] } },
+    '26-t2': { g: { 0: ['thrCount'] }, q: { 10: ['thrCount'] } },
+    '26-t3': { g: { 0: ['race'], 1: ['pcX86'], 2: ['counter', 'lost'] }, q: { 0: ['counter'], 7: ['race'], 10: ['race'], 11: ['race'], 16: ['counter', 'lost'], 18: ['pcX86'] } }
   };
 })();

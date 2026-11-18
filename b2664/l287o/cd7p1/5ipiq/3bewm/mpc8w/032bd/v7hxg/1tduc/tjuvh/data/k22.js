@@ -291,7 +291,7 @@
   ];
 
   /* ---------- Vokabelheft ---------- */
-  OSTEP.gloss.push(
+  (OSTEP.gloss = OSTEP.gloss || []).push(
     ['Replacement Policy|Ersetzungsstrategie', 'Replacement Policy', 'Strategie, die bei Speicherdruck entscheidet, welche Seite verdrängt wird.', [22, 'Replacement Policy']],
     ['\\bAMAT\\b', 'AMAT', 'Average Memory Access Time: T_M + P_Miss · T_D.', [22, 'AMAT']],
     ['Compulsory Miss|Cold-Start Miss', 'Compulsory Miss', 'Miss beim ersten Zugriff auf eine Seite, weil der Cache anfangs leer ist.', [22, 'Compulsory / Capacity / Conflict']],
