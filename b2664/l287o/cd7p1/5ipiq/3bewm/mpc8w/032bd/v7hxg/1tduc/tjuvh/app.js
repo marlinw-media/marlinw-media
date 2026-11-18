@@ -287,30 +287,68 @@
     if (o.progress != null) setTimeout(function () { var i = d.querySelector('.xpbar i'); if (i) i.style.width = Math.round(o.progress * 100) + '%'; }, 120);
     d.querySelector('button').onclick = function () { d.remove(); };
   }
-  /* Chippy zwischen den Fragen: kurze englische Sprüche in der eingestellten Stimme */
-  var cheerLast = [];
+  /* Chippy zwischen den Fragen: kurze Sprüche (englisch mit englischer, deutsch mit deutscher Stimme) + aufwendige Szenen */
+  var cheerLast = [], sceneLast = '';
+  function rr(a, b) { return a + Math.random() * (b - a); }
+  function pick1(a) { return a[Math.floor(Math.random() * a.length)]; }
+  function cheerScene(sc, kind) {
+    var h = '', i, n, PAL = ['#7c5cff', '#ff5fa2', '#ffb347', '#4cc9ff', '#2fd17c', '#ffd166'];
+    var pt = function (cls, txt, st) { return '<i class="pt ' + cls + '" style="' + st + '">' + (txt || '') + '</i>'; };
+    if (sc === 'burst') {
+      h += '<div class="rays"></div><div class="ring r1"></div><div class="ring r2"></div><div class="ring r3"></div>';
+      for (i = 0; i < 28; i++) { var an = i / 28 * 6.283 + rr(-.1, .1), d = rr(140, 260); h += pt('fly', pick1(['✦', '★', '✧', '•']), '--x:' + (Math.cos(an) * d).toFixed(0) + 'px;--y:' + (Math.sin(an) * d).toFixed(0) + 'px;--r:' + rr(-360, 360).toFixed(0) + 'deg;--s:' + rr(.6, 1.6).toFixed(2) + ';--d:' + rr(.9, 1.5).toFixed(2) + 's;--dl:' + rr(.05, .35).toFixed(2) + 's;color:' + pick1(PAL) + ';font-size:' + rr(14, 28).toFixed(0) + 'px'); }
+    } else if (sc === 'fireworks') {
+      for (n = 0; n < 4; n++) {
+        var cx = rr(18, 82), cy = rr(14, 40), col = pick1(PAL), dl = .15 + n * .38;
+        h += '<i class="fwtrail" style="left:' + cx + '%;--ty:' + (100 - cy) + 'vh;--dl:' + (dl - .3).toFixed(2) + 's;background:' + col + '"></i>';
+        for (i = 0; i < 18; i++) { var a2 = i / 18 * 6.283, d2 = rr(60, 110); h += pt('fw', '', 'left:' + cx + '%;top:' + cy + '%;--x:' + (Math.cos(a2) * d2).toFixed(0) + 'px;--y:' + (Math.sin(a2) * d2 + 30).toFixed(0) + 'px;--dl:' + dl.toFixed(2) + 's;background:' + col + ';box-shadow:0 0 10px ' + col); }
+      }
+    } else if (sc === 'rocket') {
+      h += '<div class="speed">'; for (i = 0; i < 16; i++) h += '<i style="top:' + rr(0, 100).toFixed(0) + '%;--dl:' + rr(0, .8).toFixed(2) + 's;--w:' + rr(60, 180).toFixed(0) + 'px"></i>'; h += '</div>';
+      h += '<i class="rkt">🚀</i>'; for (i = 0; i < 12; i++) h += '<i class="puff" style="--p:' + (i / 12).toFixed(2) + ';--dl:' + (i * .055).toFixed(2) + 's"></i>';
+    } else if (sc === 'disco') {
+      h += '<i class="ball">🪩</i>'; for (i = 0; i < 4; i++) h += '<i class="spot s' + i + '" style="--c:' + PAL[i] + '"></i>';
+      for (i = 0; i < 12; i++) h += pt('rise', pick1(['🎵', '🎶', '✨']), 'left:' + rr(8, 92).toFixed(0) + '%;--x:' + rr(-40, 40).toFixed(0) + 'px;--y:' + rr(260, 520).toFixed(0) + 'px;--d:' + rr(1.6, 2.6).toFixed(2) + 's;--dl:' + rr(0, 1.2).toFixed(2) + 's;font-size:' + rr(18, 30).toFixed(0) + 'px');
+    } else if (sc === 'orbit') {
+      var em = kind === 'w' ? ['💪', '🧠', '✨', '📚', '💡', '🌱'] : ['🧠', '⚡', '🔥', '⭐', '💾', '🚀'];
+      h += '<div class="orb">'; em.forEach(function (e, k) { h += '<i style="--a:' + (k * 60) + 'deg">' + e + '</i>'; }); h += '</div><div class="orb o2">'; for (i = 0; i < 10; i++) h += '<i class="dot" style="--a:' + (i * 36) + 'deg;background:' + PAL[i % 6] + '"></i>'; h += '</div>';
+    } else if (sc === 'lightning') {
+      h += '<div class="flash"></div>'; [[10, 12, -15], [78, 18, 20], [16, 62, 10], [80, 64, -20]].forEach(function (b, k) { h += '<i class="bolt" style="left:' + b[0] + '%;top:' + b[1] + '%;--r:' + b[2] + 'deg;--dl:' + (k * .12).toFixed(2) + 's">⚡</i>'; });
+      for (i = 0; i < 14; i++) { var a3 = rr(0, 6.283), d3 = rr(90, 170); h += pt('fly', '⚡', '--x:' + (Math.cos(a3) * d3).toFixed(0) + 'px;--y:' + (Math.sin(a3) * d3).toFixed(0) + 'px;--r:' + rr(-90, 90).toFixed(0) + 'deg;--s:' + rr(.6, 1.2).toFixed(2) + ';--d:1s;--dl:' + rr(.1, .4).toFixed(2) + 's;font-size:18px'); }
+    } else if (sc === 'hearts') {
+      h += '<div class="softglow"></div>'; for (i = 0; i < 18; i++) h += pt('rise', pick1(['💜', '💗', '💪', '✨', '🌟']), 'left:' + rr(6, 94).toFixed(0) + '%;--x:' + rr(-50, 50).toFixed(0) + 'px;--y:' + rr(300, 560).toFixed(0) + 'px;--d:' + rr(1.8, 2.8).toFixed(2) + 's;--dl:' + rr(0, 1).toFixed(2) + 's;font-size:' + rr(18, 34).toFixed(0) + 'px');
+    } else if (sc === 'sunrise') {
+      h += '<div class="rainbow"></div><i class="sun">☀️</i><i class="cloud">☁️</i>'; for (i = 0; i < 14; i++) h += '<i class="drop" style="left:' + rr(36, 64).toFixed(0) + '%;--dl:' + rr(0, .7).toFixed(2) + 's"></i>';
+    }
+    return h;
+  }
   function showCheer(lastRight, done) {
     var all = O.cheers || []; if (!all.length) { done(); return; }
     var kind = lastRight != null && Math.random() < .6 ? (lastRight ? 'r' : 'w') : 'g';
     var pool = all.filter(function (c) { return c[2] === kind && cheerLast.indexOf(c[0]) < 0; }); if (!pool.length) pool = all.filter(function (c) { return c[2] === kind; });
-    var c = pool[Math.floor(Math.random() * pool.length)]; cheerLast.push(c[0]); if (cheerLast.length > 8) cheerLast.shift();
+    var c = pick1(pool); cheerLast.push(c[0]); if (cheerLast.length > 10) cheerLast.shift();
+    var scenes = (kind === 'r' ? ['burst', 'fireworks', 'disco', 'orbit'] : kind === 'w' ? ['hearts', 'sunrise', 'orbit'] : ['rocket', 'disco', 'orbit', 'lightning', 'burst']).filter(function (x) { return x !== sceneLast; });
+    var sc = pick1(scenes); sceneLast = sc;
     var moods = kind === 'r' ? ['party', 'cool', 'strong'] : kind === 'w' ? ['think', 'happy', 'strong'] : ['happy', 'strong', 'cool', 'wow', 'party'];
-    var anims = ['bounce', 'spin', 'jump', 'wiggle', 'zoom', 'slide', 'flip'], an = anims[Math.floor(Math.random() * anims.length)];
-    var d = document.createElement('div'); d.className = 'cheerpop';
-    d.innerHTML = '<div class="cpin a-' + an + '">' + chippy(moods[Math.floor(Math.random() * moods.length)], 132) + '</div><div class="cpbub ' + kind + '">' + esc(c[1]) + '</div><div class="cpskip">Tippen zum Weitermachen</div>';
+    var ent = pick1(['bounce', 'spin', 'jump', 'wiggle', 'zoom', 'slide', 'flip']), idle = pick1(['dance', 'float', 'pulse', 'sway']);
+    var li = 0, letters = c[1].split(' ').map(function (w) { return '<span class="w">' + w.split('').map(function (ch) { return '<span style="--i:' + (li++) + '">' + esc(ch) + '</span>'; }).join('') + '</span>'; }).join(' ');
+    var d = document.createElement('div'); d.className = 'cheerpop k-' + kind + ' sc-' + sc;
+    d.innerHTML = '<div class="cpscene">' + cheerScene(sc, kind) + '</div><div class="cpglow"></div><div class="cpin a-' + ent + '"><div class="cpidle i-' + idle + '">' + chippy(pick1(moods), 140) + '</div></div><div class="cpbub ' + kind + '">' + letters + '</div><div class="cpskip">Tippen zum Weitermachen</div>';
     document.body.appendChild(d); requestAnimationFrame(function () { d.classList.add('on'); });
-    if (kind === 'r') confetti(50);
-    var closed = false, au = null, close = function () { if (closed) return; closed = true; if (au) try { au.pause(); } catch (e) {} if (window.speechSynthesis && S.voice === 'geraet') speechSynthesis.cancel(); d.classList.remove('on'); setTimeout(function () { d.remove(); done(); }, 220); };
-    var tmo = setTimeout(close, 2600);
+    if (kind === 'r' && sc !== 'fireworks') setTimeout(function () { confetti(70); }, 250);
+    if (navigator.vibrate && kind === 'r') navigator.vibrate([15, 40, 15]);
+    var closed = false, au = null, close = function () { if (closed) return; closed = true; if (au) try { au.pause(); } catch (e) {} if (window.speechSynthesis && S.voice === 'geraet') speechSynthesis.cancel(); d.classList.add('out'); setTimeout(function () { d.remove(); done(); }, 300); };
+    var tmo = setTimeout(close, 3000);
     d.onclick = function () { clearTimeout(tmo); close(); };
     if (!S.sound) return;
     if (S.voice === 'geraet' && window.speechSynthesis) {
-      var ut = new SpeechSynthesisUtterance(c[1]); ut.lang = 'en-US'; var en = speechSynthesis.getVoices().filter(function (v) { return /^en/i.test(v.lang); }); if (en.length) ut.voice = en[0]; speechSynthesis.speak(ut);
+      var ut = new SpeechSynthesisUtterance(c[1]), en = c[3] === 'en'; ut.lang = en ? 'en-US' : 'de-DE';
+      var vs = speechSynthesis.getVoices().filter(function (v) { return (en ? /^en/i : /^de/i).test(v.lang); }); if (vs.length) ut.voice = vs[0]; speechSynthesis.speak(ut);
     } else {
       var v = VOICES.some(function (x) { return x[0] === S.voice; }) && S.voice !== 'ki' ? S.voice : 'thorsten';
-      au = new Audio('audio/' + v + '/cheer/' + c[0] + '.m4a?v=1');
-      au.onloadedmetadata = function () { if (isFinite(au.duration) && au.duration > 1.8) { clearTimeout(tmo); tmo = setTimeout(close, au.duration * 1000 + 800); } };
-      au.play().catch(function () {});
+      au = new Audio('audio/' + v + '/cheer/' + c[0] + '.m4a?v=2');
+      au.onloadedmetadata = function () { if (isFinite(au.duration) && au.duration > 2) { clearTimeout(tmo); tmo = setTimeout(close, au.duration * 1000 + 900); } };
+      setTimeout(function () { if (!closed) au.play().catch(function () {}); }, 280);
     }
   }
   function rnd(a) { var l = a.filter(function (x) { return S.name || x.indexOf('{n}') < 0; }); var x = l[Math.floor(Math.random() * l.length)] || a[0]; return x.replace(/\{n\}/g, esc(S.name || '')); }
