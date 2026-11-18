@@ -873,6 +873,8 @@
     else if (it.gen || !it.lang) html += '<h3 style="margin-top:16px">' + (it.gen ? '🧭 Rechenweg' : 'Erklärung') + '</h3><div class="xexp">' + md(it.e) + '</div>';
     if (it.lang) html += '<h3 style="margin-top:16px">📘 Ausführlich erklärt</h3><div class="xexp long">' + md(it.lang) + '</div>';
     var voc = vocab(plain(it.q) + ' ' + it.a.map(plain).join(' ') + ' ' + plain(it.e) + ' ' + plain(it.dw || '') + ' ' + plain(it.lang || ''));
+    var fxn = (it.fx || []).filter(function (k) { return (O.FX || {})[k]; }).length;
+    if (fxn) html += '<details class="vocabbox fxbox"><summary><span>🧮 Formeln <small>(' + fxn + ')</small></span><i class="plus"></i></summary><div class="vocab">' + fxRows(it.fx) + '</div></details>';
     if (voc.length) html += '<details class="vocabbox"><summary><span>📖 Fachbegriffe <small>(' + voc.length + ')</small></span><i class="plus"></i></summary><div class="vocab">' + voc.map(function (v) {
       var g = v.g, href = termLink(g[3]), full = (O.glossFull || {})[g[1]];
       return '<div class="vrow"><div><b>' + esc(g[1]) + '</b>' + (full ? '<em class="full">' + esc(full) + '</em>' : '') + '<span>' + esc(full ? g[2].replace(full + ' – ', '').replace(/^./, function (c) { return c.toUpperCase(); }) : g[2]) + '</span></div>' + (href ? '<a class="vi" href="' + href + '" title="Zum Begriff">i</a>' : '') + '</div>';
@@ -973,11 +975,14 @@
     }
   }
   /* Formel-Hilfe: nur während die Frage gestellt ist, nie in der Lösung */
-  function openFx(keys) {
+  function fxRows(keys) {
     var F = O.FX || {};
-    var rows = (keys || []).filter(function (k) { return F[k]; }).map(function (k) {
+    return (keys || []).filter(function (k) { return F[k]; }).map(function (k) {
       return '<div class="fxitem"><div class="fxname">' + esc(F[k][0]) + '</div><div class="fxf">' + F[k][1].split('\n').map(function (l) { return '<div' + (/[=≈]/.test(l) ? ' class="eq"' : '') + '>' + md(l).replace(/^<p>|<\/p>$/g, '') + '</div>'; }).join('') + '</div></div>';
     }).join('');
+  }
+  function openFx(keys) {
+    var rows = fxRows(keys);
     openSheetHtml('<h2 style="margin:0 0 4px">🧮 Formeln</h2><p class="fxsub">Was du für diese Aufgabe brauchst – rechnen musst du selbst 😉</p>' + rows + '<button class="btn main block" style="margin-top:14px" id="fxclose">Zurück zur Aufgabe</button>', function (box) {
       box.querySelector('#fxclose').onclick = function () { box.remove(); };
     });
