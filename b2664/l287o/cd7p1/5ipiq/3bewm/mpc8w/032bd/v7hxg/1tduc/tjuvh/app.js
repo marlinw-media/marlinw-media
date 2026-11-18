@@ -287,6 +287,32 @@
     if (o.progress != null) setTimeout(function () { var i = d.querySelector('.xpbar i'); if (i) i.style.width = Math.round(o.progress * 100) + '%'; }, 120);
     d.querySelector('button').onclick = function () { d.remove(); };
   }
+  /* Chippy zwischen den Fragen: kurze englische Sprüche in der eingestellten Stimme */
+  var cheerLast = [];
+  function showCheer(lastRight, done) {
+    var all = O.cheers || []; if (!all.length) { done(); return; }
+    var kind = lastRight != null && Math.random() < .6 ? (lastRight ? 'r' : 'w') : 'g';
+    var pool = all.filter(function (c) { return c[2] === kind && cheerLast.indexOf(c[0]) < 0; }); if (!pool.length) pool = all.filter(function (c) { return c[2] === kind; });
+    var c = pool[Math.floor(Math.random() * pool.length)]; cheerLast.push(c[0]); if (cheerLast.length > 8) cheerLast.shift();
+    var moods = kind === 'r' ? ['party', 'cool', 'strong'] : kind === 'w' ? ['think', 'happy', 'strong'] : ['happy', 'strong', 'cool', 'wow', 'party'];
+    var anims = ['bounce', 'spin', 'jump', 'wiggle', 'zoom', 'slide', 'flip'], an = anims[Math.floor(Math.random() * anims.length)];
+    var d = document.createElement('div'); d.className = 'cheerpop';
+    d.innerHTML = '<div class="cpin a-' + an + '">' + chippy(moods[Math.floor(Math.random() * moods.length)], 132) + '</div><div class="cpbub ' + kind + '">' + esc(c[1]) + '</div><div class="cpskip">Tippen zum Weitermachen</div>';
+    document.body.appendChild(d); requestAnimationFrame(function () { d.classList.add('on'); });
+    if (kind === 'r') confetti(50);
+    var closed = false, au = null, close = function () { if (closed) return; closed = true; if (au) try { au.pause(); } catch (e) {} if (window.speechSynthesis && S.voice === 'geraet') speechSynthesis.cancel(); d.classList.remove('on'); setTimeout(function () { d.remove(); done(); }, 220); };
+    var tmo = setTimeout(close, 2600);
+    d.onclick = function () { clearTimeout(tmo); close(); };
+    if (!S.sound) return;
+    if (S.voice === 'geraet' && window.speechSynthesis) {
+      var ut = new SpeechSynthesisUtterance(c[1]); ut.lang = 'en-US'; var en = speechSynthesis.getVoices().filter(function (v) { return /^en/i.test(v.lang); }); if (en.length) ut.voice = en[0]; speechSynthesis.speak(ut);
+    } else {
+      var v = VOICES.some(function (x) { return x[0] === S.voice; }) && S.voice !== 'ki' ? S.voice : 'thorsten';
+      au = new Audio('audio/' + v + '/cheer/' + c[0] + '.m4a?v=1');
+      au.onloadedmetadata = function () { if (isFinite(au.duration) && au.duration > 1.8) { clearTimeout(tmo); tmo = setTimeout(close, au.duration * 1000 + 800); } };
+      au.play().catch(function () {});
+    }
+  }
   function rnd(a) { var l = a.filter(function (x) { return S.name || x.indexOf('{n}') < 0; }); var x = l[Math.floor(Math.random() * l.length)] || a[0]; return x.replace(/\{n\}/g, esc(S.name || '')); }
   var MOT = {
     combo: { 3: ['3 richtig in Folge – du bist warm! 🔥', 'Hattrick! Weiter so ⚡'], 5: ['5er-Combo! Dein Gehirn cached gerade alles 🧠', '{n} ist on fire! 5 in Folge 🔥', 'Fünf am Stück – TLB-Hit-Rate: 100 % 😎'], 8: ['8 in Folge! Du bist schneller als ein TLB-Hit ⚡'], 10: ['10er-Combo!! Professor-Level erreicht 🎓', '{n}, das ist Wahnsinn – 10 am Stück! 🎓'], 15: ['15 am Stück – das ist Kernel-Modus! 👑'] },
@@ -941,7 +967,7 @@
     if (tid === 'alle') { items = []; ch.topics.forEach(function (t) { items = items.concat(pool(n, t.id)); }); items = pick(items, 20); title = 'Kapitel-Quiz'; }
     else { var t = ch.topics.filter(function (x) { return x.id === tid; })[0]; if (!t) return; items = pick(pool(n, tid), 15); title = t.title; }
     items = items.map(function (it) { var order = shuffle(it.a.map(function (_, i) { return i; })); return Object.assign({}, it, { order: order }); });
-    Q = { n: n, tid: tid, title: title, items: items, i: 0, ok: 0, combo: 0, maxCombo: 0, xp: 0, wrong: [], masteryBefore: tid === 'alle' ? chapterProgress(n) : mastery(n, tid) };
+    Q = { n: n, tid: tid, title: title, items: items, i: 0, ok: 0, combo: 0, maxCombo: 0, xp: 0, wrong: [], nextCheer: 4 + Math.floor(Math.random() * 4), lastRight: null, masteryBefore: tid === 'alle' ? chapterProgress(n) : mastery(n, tid) };
     document.body.classList.add('immersive');
     renderQ();
   }
@@ -989,7 +1015,7 @@
   }
   function answer(ai, btn) {
     var fxb = $('.fxwrap'); if (fxb) fxb.remove(); closeSheets();
-    var it = Q.items[Q.i], right = ai === 0, pctBefore = chapterProgress(it.n);
+    var it = Q.items[Q.i], right = ai === 0, pctBefore = chapterProgress(it.n); Q.lastRight = right;
     $$('.opt').forEach(function (b) { b.disabled = true; var a = +b.dataset.a; if (a === 0) b.classList.add('right'); else if (b === btn) b.classList.add('wrong'); else b.classList.add('dim'); });
     var r = S.q[it.id] || { b: 0, n: 0, c: 0, t: 0 };
     r.n++; r.t = Date.now();
@@ -1016,7 +1042,11 @@
       '<div class="ex">' + md(it.e) + '</div><div class="row"><button class="info" id="info" title="Im Lerntext nachlesen">i</button><button class="btn ' + (right ? 'ok' : 'main') + ' block" id="next">' + (Q.i + 1 < Q.items.length ? 'Weiter' : 'Auswertung') + '</button></div></div>';
     requestAnimationFrame(function () { fb.classList.add('on'); });
     $('#info').onclick = function () { openExplain(it, ai, right, reason); };
-    $('#next').onclick = function () { Q.i++; if (Q.i < Q.items.length) renderQ(); else result(); };
+    $('#next').onclick = function () {
+      Q.i++; if (Q.i >= Q.items.length) { result(); return; }
+      if (Q.i >= Q.nextCheer && Q.items.length - Q.i >= 2) { Q.nextCheer = Q.i + 4 + Math.floor(Math.random() * 4); $('#fb').classList.remove('on'); showCheer(Q.lastRight, renderQ); }
+      else renderQ();
+    };
   }
   function grade(pct) {
     var t = [[.95, '1,0'], [.9, '1,3'], [.85, '1,7'], [.8, '2,0'], [.75, '2,3'], [.7, '2,7'], [.65, '3,0'], [.6, '3,3'], [.55, '3,7'], [.5, '4,0']];
