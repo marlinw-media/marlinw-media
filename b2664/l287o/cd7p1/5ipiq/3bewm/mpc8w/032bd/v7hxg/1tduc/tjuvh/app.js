@@ -539,7 +539,7 @@
   }
   /* ---------- Fachbegriffe: Grafik in Endlosschleife (wie ein GIF) + Text ---------- */
   function MERK(n) { return (O.merk || {})[n] || null; }
-  var PDFS = { 20: 2, 21: 2 }, FPDFS = { 20: 1, 21: 1 };   /* FPDFS: Formel-Übersicht pdf/kNNf.pdf */
+  var PDFS = { 20: 2, 21: 2, 22: 1, 26: 1 }, FPDFS = { 20: 1, 21: 1, 22: 1, 26: 1 };   /* FPDFS: Formel-Übersicht pdf/kNNf.pdf */
     /* Übersichts-PDF je Kapitel: pdf/kNN.pdf + Vorschau pdf/kNN.png (?v=) */
   /* Vorschau-Fenster: Bild mit Zoom (Pinch, Doppeltipp, +/−), Schließen, PDF speichern */
   function openPdf(n, kind) {
