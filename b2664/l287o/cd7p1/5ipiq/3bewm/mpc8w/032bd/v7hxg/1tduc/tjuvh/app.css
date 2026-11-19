@@ -330,6 +330,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px;
 /* ---------- Merksätze ---------- */
 .merk-lead { color: var(--dim); font-size: 14px; margin: 2px 2px 12px; }
 .merks { display: grid; gap: 10px; }
+.pdf-btn { background: linear-gradient(135deg, rgba(96,165,250,.24), rgba(52,211,153,.14)); border-color: rgba(96,165,250,.45); margin-top: 10px; }
 .merk-btn { background: linear-gradient(135deg, rgba(255,209,102,.22), rgba(255,140,60,.14)); border-color: rgba(255,209,102,.4); }
 .merk { border-radius: 18px; background: var(--card); border: 1px solid var(--line); overflow: hidden; }
 .merk[open] { border-color: rgba(255,209,102,.45); background: linear-gradient(160deg, rgba(255,209,102,.08), var(--card) 60%); }

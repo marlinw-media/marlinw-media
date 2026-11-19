@@ -515,6 +515,7 @@
     html += '</div>';
     if (tab === 'begriffe') html += termCards(n);
     if (tab === 'lernen' && MERK(n)) html += '<a class="big-quiz merk-btn" href="#/k/' + n + '/merken"><div class="ic">💡</div><div style="flex:1"><b style="font-size:17px">Merksätze des Kapitels</b><div style="color:#d8d5f5;font-size:13px;font-weight:600">' + MERK(n).length + ' wichtige Merksätze mit Erklärung – ideal nach dem Lernen</div></div><span style="font-size:22px">›</span></a>';
+    if (tab === 'lernen' && PDFS[n]) html += '<a class="big-quiz pdf-btn" href="pdf/k' + n + '.pdf?v=' + PDFS[n] + '" target="_blank" rel="noopener"><div class="ic">🗺️</div><div style="flex:1"><b style="font-size:17px">Übersicht als PDF</b><div style="color:#d8d5f5;font-size:13px;font-weight:600">Alles aus Kapitel ' + n + ' als Grafik – ansehen &amp; speichern</div></div><span style="font-size:22px">⤓</span></a>';
     if (tab === 'quiz') {
       var tot = ch.topics.reduce(function (a, t) { return a + pool(n, t.id).length; }, 0);
       html += '<a class="big-quiz" href="#/k/' + n + '/quiz/alle"><div class="ic">🏆</div><div style="flex:1"><b style="font-size:17px">Großes Kapitel-Quiz</b><div style="color:#d8d5f5;font-size:13px;font-weight:600">20 Fragen aus allen ' + tot + ' Fragen des Kapitels</div></div><span style="font-size:22px">›</span></a>';
@@ -525,6 +526,7 @@
   }
   /* ---------- Fachbegriffe: Grafik in Endlosschleife (wie ein GIF) + Text ---------- */
   function MERK(n) { return (O.merk || {})[n] || null; }
+  var PDFS = { 20: 1, 21: 1 };   /* Übersichts-PDF je Kapitel: pdf/kNN.pdf?v= */
   function viewMerk(n) {
     if (!MERK(n)) { viewChapter(n); return; }
     var m = O.meta.filter(function (x) { return x.n === +n; })[0];
