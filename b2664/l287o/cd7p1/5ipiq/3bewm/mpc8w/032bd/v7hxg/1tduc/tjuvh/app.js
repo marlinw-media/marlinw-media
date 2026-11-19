@@ -455,8 +455,8 @@
   }
   function chapterRow(m) {
     var has = !!O.chapters[m.n], pr = has ? chapterProgress(m.n) : 0, ex = exChapters()[m.n];
-    var tag = ex ? (ex.s === 'done' ? '<span class="extag done">✓ im Test dran · ' + fmtP(ex.p) + ' P.</span>' : '<span class="extag next">📝 kommt im Test</span>') : '';
-    return '<a class="ch ' + (has ? '' : 'locked') + '" href="' + (has ? '#/k/' + m.n : 'javascript:void 0') + '"><div class="num" style="background:' + m.color + '">' + m.n + '</div><div class="meta"><b>' + esc(m.title) + '</b><small>' + esc(m.short) + '</small>' + tag + '</div>' +
+    var exc = ex ? (ex.s === 'done' ? ' ex-done' : ' ex-next') : '', tag = ex ? '<i class="exbadge">' + (ex.s === 'done' ? '✓ ' + fmtP(ex.p) + ' P.' : '📝 Test') + '</i>' : '';
+    return '<a class="ch ' + (has ? '' : 'locked') + exc + '" href="' + (has ? '#/k/' + m.n : 'javascript:void 0') + '"><div class="num" style="background:' + m.color + '">' + m.n + '</div><div class="meta"><b>' + esc(m.title) + '</b><small>' + esc(m.short) + '</small></div>' + tag +
       (has ? (pr >= .9 ? '<span class="crown">👑</span>' : '') + ring(pr, 46, 5, m.color) : '<small style="color:var(--faint)">folgt</small>') + '</a>';
   }
   function recommend() {
