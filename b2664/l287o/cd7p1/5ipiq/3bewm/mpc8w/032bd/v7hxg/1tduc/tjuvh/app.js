@@ -515,18 +515,70 @@
     html += '</div>';
     if (tab === 'begriffe') html += termCards(n);
     if (tab === 'lernen' && MERK(n)) html += '<a class="big-quiz merk-btn" href="#/k/' + n + '/merken"><div class="ic">💡</div><div style="flex:1"><b style="font-size:17px">Merksätze des Kapitels</b><div style="color:#d8d5f5;font-size:13px;font-weight:600">' + MERK(n).length + ' wichtige Merksätze mit Erklärung – ideal nach dem Lernen</div></div><span style="font-size:22px">›</span></a>';
-    if (tab === 'lernen' && PDFS[n]) html += '<a class="big-quiz pdf-btn" href="pdf/k' + n + '.pdf?v=' + PDFS[n] + '" target="_blank" rel="noopener"><div class="ic">🗺️</div><div style="flex:1"><b style="font-size:17px">Übersicht als PDF</b><div style="color:#d8d5f5;font-size:13px;font-weight:600">Alles aus Kapitel ' + n + ' als Grafik – ansehen &amp; speichern</div></div><span style="font-size:22px">⤓</span></a>';
+    if (tab === 'lernen' && PDFS[n]) html += '<a class="big-quiz pdf-btn" href="#" data-pdf="' + n + '"><div class="ic">🗺️</div><div style="flex:1"><b style="font-size:17px">Übersicht als PDF</b><div style="color:#d8d5f5;font-size:13px;font-weight:600">Alles aus Kapitel ' + n + ' als Grafik – ansehen &amp; speichern</div></div><span style="font-size:22px">⤓</span></a>';
     if (tab === 'quiz') {
       var tot = ch.topics.reduce(function (a, t) { return a + pool(n, t.id).length; }, 0);
       html += '<a class="big-quiz" href="#/k/' + n + '/quiz/alle"><div class="ic">🏆</div><div style="flex:1"><b style="font-size:17px">Großes Kapitel-Quiz</b><div style="color:#d8d5f5;font-size:13px;font-weight:600">20 Fragen aus allen ' + tot + ' Fragen des Kapitels</div></div><span style="font-size:22px">›</span></a>';
     } else if (tab === 'lernen') html += '<p style="color:var(--dim);font-size:13px;text-align:center;margin-top:16px">Tipp: Erst den Podcast hören, dann im Quiz festigen. 🎧 → 🎯</p>';
     app.innerHTML = html;
     $$('.seg button').forEach(function (b) { b.onclick = function () { sessionStorage.setItem('ostep-tab', b.dataset.tab); sfx('tap'); viewChapter(n, b.dataset.tab); }; });
+    $$('.pdf-btn').forEach(function (b) { b.onclick = function (e) { e.preventDefault(); sfx('tap'); openPdf(b.dataset.pdf); }; });
     if (tab === 'begriffe') animateTerms(n);
   }
   /* ---------- Fachbegriffe: Grafik in Endlosschleife (wie ein GIF) + Text ---------- */
   function MERK(n) { return (O.merk || {})[n] || null; }
-  var PDFS = { 20: 1, 21: 1 };   /* Übersichts-PDF je Kapitel: pdf/kNN.pdf?v= */
+  var PDFS = { 20: 2, 21: 2 };   /* Übersichts-PDF je Kapitel: pdf/kNN.pdf + Vorschau pdf/kNN.png (?v=) */
+  /* Vorschau-Fenster: Bild mit Zoom (Pinch, Doppeltipp, +/−), Schließen, PDF speichern */
+  function openPdf(n) {
+    closePdf();
+    var v = PDFS[n], url = 'pdf/k' + n + '.pdf?v=' + v, name = 'OSTEP-Kapitel-' + n + '-Uebersicht.pdf';
+    var d = document.createElement('div'); d.className = 'pdfview'; d.id = 'pdfview';
+    d.innerHTML = '<div class="pdfbar"><button class="pdfx" aria-label="Schließen">✕</button><b>Kapitel ' + n + ' · Übersicht</b>' +
+      '<button class="pdfz" data-z="-1" aria-label="Verkleinern">−</button><button class="pdfz" data-z="1" aria-label="Vergrößern">+</button></div>' +
+      '<div class="pdfscroll"><img alt="Übersicht Kapitel ' + n + '" src="pdf/k' + n + '.png?v=' + v + '"></div>' +
+      '<div class="pdffoot"><button class="pdfdl">⤓ PDF speichern</button></div>';
+    document.body.appendChild(d); document.body.classList.add('noscroll');
+    var sc = d.querySelector('.pdfscroll'), img = d.querySelector('img'), z = 1;
+    function setZ(nz, cx, cy) {
+      nz = Math.max(1, Math.min(6, nz));
+      cx = cx == null ? sc.clientWidth / 2 : cx; cy = cy == null ? sc.clientHeight / 2 : cy;
+      var fx = (sc.scrollLeft + cx) / img.offsetWidth, fy = (sc.scrollTop + cy) / img.offsetHeight;
+      z = nz; img.style.width = (z * 100) + '%';
+      sc.scrollLeft = fx * img.offsetWidth - cx; sc.scrollTop = fy * img.offsetHeight - cy;
+    }
+    d.querySelector('.pdfx').onclick = closePdf;
+    $$('.pdfz', d).forEach(function (b) { b.onclick = function () { setZ(z * (b.dataset.z > 0 ? 1.6 : 1 / 1.6)); }; });
+    var last = 0, pinch = null;
+    sc.addEventListener('touchstart', function (e) {
+      if (e.touches.length === 2) {
+        var a = e.touches[0], b = e.touches[1], r = sc.getBoundingClientRect();
+        pinch = { d: Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY), z: z, cx: (a.clientX + b.clientX) / 2 - r.left, cy: (a.clientY + b.clientY) / 2 - r.top };
+        e.preventDefault();
+      } else if (e.touches.length === 1) {
+        var t = Date.now(), r2 = sc.getBoundingClientRect();
+        if (t - last < 300) { setZ(z > 1.5 ? 1 : 3, e.touches[0].clientX - r2.left, e.touches[0].clientY - r2.top); e.preventDefault(); }
+        last = t;
+      }
+    }, { passive: false });
+    sc.addEventListener('touchmove', function (e) {
+      if (pinch && e.touches.length === 2) {
+        var a = e.touches[0], b = e.touches[1];
+        setZ(pinch.z * Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY) / pinch.d, pinch.cx, pinch.cy); e.preventDefault();
+      }
+    }, { passive: false });
+    sc.addEventListener('touchend', function (e) { if (e.touches.length < 2) pinch = null; });
+    d.querySelector('.pdfdl').onclick = function () {
+      var btn = this; btn.textContent = 'Lädt …';
+      fetch(url).then(function (r) { return r.blob(); }).then(function (blob) {
+        var file = new File([blob], name, { type: 'application/pdf' });
+        btn.textContent = '⤓ PDF speichern';
+        if (navigator.canShare && navigator.canShare({ files: [file] })) return navigator.share({ files: [file], title: name }).catch(function () {});
+        var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+        document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+      }).catch(function () { btn.textContent = '⤓ PDF speichern'; toast('Download fehlgeschlagen – Internet prüfen'); });
+    };
+  }
+  function closePdf() { var d = $('#pdfview'); if (d) d.remove(); document.body.classList.remove('noscroll'); }
   function viewMerk(n) {
     if (!MERK(n)) { viewChapter(n); return; }
     var m = O.meta.filter(function (x) { return x.n === +n; })[0];
@@ -1149,7 +1201,7 @@
 
   /* ================= Router ================= */
   function route() {
-    stopPlayer(); stopTerms(); closeSheets(); $$('.fxwrap').forEach(function (x) { x.remove(); }); window.scrollTo(0, 0);
+    stopPlayer(); stopTerms(); closeSheets(); closePdf(); $$('.fxwrap').forEach(function (x) { x.remove(); }); window.scrollTo(0, 0);
     var h = location.hash.replace(/^#/, '') || '/', qs = '', qi = h.indexOf('?');
     if (qi >= 0) { qs = h.slice(qi + 1); h = h.slice(0, qi); }
     var params = {}; qs.split('&').forEach(function (kv) { if (!kv) return; var p = kv.split('='); params[p[0]] = decodeURIComponent(p[1] || ''); });
