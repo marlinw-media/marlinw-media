@@ -516,26 +516,28 @@
     if (tab === 'begriffe') html += termCards(n);
     if (tab === 'lernen' && MERK(n)) html += '<a class="big-quiz merk-btn" href="#/k/' + n + '/merken"><div class="ic">💡</div><div style="flex:1"><b style="font-size:17px">Merksätze des Kapitels</b><div style="color:#d8d5f5;font-size:13px;font-weight:600">' + MERK(n).length + ' wichtige Merksätze mit Erklärung – ideal nach dem Lernen</div></div><span style="font-size:22px">›</span></a>';
     if (tab === 'lernen' && PDFS[n]) html += '<a class="big-quiz pdf-btn" href="#" data-pdf="' + n + '"><div class="ic">🗺️</div><div style="flex:1"><b style="font-size:17px">Übersicht als PDF</b><div style="color:#d8d5f5;font-size:13px;font-weight:600">Alles aus Kapitel ' + n + ' als Grafik – ansehen &amp; speichern</div></div><span style="font-size:22px">⤓</span></a>';
+    if (tab === 'lernen' && FPDFS[n]) html += '<a class="big-quiz pdf-btn fpdf-btn" href="#" data-pdf="' + n + '" data-kind="f"><div class="ic">🧮</div><div style="flex:1"><b style="font-size:17px">Formeln als PDF</b><div style="color:#d8d5f5;font-size:13px;font-weight:600">Alle Formeln aus Kapitel ' + n + ' mit Buch-Beispiel</div></div><span style="font-size:22px">⤓</span></a>';
     if (tab === 'quiz') {
       var tot = ch.topics.reduce(function (a, t) { return a + pool(n, t.id).length; }, 0);
       html += '<a class="big-quiz" href="#/k/' + n + '/quiz/alle"><div class="ic">🏆</div><div style="flex:1"><b style="font-size:17px">Großes Kapitel-Quiz</b><div style="color:#d8d5f5;font-size:13px;font-weight:600">20 Fragen aus allen ' + tot + ' Fragen des Kapitels</div></div><span style="font-size:22px">›</span></a>';
     } else if (tab === 'lernen') html += '<p style="color:var(--dim);font-size:13px;text-align:center;margin-top:16px">Tipp: Erst den Podcast hören, dann im Quiz festigen. 🎧 → 🎯</p>';
     app.innerHTML = html;
     $$('.seg button').forEach(function (b) { b.onclick = function () { sessionStorage.setItem('ostep-tab', b.dataset.tab); sfx('tap'); viewChapter(n, b.dataset.tab); }; });
-    $$('.pdf-btn').forEach(function (b) { b.onclick = function (e) { e.preventDefault(); sfx('tap'); openPdf(b.dataset.pdf); }; });
+    $$('.pdf-btn').forEach(function (b) { b.onclick = function (e) { e.preventDefault(); sfx('tap'); openPdf(b.dataset.pdf, b.dataset.kind || ''); }; });
     if (tab === 'begriffe') animateTerms(n);
   }
   /* ---------- Fachbegriffe: Grafik in Endlosschleife (wie ein GIF) + Text ---------- */
   function MERK(n) { return (O.merk || {})[n] || null; }
-  var PDFS = { 20: 2, 21: 2 };   /* Übersichts-PDF je Kapitel: pdf/kNN.pdf + Vorschau pdf/kNN.png (?v=) */
+  var PDFS = { 20: 2, 21: 2 }, FPDFS = { 20: 1, 21: 1 };   /* FPDFS: Formel-Übersicht pdf/kNNf.pdf */
+    /* Übersichts-PDF je Kapitel: pdf/kNN.pdf + Vorschau pdf/kNN.png (?v=) */
   /* Vorschau-Fenster: Bild mit Zoom (Pinch, Doppeltipp, +/−), Schließen, PDF speichern */
-  function openPdf(n) {
-    closePdf();
-    var v = PDFS[n], url = 'pdf/k' + n + '.pdf?v=' + v, name = 'OSTEP-Kapitel-' + n + '-Uebersicht.pdf';
+  function openPdf(n, kind) {
+    closePdf(); kind = kind || '';
+    var v = (kind ? FPDFS : PDFS)[n], base = 'pdf/k' + n + kind, url = base + '.pdf?v=' + v, name = 'OSTEP-Kapitel-' + n + (kind ? '-Formeln' : '-Uebersicht') + '.pdf';
     var d = document.createElement('div'); d.className = 'pdfview'; d.id = 'pdfview';
-    d.innerHTML = '<div class="pdfbar"><button class="pdfx" aria-label="Schließen">✕</button><b>Kapitel ' + n + ' · Übersicht</b>' +
+    d.innerHTML = '<div class="pdfbar"><button class="pdfx" aria-label="Schließen">✕</button><b>Kapitel ' + n + (kind ? ' · Formeln' : ' · Übersicht') + '</b>' +
       '<button class="pdfz" data-z="-1" aria-label="Verkleinern">−</button><button class="pdfz" data-z="1" aria-label="Vergrößern">+</button></div>' +
-      '<div class="pdfscroll"><img alt="Übersicht Kapitel ' + n + '" src="pdf/k' + n + '.png?v=' + v + '"></div>' +
+      '<div class="pdfscroll"><img alt="Kapitel ' + n + '" src="' + base + '.png?v=' + v + '"></div>' +
       '<div class="pdffoot"><button class="pdfdl">⤓ PDF speichern</button></div>';
     document.body.appendChild(d); document.body.classList.add('noscroll');
     var sc = d.querySelector('.pdfscroll'), img = d.querySelector('img'), z = 1;
