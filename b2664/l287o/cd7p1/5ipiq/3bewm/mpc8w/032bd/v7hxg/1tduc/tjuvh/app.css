@@ -668,3 +668,16 @@ body.noscroll { overflow: hidden; }
 .chpick button { width: 46px; height: 40px; border-radius: 12px; border: 2px solid var(--line2); background: var(--card2); color: var(--text); font-weight: 900; font-size: 15px; }
 .chpick button.on { background: var(--c); border-color: #fff; color: #fff; }
 .exdel { background: none; border: 0; font-size: 18px; padding: 6px; opacity: .7; }
+.exrow .grow { flex-wrap: wrap; }
+.expin { padding: 2px 4px 2px 12px; border-radius: 12px; flex: 0 1 170px; }
+.expin input { font-size: 16px !important; padding: 6px 0; width: 70px; }
+.exedit { background: none; border: 0; font-size: 17px; padding: 6px; opacity: .8; }
+.extag { display: inline-block; margin-top: 4px; padding: 2px 8px; border-radius: 8px; font-size: 11.5px; font-weight: 800; }
+.extag.done { background: rgba(47,209,124,.18); color: #7ff0b2; }
+.extag.next { background: rgba(255,209,102,.18); color: #ffd166; }
+.exleg { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.exch { display: inline-grid; place-items: center; min-width: 36px; height: 32px; padding: 0 6px; border-radius: 10px; font-weight: 900; font-size: 14px; border: 2px solid var(--line2); color: var(--dim); }
+.exch.done { background: var(--c, #2fd17c); border-color: #7ff0b2; color: #fff; }
+.exch.next { border-color: #ffd166; border-style: dashed; color: #ffd166; }
+.exlegtxt { width: 100%; font-size: 12.5px; color: var(--dim); font-weight: 600; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.exlegtxt .exch { min-width: 24px; height: 22px; font-size: 12px; }

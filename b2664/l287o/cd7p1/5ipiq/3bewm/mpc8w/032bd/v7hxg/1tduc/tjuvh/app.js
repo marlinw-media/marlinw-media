@@ -454,8 +454,9 @@
       '<span class="chip fire ' + (st ? 'on' : '') + '">🔥 ' + st + '</span><span class="chip">⚡ ' + S.xp + '</span></div>';
   }
   function chapterRow(m) {
-    var has = !!O.chapters[m.n], pr = has ? chapterProgress(m.n) : 0;
-    return '<a class="ch ' + (has ? '' : 'locked') + '" href="' + (has ? '#/k/' + m.n : 'javascript:void 0') + '"><div class="num" style="background:' + m.color + '">' + m.n + '</div><div class="meta"><b>' + esc(m.title) + '</b><small>' + esc(m.short) + '</small></div>' +
+    var has = !!O.chapters[m.n], pr = has ? chapterProgress(m.n) : 0, ex = exChapters()[m.n];
+    var tag = ex ? (ex.s === 'done' ? '<span class="extag done">✓ im Test dran · ' + fmtP(ex.p) + ' P.</span>' : '<span class="extag next">📝 kommt im Test</span>') : '';
+    return '<a class="ch ' + (has ? '' : 'locked') + '" href="' + (has ? '#/k/' + m.n : 'javascript:void 0') + '"><div class="num" style="background:' + m.color + '">' + m.n + '</div><div class="meta"><b>' + esc(m.title) + '</b><small>' + esc(m.short) + '</small>' + tag + '</div>' +
       (has ? (pr >= .9 ? '<span class="crown">👑</span>' : '') + ring(pr, 46, 5, m.color) : '<small style="color:var(--faint)">folgt</small>') + '</a>';
   }
   function recommend() {
@@ -691,26 +692,34 @@
     }).join('') + '</div>';
     return html;
   }
-  /* ---------- Uni-Tests: Punkte 0–10, Ziel Schnitt 6 ---------- */
+  /* ---------- Uni-Tests: Punkte 0–10, Ziel Schnitt 6 · Punkte können später nachgetragen werden ---------- */
   var EX_GOAL = 6, EX_MAX = 10;
-  function exList() { return Object.keys(S.exams || {}).map(function (k) { return S.exams[k]; }).filter(function (e) { return e && !e.del; }).sort(function (a, b) { return (a.d || '').localeCompare(b.d || '') || a.u - b.u; }); }
+  function exAll() { return Object.keys(S.exams || {}).map(function (k) { return S.exams[k]; }).filter(function (e) { return e && !e.del; }).sort(function (a, b) { return (a.c || a.u) - (b.c || b.u); }); }
+  function graded(e) { return typeof e.p === 'number'; }
   function fmtP(x) { return (Math.round(x * 100) / 100).toString().replace('.', ','); }
   function exStats() {
-    var l = exList(), sum = l.reduce(function (a, e) { return a + e.p; }, 0), k = l.length, tot = S.examTotal || 0;
-    var o = { l: l, k: k, sum: sum, avg: k ? sum / k : null, tot: tot };
+    var all = exAll(), l = all.filter(graded), sum = l.reduce(function (a, e) { return a + e.p; }, 0), k = l.length;
+    var tot = Math.max(S.examTotal || 0, all.length);
+    var o = { all: all, l: l, k: k, sum: sum, avg: k ? sum / k : null, tot: tot, planned: all.length - k };
     if (tot > k) { o.rem = tot - k; o.need = (EX_GOAL * tot - sum) / o.rem; }
-    else if (tot && tot <= k) o.done = true;
+    else if (S.examTotal && tot <= k) o.done = true;
     o.next = Math.max(0, EX_GOAL * (k + 1) - sum);
     return o;
+  }
+  /* Kapitel → Status aus den Tests: 'done' (Test mit Punkten) oder 'next' (Test ohne Punkte) */
+  function exChapters() {
+    var m = {};
+    exAll().forEach(function (e) { (e.ch || []).forEach(function (n) { if (graded(e)) m[n] = { s: 'done', p: e.p }; else if (!m[n]) m[n] = { s: 'next' }; }); });
+    return m;
   }
   function needTxt(o) {
     if (o.done) return o.avg >= EX_GOAL ? '✅ Alle Tests geschrieben – Ziel geschafft!' : '❌ Alle Tests geschrieben – Schnitt unter ' + EX_GOAL;
     if (o.rem) {
       if (o.need <= 0) return '✅ Ziel sicher – egal, wie die restlichen ' + o.rem + ' Tests laufen';
       if (o.need > EX_MAX) return '⚠️ Rechnerisch nicht mehr erreichbar (nötig wären Ø ' + fmtP(o.need) + ' Punkte)';
-      return 'In den restlichen <b>' + o.rem + '</b> Test' + (o.rem === 1 ? '' : 's') + ' brauchst du im Schnitt <b>' + fmtP(Math.ceil(o.need * 100) / 100) + ' Punkte</b>';
+      return 'In ' + (o.rem === 1 ? 'deinem nächsten Test' : 'den restlichen <b>' + o.rem + '</b> Tests') + ' brauchst du ' + (o.rem === 1 ? 'mindestens' : 'im Schnitt') + ' <b>' + fmtP(Math.ceil(o.need * 100) / 100) + ' Punkte</b>';
     }
-    if (!o.k) return 'Trag deinen ersten Test ein – Ziel: Schnitt ' + EX_GOAL + ' Punkte';
+    if (!o.all.length) return 'Leg deinen ersten Test an – Ziel: Schnitt ' + EX_GOAL + ' Punkte';
     return o.next > EX_MAX ? '⚠️ Mit dem nächsten Test allein nicht auf Ø ' + EX_GOAL : 'Nächster Test: mindestens <b>' + fmtP(o.next) + ' Punkte</b>, damit dein Schnitt ≥ ' + EX_GOAL + ' bleibt';
   }
   function exColor(a) { return a == null ? 'var(--dim)' : a >= 8 ? '#7ff0b2' : a >= EX_GOAL ? '#ffd166' : a >= 5 ? '#ffb347' : '#ff8a95'; }
@@ -720,39 +729,57 @@
       '<div><small>📝 Uni-Tests</small><b class="gv" style="color:' + exColor(o.avg) + '">' + (o.avg == null ? '–' : fmtP(Math.round(o.avg * 100) / 100)) + '</b><small style="color:var(--dim)">Ziel ' + EX_GOAL + ' / ' + EX_MAX + '</small></div>' +
       '<div style="flex:1;font-size:13.5px;font-weight:700;color:#d8d5f5">' + needTxt(o) + '</div>' + (link ? '<span>›</span></a>' : '</div>');
   }
+  function chPick(id) { return '<div class="chpick" id="' + id + '">' + O.meta.map(function (m) { return '<button type="button" data-n="' + m.n + '" style="--c:' + m.color + '">' + m.n + '</button>'; }).join('') + '</div>'; }
   function examsHtml() {
-    var o = exStats(), d = new Date(), td = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+    var o = exStats(), cm = exChapters();
     var bar = o.avg == null ? '' : '<div class="exbar"><i style="width:' + Math.min(100, o.avg / EX_MAX * 100) + '%;background:' + exColor(o.avg) + '"></i><span style="left:' + EX_GOAL / EX_MAX * 100 + '%"></span></div>';
-    var html = '<h1 style="font-size:24px;font-weight:900;margin:4px 2px 10px">📝 Uni-Tests</h1>' + examCard(false) + bar +
-      '<div class="card exform"><b>Tests im Semester insgesamt</b><small>Optional – dann rechne ich den nötigen Schnitt für alle restlichen Tests aus.</small>' +
-      '<div class="numrow"><input id="extot" type="number" inputmode="numeric" min="0" max="50" placeholder="z. B. 8" value="' + (S.examTotal || '') + '"><span class="unit">Tests</span></div></div>' +
-      '<div class="sec-title"><h2>Test eintragen</h2></div><div class="card exform">' +
-      '<label>Name (optional)</label><div class="numrow"><input id="exname" type="text" maxlength="40" placeholder="z. B. Test ' + (o.k + 1) + '"></div>' +
-      '<label>Datum</label><div class="numrow"><input id="exdate" type="date" value="' + td + '"></div>' +
-      '<label>Punkte (0–10)</label><div class="numrow"><input id="expts" type="text" inputmode="decimal" placeholder="z. B. 7,5"><span class="unit">/ 10</span></div>' +
-      '<label>Welche Kapitel kamen dran?</label><div class="chpick">' + O.meta.map(function (m) { return '<button type="button" data-n="' + m.n + '" style="--c:' + m.color + '">' + m.n + '</button>'; }).join('') + '</div>' +
-      '<button class="btn main block" id="exadd">Test speichern</button></div>';
-    if (o.k) html += '<div class="sec-title"><h2>Deine Tests</h2><small>' + o.k + (o.tot ? ' von ' + o.tot : '') + '</small></div><div class="card" style="display:grid;gap:10px">' + o.l.slice().reverse().map(function (e, i) {
-      var dt = e.d ? e.d.split('-').reverse().join('.') : '';
-      return '<div class="grow"><div style="flex:1;min-width:0"><b>' + esc(e.name || ('Test ' + (o.k - i))) + '</b><small>' + dt + (e.ch && e.ch.length ? ' · Kapitel ' + e.ch.join(', ') : '') + '</small></div><b style="font-size:20px;color:' + exColor(e.p) + '">' + fmtP(e.p) + '</b><button class="exdel" data-id="' + e.id + '" aria-label="Löschen">🗑️</button></div>';
+    var html = '<h1 style="font-size:24px;font-weight:900;margin:4px 2px 10px">📝 Uni-Tests</h1>' + examCard(false) + bar;
+    if (o.all.length) html += '<div class="sec-title"><h2>Deine Tests</h2><small>' + o.k + ' bewertet' + (o.planned ? ' · ' + o.planned + ' offen' : '') + '</small></div><div class="card" style="display:grid;gap:12px">' + o.all.map(function (e, i) {
+      var nm = esc(e.name || ('Test ' + (i + 1))), chs = e.ch && e.ch.length ? 'Kapitel ' + e.ch.join(', ') : 'keine Kapitel gewählt';
+      return '<div class="exrow"><div class="grow"><div style="flex:1;min-width:0"><b>' + nm + '</b><small>' + chs + '</small></div>' +
+        (graded(e) ? '<b style="font-size:20px;color:' + exColor(e.p) + '">' + fmtP(e.p) + '</b><button class="exedit" data-id="' + e.id + '" aria-label="Punkte ändern">✏️</button>'
+          : '<div class="numrow expin"><input type="text" inputmode="decimal" placeholder="Punkte" data-id="' + e.id + '"><button class="btn sm main exsave" data-id="' + e.id + '">OK</button></div>') +
+        '<button class="exdel" data-id="' + e.id + '" aria-label="Löschen">🗑️</button></div></div>';
     }).join('') + '</div>';
+    html += '<div class="sec-title"><h2>Test hinzufügen</h2></div><div class="card exform">' +
+      '<label>Name (optional)</label><div class="numrow"><input id="exname" type="text" maxlength="40" placeholder="z. B. Test ' + (o.all.length + 1) + '"></div>' +
+      '<label>Welche Kapitel kommen dran?</label>' + chPick('exch') +
+      '<label>Punkte (0–10) – kannst du auch später eintragen</label><div class="numrow"><input id="expts" type="text" inputmode="decimal" placeholder="leer lassen, wenn noch offen"><span class="unit">/ 10</span></div>' +
+      '<button class="btn main block" id="exadd">Test hinzufügen</button></div>' +
+      '<div class="card exform"><b>Tests im Semester insgesamt</b><small>Optional – wenn noch nicht alle Tests angelegt sind, rechne ich mit dieser Zahl.</small>' +
+      '<div class="numrow"><input id="extot" type="number" inputmode="numeric" min="0" max="50" placeholder="z. B. 8" value="' + (S.examTotal || '') + '"><span class="unit">Tests</span></div></div>';
+    if (Object.keys(cm).length) html += '<div class="sec-title"><h2>Kapitel in Tests</h2></div><div class="card exleg">' + O.meta.map(function (m) { var st = cm[m.n]; return '<span class="exch ' + (st ? st.s : 'none') + '" style="--c:' + m.color + '">' + m.n + '</span>'; }).join('') +
+      '<div class="exlegtxt"><span class="exch done">✓</span> schon im Test dran · <span class="exch next">•</span> kommt im offenen Test</div></div>';
     return html;
   }
+  function parseP(v) { var p = parseFloat(String(v).replace(',', '.')); return p >= 0 && p <= EX_MAX ? Math.round(p * 100) / 100 : null; }
+  function exPut(e) { e.u = Date.now(); S.exams = S.exams || {}; S.exams[e.id] = e; save(); syncSoon(1500); viewProfile('tests'); }
   function bindExams() {
     var sel = {};
-    $$('.chpick button').forEach(function (b) { b.onclick = function () { sfx('tap'); sel[b.dataset.n] = !sel[b.dataset.n]; b.classList.toggle('on', !!sel[b.dataset.n]); }; });
+    $$('#exch button').forEach(function (b) { b.onclick = function () { sfx('tap'); sel[b.dataset.n] = !sel[b.dataset.n]; b.classList.toggle('on', !!sel[b.dataset.n]); }; });
     $('#extot').onchange = function () { var v = parseInt(this.value, 10); S.examTotal = v > 0 ? Math.min(50, v) : 0; save(); syncSoon(1500); viewProfile('tests'); };
     $('#exadd').onclick = function () {
-      var p = parseFloat(String($('#expts').value).replace(',', '.'));
-      if (!(p >= 0 && p <= EX_MAX)) { $('#expts').classList.add('err'); toast('Bitte Punkte von 0 bis 10 eingeben'); return; }
-      var id = 'e' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-      S.exams = S.exams || {};
-      S.exams[id] = { id: id, u: Date.now(), d: $('#exdate').value || '', p: Math.round(p * 100) / 100, name: $('#exname').value.trim().slice(0, 40), ch: Object.keys(sel).filter(function (n) { return sel[n]; }).map(Number).sort(function (a, b) { return a - b; }) };
-      save(); syncSoon(1500); sfx('win'); toast('📝 Test gespeichert'); viewProfile('tests');
+      var raw = String($('#expts').value).trim(), p = raw ? parseP(raw) : null;
+      if (raw && p == null) { $('#expts').classList.add('err'); toast('Punkte von 0 bis 10 – oder leer lassen'); return; }
+      var ch = Object.keys(sel).filter(function (n) { return sel[n]; }).map(Number).sort(function (a, b) { return a - b; });
+      var id = 'e' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), e = { id: id, c: Date.now(), name: $('#exname').value.trim().slice(0, 40), ch: ch };
+      if (p != null) e.p = p;
+      sfx('win'); toast(p == null ? '📝 Test angelegt – Punkte später eintragen' : '📝 Test gespeichert'); exPut(e);
     };
+    $$('.exsave').forEach(function (b) { b.onclick = function () {
+      var inp = $('input[data-id="' + b.dataset.id + '"]'), p = parseP(inp.value);
+      if (p == null) { inp.classList.add('err'); toast('Bitte Punkte von 0 bis 10 eingeben'); return; }
+      sfx('win'); exPut(Object.assign({}, S.exams[b.dataset.id], { p: p }));
+    }; });
+    $$('.expin input').forEach(function (i) { i.onkeydown = function (ev) { if (ev.key === 'Enter') $('.exsave[data-id="' + i.dataset.id + '"]').click(); }; });
+    $$('.exedit').forEach(function (b) { b.onclick = function () {
+      var e = S.exams[b.dataset.id], v = prompt('Punkte für „' + (e.name || 'Test') + '“ (0–10, leer = noch offen):', fmtP(e.p)); if (v === null) return;
+      var n = Object.assign({}, e); if (String(v).trim() === '') delete n.p; else { var p = parseP(v); if (p == null) { toast('Bitte 0 bis 10 eingeben'); return; } n.p = p; }
+      exPut(n);
+    }; });
     $$('.exdel').forEach(function (b) { b.onclick = function () {
-      var e = S.exams[b.dataset.id]; if (!e || !confirm('Test „' + (e.name || 'ohne Namen') + '“ (' + fmtP(e.p) + ' Punkte) löschen?')) return;
-      S.exams[b.dataset.id] = { id: e.id, u: Date.now(), del: true }; save(); syncSoon(1500); viewProfile('tests');
+      var e = S.exams[b.dataset.id]; if (!e || !confirm('Test „' + (e.name || 'ohne Namen') + '“ löschen?')) return;
+      exPut({ id: e.id, del: true });
     }; });
   }
   function badgesHtml() {
