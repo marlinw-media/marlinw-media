@@ -686,3 +686,5 @@ body.noscroll { overflow: hidden; }
 .ch.ex-next { border-color: rgba(255,209,102,.75) !important; box-shadow: 0 0 0 1px rgba(255,209,102,.45) inset; position: relative; }
 .ch .exbadge { position: absolute; top: 6px; right: 10px; font-style: normal; font-size: 10.5px; font-weight: 900; letter-spacing: .02em; color: #7ff0b2; }
 .ch.ex-next .exbadge { color: #ffd166; }
+.exeditform { width: 100%; margin: 10px 0 2px; padding: 12px; border-radius: 14px; background: var(--card2); border: 1px solid var(--line2); }
+.exeditform[hidden] { display: none; }

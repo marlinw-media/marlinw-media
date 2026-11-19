@@ -729,7 +729,7 @@
       '<div><small>📝 Uni-Tests</small><b class="gv" style="color:' + exColor(o.avg) + '">' + (o.avg == null ? '–' : fmtP(Math.round(o.avg * 100) / 100)) + '</b><small style="color:var(--dim)">Ziel ' + EX_GOAL + ' / ' + EX_MAX + '</small></div>' +
       '<div style="flex:1;font-size:13.5px;font-weight:700;color:#d8d5f5">' + needTxt(o) + '</div>' + (link ? '<span>›</span></a>' : '</div>');
   }
-  function chPick(id) { return '<div class="chpick" id="' + id + '">' + O.meta.map(function (m) { return '<button type="button" data-n="' + m.n + '" style="--c:' + m.color + '">' + m.n + '</button>'; }).join('') + '</div>'; }
+  function chPick(id, on) { on = on || []; return '<div class="chpick" id="' + id + '">' + O.meta.map(function (m) { return '<button type="button" data-n="' + m.n + '" class="' + (on.indexOf(m.n) >= 0 ? 'on' : '') + '" style="--c:' + m.color + '">' + m.n + '</button>'; }).join('') + '</div>'; }
   function examsHtml() {
     var o = exStats(), cm = exChapters();
     var bar = o.avg == null ? '' : '<div class="exbar"><i style="width:' + Math.min(100, o.avg / EX_MAX * 100) + '%;background:' + exColor(o.avg) + '"></i><span style="left:' + EX_GOAL / EX_MAX * 100 + '%"></span></div>';
@@ -737,9 +737,13 @@
     if (o.all.length) html += '<div class="sec-title"><h2>Deine Tests</h2><small>' + o.k + ' bewertet' + (o.planned ? ' · ' + o.planned + ' offen' : '') + '</small></div><div class="card" style="display:grid;gap:12px">' + o.all.map(function (e, i) {
       var nm = esc(e.name || ('Test ' + (i + 1))), chs = e.ch && e.ch.length ? 'Kapitel ' + e.ch.join(', ') : 'keine Kapitel gewählt';
       return '<div class="exrow"><div class="grow"><div style="flex:1;min-width:0"><b>' + nm + '</b><small>' + chs + '</small></div>' +
-        (graded(e) ? '<b style="font-size:20px;color:' + exColor(e.p) + '">' + fmtP(e.p) + '</b><button class="exedit" data-id="' + e.id + '" aria-label="Punkte ändern">✏️</button>'
+        (graded(e) ? '<b style="font-size:20px;color:' + exColor(e.p) + '">' + fmtP(e.p) + '</b>'
           : '<div class="numrow expin"><input type="text" inputmode="decimal" placeholder="Punkte" data-id="' + e.id + '"><button class="btn sm main exsave" data-id="' + e.id + '">OK</button></div>') +
-        '<button class="exdel" data-id="' + e.id + '" aria-label="Löschen">🗑️</button></div></div>';
+        '<button class="exedit" data-id="' + e.id + '" aria-label="Bearbeiten">✏️</button><button class="exdel" data-id="' + e.id + '" aria-label="Löschen">🗑️</button></div>' +
+        '<div class="exform exeditform" data-id="' + e.id + '" hidden><label>Name</label><div class="numrow"><input class="efname" type="text" maxlength="40" value="' + esc(e.name || '') + '" placeholder="Test ' + (i + 1) + '"></div>' +
+        '<label>Kapitel</label>' + chPick('efch-' + e.id, e.ch || []) +
+        '<label>Punkte (0–10, leer = noch offen)</label><div class="numrow"><input class="efpts" type="text" inputmode="decimal" value="' + (graded(e) ? fmtP(e.p) : '') + '"><span class="unit">/ 10</span></div>' +
+        '<div style="display:flex;gap:8px"><button class="btn sm efcancel" data-id="' + e.id + '" style="flex:1">Abbrechen</button><button class="btn sm main efsave" data-id="' + e.id + '" style="flex:2">Änderungen speichern</button></div></div></div>';
     }).join('') + '</div>';
     html += '<div class="sec-title"><h2>Test hinzufügen</h2></div><div class="card exform">' +
       '<label>Name (optional)</label><div class="numrow"><input id="exname" type="text" maxlength="40" placeholder="z. B. Test ' + (o.all.length + 1) + '"></div>' +
@@ -753,7 +757,7 @@
     return html;
   }
   function parseP(v) { var p = parseFloat(String(v).replace(',', '.')); return p >= 0 && p <= EX_MAX ? Math.round(p * 100) / 100 : null; }
-  function exPut(e) { e.u = Date.now(); S.exams = S.exams || {}; S.exams[e.id] = e; save(); syncSoon(1500); viewProfile('tests'); }
+  function exPut(e) { if (!e.c && !e.del) e.c = e.u || Date.now(); e.u = Date.now(); S.exams = S.exams || {}; S.exams[e.id] = e; save(); syncSoon(1500); viewProfile('tests'); }
   function bindExams() {
     var sel = {};
     $$('#exch button').forEach(function (b) { b.onclick = function () { sfx('tap'); sel[b.dataset.n] = !sel[b.dataset.n]; b.classList.toggle('on', !!sel[b.dataset.n]); }; });
@@ -772,10 +776,15 @@
       sfx('win'); exPut(Object.assign({}, S.exams[b.dataset.id], { p: p }));
     }; });
     $$('.expin input').forEach(function (i) { i.onkeydown = function (ev) { if (ev.key === 'Enter') $('.exsave[data-id="' + i.dataset.id + '"]').click(); }; });
-    $$('.exedit').forEach(function (b) { b.onclick = function () {
-      var e = S.exams[b.dataset.id], v = prompt('Punkte für „' + (e.name || 'Test') + '“ (0–10, leer = noch offen):', fmtP(e.p)); if (v === null) return;
-      var n = Object.assign({}, e); if (String(v).trim() === '') delete n.p; else { var p = parseP(v); if (p == null) { toast('Bitte 0 bis 10 eingeben'); return; } n.p = p; }
-      exPut(n);
+    $$('.exedit').forEach(function (b) { b.onclick = function () { sfx('tap'); var f = $('.exeditform[data-id="' + b.dataset.id + '"]'); f.hidden = !f.hidden; }; });
+    $$('.exeditform .chpick button').forEach(function (b) { b.onclick = function () { sfx('tap'); b.classList.toggle('on'); }; });
+    $$('.efcancel').forEach(function (b) { b.onclick = function () { $('.exeditform[data-id="' + b.dataset.id + '"]').hidden = true; }; });
+    $$('.efsave').forEach(function (b) { b.onclick = function () {
+      var f = $('.exeditform[data-id="' + b.dataset.id + '"]'), raw = String($('.efpts', f).value).trim(), p = raw ? parseP(raw) : null;
+      if (raw && p == null) { $('.efpts', f).classList.add('err'); toast('Punkte von 0 bis 10 – oder leer lassen'); return; }
+      var n = Object.assign({}, S.exams[b.dataset.id], { name: $('.efname', f).value.trim().slice(0, 40), ch: $$('.chpick button.on', f).map(function (x) { return +x.dataset.n; }).sort(function (a, c) { return a - c; }) });
+      if (p == null) delete n.p; else n.p = p;
+      sfx('win'); toast('✏️ Test geändert'); exPut(n);
     }; });
     $$('.exdel').forEach(function (b) { b.onclick = function () {
       var e = S.exams[b.dataset.id]; if (!e || !confirm('Test „' + (e.name || 'ohne Namen') + '“ löschen?')) return;
