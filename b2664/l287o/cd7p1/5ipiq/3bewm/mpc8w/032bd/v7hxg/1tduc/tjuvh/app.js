@@ -52,6 +52,15 @@
     r[kind] = (r[kind] || 0) + sec; S.dayTime[today()] = (S.dayTime[today()] || 0) + sec;
     tlog(0, sec, 0); checkGoal();
   }
+  /* zuletzt bearbeitete Kapitel (für „Weitermachen“): S.chAt[n] = Zeitstempel; ältere Stände aus Quiz-Zeiten ableiten */
+  function touchCh(n) { if (!n) return; S.chAt = S.chAt || {}; S.chAt[n] = Date.now(); }
+  function chLastAll() {
+    var o = {};
+    Object.keys(S.q || {}).forEach(function (id) { var n = parseInt(id, 10), t = (S.q[id] || {}).t || 0; if (t > (o[n] || 0)) o[n] = t; });
+    (S.hist || []).forEach(function (h) { if ((h.d || 0) > (o[h.n] || 0)) o[h.n] = h.d; });
+    Object.keys(S.chAt || {}).forEach(function (n) { if (S.chAt[n] > (o[n] || 0)) o[n] = S.chAt[n]; });
+    return o;
+  }
   function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} if (window.OSTEP_SYNC_SOON) window.OSTEP_SYNC_SOON(); }
   function today() { var d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
   function dayXp() { return S.days[today()] || 0; }
@@ -471,7 +480,8 @@
       '<div class="goal">' + ring(g, 70, 8, '#ffd166', Math.round(g * 100) + '%') + '<div style="flex:1">' +
       (rec ? '<div style="font-size:13px;color:#d8d5f5;font-weight:700">Als Nächstes · Kapitel ' + rec.n + '</div><div style="font-weight:900;font-size:17px;margin:2px 0 10px">' + esc(rec.t.title) + '</div><a class="btn main block" href="#/k/' + rec.n + '/' + rec.mode + '/' + rec.t.id + '">' + rec.label + '</a>'
         : '<div style="font-weight:900">Alles gemeistert! 🏆</div>') + '</div></div></div>' + motCard() + '<a href="#/profil/einstellungen" class="histlink">' + histCard() + '</a>';
-    var started = O.meta.filter(function (m) { return O.chapters[m.n] && chapterProgress(m.n) > 0; });
+    var last = chLastAll(), started = O.meta.filter(function (m) { return O.chapters[m.n] && chapterProgress(m.n) > 0; })
+      .sort(function (a, b) { return (last[b.n] || 0) - (last[a.n] || 0); });
     if (started.length) html += '<div class="sec-title"><h2>Weitermachen</h2></div><div class="chapters">' + started.slice(0, 4).map(chapterRow).join('') + '</div>';
     html += '<div class="sec-title"><h2>Alle Kapitel</h2><small>' + O.meta.length + ' Kapitel</small></div>' + chapterList();
     app.innerHTML = html;
@@ -1056,7 +1066,7 @@
     var before = S.listen[key] || 0;
     if (f > before) {
       var cn = +String(key).split('-')[0], pb = chapterProgress(cn);
-      S.listen[key] = Math.min(1, f); addPct(chapterProgress(cn) - pb);
+      S.listen[key] = Math.min(1, f); addPct(chapterProgress(cn) - pb); touchCh(cn);
       if (before < .9 && f >= .9) { syncSoon(1500); addXp(30, $('#play')); confetti(80); sfx('win'); pep(rnd(MOT.listened), 'cool', true); }
       if (Math.floor(f * 20) !== Math.floor(before * 20)) save();
     }
@@ -1139,7 +1149,7 @@
     var it = Q.items[Q.i], right = ai === 0, pctBefore = chapterProgress(it.n); Q.lastRight = right;
     $$('.opt').forEach(function (b) { b.disabled = true; var a = +b.dataset.a; if (a === 0) b.classList.add('right'); else if (b === btn) b.classList.add('wrong'); else b.classList.add('dim'); });
     var r = S.q[it.id] || { b: 0, n: 0, c: 0, t: 0 };
-    r.n++; r.t = Date.now();
+    r.n++; r.t = Date.now(); touchCh(it.n);
     var qsec = Math.min(180, (Date.now() - (Q.qStart || Date.now())) / 1000); Q.sec = (Q.sec || 0) + qsec; addTime(it.n, it.t, 'q', qsec);
     S.answered++;
     var gain = 0;
@@ -1209,6 +1219,7 @@
     var params = {}; qs.split('&').forEach(function (kv) { if (!kv) return; var p = kv.split('='); params[p[0]] = decodeURIComponent(p[1] || ''); });
     var p = h.split('/').filter(Boolean);
     document.body.classList.remove('immersive');
+    if (p[0] === 'k' && (p[2] === 'lernen' || p[2] === 'quiz') && p[3]) { touchCh(+p[1]); save(); }
     $$('.tabbar a').forEach(function (a) { a.classList.toggle('on', (p[0] || 'home') === a.dataset.tab || (!p[0] && a.dataset.tab === 'home')); });
     if (!p.length) viewHome();
     else if (p[0] === 'kapitel') viewChapters();
@@ -1279,6 +1290,7 @@
       if (k === 'days' || k === 'dayTime' || k === 'dayPct') { out[k] = {}; syKeysOf(bv, lv, rv).forEach(function (d) { out[k][d] = syAdd((bv || {})[d], (lv || {})[d], (rv || {})[d]); }); return; }
       if (k === 'time') { out[k] = {}; syKeysOf(bv, lv, rv).forEach(function (t) { var B = (bv || {})[t] || {}, Lx = (lv || {})[t] || {}, R = (rv || {})[t] || {}; out[k][t] = { l: syAdd(B.l, Lx.l, R.l), q: syAdd(B.q, Lx.q, R.q) }; }); return; }
       if (k === 'bestCombo') { out[k] = Math.max(syN(lv), syN(rv)); return; }
+      if (k === 'chAt') { out[k] = {}; syKeysOf(lv, rv).forEach(function (t) { out[k][t] = Math.max(syN((lv || {})[t]), syN((rv || {})[t])); }); return; }
       if (k === 'listen') { out[k] = {}; syKeysOf(lv, rv).forEach(function (t) { out[k][t] = Math.max(syN((lv || {})[t]), syN((rv || {})[t])); }); return; }
       if (k === 'badges') { out[k] = {}; syKeysOf(lv, rv).forEach(function (t) { var a = (lv || {})[t], c = (rv || {})[t]; out[k][t] = a && c ? Math.min(a, c) : (a || c); }); return; }
       if (k === 'q') {
