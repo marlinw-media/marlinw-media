@@ -688,3 +688,17 @@ body.noscroll { overflow: hidden; }
 .ch.ex-next .exbadge { color: #ffd166; }
 .exeditform { width: 100%; margin: 10px 0 2px; padding: 12px; border-radius: 14px; background: var(--card2); border: 1px solid var(--line2); }
 .exeditform[hidden] { display: none; }
+/* verpasste Tests + Ausklapp-Knopf */
+.ch.ex-miss { opacity: .55; filter: saturate(.45); position: relative; }
+.ch.ex-miss .exbadge { color: #ff8a95; }
+.exch.miss { background: rgba(255,93,108,.18); border-color: #ff8a95; color: #ff8a95; }
+.exmisstag { font-size: 13px; font-weight: 900; color: #ff8a95; white-space: nowrap; }
+.exrow.missed > .grow b { opacity: .7; }
+.exmiss { width: 100%; min-height: 42px; border-radius: 12px; border: 2px dashed var(--line2); background: transparent; color: var(--dim); font-weight: 800; font-size: 14px; margin-top: 4px; }
+.exmiss.on { border-style: solid; border-color: #ff8a95; background: rgba(255,93,108,.14); color: #ff8a95; }
+.exopen { display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px 16px; margin: 4px 0 12px; border-radius: 18px; border: 1px dashed rgba(125,211,252,.55); background: rgba(125,211,252,.08); color: var(--text); font-size: 16px; text-align: left; }
+.exopen .plus { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; background: linear-gradient(135deg, #7dd3fc, #34d399); color: #0b0c18; font-weight: 900; font-size: 20px; flex: none; }
+.exopen b { flex: 1; }
+.exopen .chev { font-size: 22px; color: var(--dim); transition: transform .2s; }
+.exopen[aria-expanded="true"] .chev { transform: rotate(90deg); }
+.exnew[hidden] { display: none; }

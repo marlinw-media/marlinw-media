@@ -455,7 +455,7 @@
   }
   function chapterRow(m) {
     var has = !!O.chapters[m.n], pr = has ? chapterProgress(m.n) : 0, ex = exChapters()[m.n];
-    var exc = ex ? (ex.s === 'done' ? ' ex-done' : ' ex-next') : '', tag = ex ? '<i class="exbadge">' + (ex.s === 'done' ? '✓ ' + fmtP(ex.p) + ' P.' : '📝 Test') + '</i>' : '';
+    var exc = ex ? ' ex-' + ex.s : '', tag = ex ? '<i class="exbadge">' + (ex.s === 'done' ? '✓ ' + fmtP(ex.p) + ' P.' : ex.s === 'miss' ? '✗ verpasst' : '📝 Test') + '</i>' : '';
     return '<a class="ch ' + (has ? '' : 'locked') + exc + '" href="' + (has ? '#/k/' + m.n : 'javascript:void 0') + '"><div class="num" style="background:' + m.color + '">' + m.n + '</div><div class="meta"><b>' + esc(m.title) + '</b><small>' + esc(m.short) + '</small></div>' + tag +
       (has ? (pr >= .9 ? '<span class="crown">👑</span>' : '') + ring(pr, 46, 5, m.color) : '<small style="color:var(--faint)">folgt</small>') + '</a>';
   }
@@ -692,24 +692,27 @@
     }).join('') + '</div>';
     return html;
   }
-  /* ---------- Uni-Tests: Punkte 0–10, Ziel Schnitt 6 · Punkte können später nachgetragen werden ---------- */
+  /* ---------- Uni-Tests: Punkte 0–10, Ziel Schnitt 6 · Punkte später nachtragen · verpasste Tests zählen nicht ---------- */
   var EX_GOAL = 6, EX_MAX = 10;
   function exAll() { return Object.keys(S.exams || {}).map(function (k) { return S.exams[k]; }).filter(function (e) { return e && !e.del; }).sort(function (a, b) { return (a.c || a.u) - (b.c || b.u); }); }
-  function graded(e) { return typeof e.p === 'number'; }
+  function graded(e) { return !e.miss && typeof e.p === 'number'; }
   function fmtP(x) { return (Math.round(x * 100) / 100).toString().replace('.', ','); }
   function exStats() {
-    var all = exAll(), l = all.filter(graded), sum = l.reduce(function (a, e) { return a + e.p; }, 0), k = l.length;
-    var tot = Math.max(S.examTotal || 0, all.length);
-    var o = { all: all, l: l, k: k, sum: sum, avg: k ? sum / k : null, tot: tot, planned: all.length - k };
+    var all = exAll(), miss = all.filter(function (e) { return e.miss; }).length, l = all.filter(graded), sum = l.reduce(function (a, e) { return a + e.p; }, 0), k = l.length;
+    var tot = Math.max(S.examTotal || 0, all.length) - miss;   /* verpasste Tests zählen nicht mit */
+    var o = { all: all, l: l, k: k, sum: sum, avg: k ? sum / k : null, tot: tot, miss: miss, planned: all.length - k - miss };
     if (tot > k) { o.rem = tot - k; o.need = (EX_GOAL * tot - sum) / o.rem; }
     else if (S.examTotal && tot <= k) o.done = true;
     o.next = Math.max(0, EX_GOAL * (k + 1) - sum);
     return o;
   }
-  /* Kapitel → Status aus den Tests: 'done' (Test mit Punkten) oder 'next' (Test ohne Punkte) */
+  /* Kapitel → Status aus den Tests: 'done' (bewertet) > 'next' (offen) > 'miss' (verpasst) */
   function exChapters() {
-    var m = {};
-    exAll().forEach(function (e) { (e.ch || []).forEach(function (n) { if (graded(e)) m[n] = { s: 'done', p: e.p }; else if (!m[n]) m[n] = { s: 'next' }; }); });
+    var m = {}, rank = { miss: 1, next: 2, done: 3 };
+    exAll().forEach(function (e) {
+      var st = graded(e) ? { s: 'done', p: e.p } : e.miss ? { s: 'miss' } : { s: 'next' };
+      (e.ch || []).forEach(function (n) { if (!m[n] || rank[st.s] > rank[m[n].s] || (st.s === 'done' && m[n].s === 'done')) m[n] = st; });
+    });
     return m;
   }
   function needTxt(o) {
@@ -730,45 +733,53 @@
       '<div style="flex:1;font-size:13.5px;font-weight:700;color:#d8d5f5">' + needTxt(o) + '</div>' + (link ? '<span>›</span></a>' : '</div>');
   }
   function chPick(id, on) { on = on || []; return '<div class="chpick" id="' + id + '">' + O.meta.map(function (m) { return '<button type="button" data-n="' + m.n + '" class="' + (on.indexOf(m.n) >= 0 ? 'on' : '') + '" style="--c:' + m.color + '">' + m.n + '</button>'; }).join('') + '</div>'; }
+  function missToggle(cls, on) { return '<button type="button" class="exmiss ' + cls + (on ? ' on' : '') + '">' + (on ? '✗ Verpasst – zählt nicht' : 'Test verpasst?') + '</button>'; }
   function examsHtml() {
     var o = exStats(), cm = exChapters();
     var bar = o.avg == null ? '' : '<div class="exbar"><i style="width:' + Math.min(100, o.avg / EX_MAX * 100) + '%;background:' + exColor(o.avg) + '"></i><span style="left:' + EX_GOAL / EX_MAX * 100 + '%"></span></div>';
     var html = '<h1 style="font-size:24px;font-weight:900;margin:4px 2px 10px">📝 Uni-Tests</h1>' + examCard(false) + bar;
-    if (o.all.length) html += '<div class="sec-title"><h2>Deine Tests</h2><small>' + o.k + ' bewertet' + (o.planned ? ' · ' + o.planned + ' offen' : '') + '</small></div><div class="card" style="display:grid;gap:12px">' + o.all.map(function (e, i) {
+    /* neuer Test: zum Ausklappen */
+    html += '<button class="exopen" id="exopen" aria-expanded="' + (o.all.length ? 'false' : 'true') + '"><span class="plus">＋</span><b>Test hinzufügen</b><span class="chev">›</span></button>' +
+      '<div class="card exform exnew" id="exnew"' + (o.all.length ? ' hidden' : '') + '>' +
+      '<label>Name (optional)</label><div class="numrow"><input id="exname" type="text" maxlength="40" placeholder="z. B. Test ' + (o.all.length + 1) + '"></div>' +
+      '<label>Welche Kapitel kommen dran?</label>' + chPick('exch') +
+      '<label>Punkte (0–10) – kannst du auch später eintragen</label><div class="numrow"><input id="expts" type="text" inputmode="decimal" placeholder="leer lassen, wenn noch offen"><span class="unit">/ 10</span></div>' +
+      missToggle('newmiss', false) +
+      '<button class="btn main block" id="exadd">Test speichern</button></div>';
+    if (o.all.length) html += '<div class="sec-title"><h2>Deine Tests</h2><small>' + o.k + ' bewertet' + (o.planned ? ' · ' + o.planned + ' offen' : '') + (o.miss ? ' · ' + o.miss + ' verpasst' : '') + '</small></div><div class="card" style="display:grid;gap:12px">' + o.all.map(function (e, i) {
       var nm = esc(e.name || ('Test ' + (i + 1))), chs = e.ch && e.ch.length ? 'Kapitel ' + e.ch.join(', ') : 'keine Kapitel gewählt';
-      return '<div class="exrow"><div class="grow"><div style="flex:1;min-width:0"><b>' + nm + '</b><small>' + chs + '</small></div>' +
-        (graded(e) ? '<b style="font-size:20px;color:' + exColor(e.p) + '">' + fmtP(e.p) + '</b>'
-          : '<div class="numrow expin"><input type="text" inputmode="decimal" placeholder="Punkte" data-id="' + e.id + '"><button class="btn sm main exsave" data-id="' + e.id + '">OK</button></div>') +
+      var right = graded(e) ? '<b style="font-size:20px;color:' + exColor(e.p) + '">' + fmtP(e.p) + '</b>'
+        : e.miss ? '<span class="exmisstag">✗ verpasst</span>'
+        : '<div class="numrow expin"><input type="text" inputmode="decimal" placeholder="Punkte" data-id="' + e.id + '"><button class="btn sm main exsave" data-id="' + e.id + '">OK</button></div>';
+      return '<div class="exrow' + (e.miss ? ' missed' : '') + '"><div class="grow"><div style="flex:1;min-width:0"><b>' + nm + '</b><small>' + chs + '</small></div>' + right +
         '<button class="exedit" data-id="' + e.id + '" aria-label="Bearbeiten">✏️</button><button class="exdel" data-id="' + e.id + '" aria-label="Löschen">🗑️</button></div>' +
         '<div class="exform exeditform" data-id="' + e.id + '" hidden><label>Name</label><div class="numrow"><input class="efname" type="text" maxlength="40" value="' + esc(e.name || '') + '" placeholder="Test ' + (i + 1) + '"></div>' +
         '<label>Kapitel</label>' + chPick('efch-' + e.id, e.ch || []) +
         '<label>Punkte (0–10, leer = noch offen)</label><div class="numrow"><input class="efpts" type="text" inputmode="decimal" value="' + (graded(e) ? fmtP(e.p) : '') + '"><span class="unit">/ 10</span></div>' +
+        missToggle('efmiss', !!e.miss) +
         '<div style="display:flex;gap:8px"><button class="btn sm efcancel" data-id="' + e.id + '" style="flex:1">Abbrechen</button><button class="btn sm main efsave" data-id="' + e.id + '" style="flex:2">Änderungen speichern</button></div></div></div>';
     }).join('') + '</div>';
-    html += '<div class="sec-title"><h2>Test hinzufügen</h2></div><div class="card exform">' +
-      '<label>Name (optional)</label><div class="numrow"><input id="exname" type="text" maxlength="40" placeholder="z. B. Test ' + (o.all.length + 1) + '"></div>' +
-      '<label>Welche Kapitel kommen dran?</label>' + chPick('exch') +
-      '<label>Punkte (0–10) – kannst du auch später eintragen</label><div class="numrow"><input id="expts" type="text" inputmode="decimal" placeholder="leer lassen, wenn noch offen"><span class="unit">/ 10</span></div>' +
-      '<button class="btn main block" id="exadd">Test hinzufügen</button></div>' +
-      '<div class="card exform"><b>Tests im Semester insgesamt</b><small>Optional – wenn noch nicht alle Tests angelegt sind, rechne ich mit dieser Zahl.</small>' +
+    html += '<div class="card exform"><b>Tests im Semester insgesamt</b><small>Optional – wenn noch nicht alle Tests angelegt sind, rechne ich mit dieser Zahl. Verpasste Tests werden abgezogen.</small>' +
       '<div class="numrow"><input id="extot" type="number" inputmode="numeric" min="0" max="50" placeholder="z. B. 8" value="' + (S.examTotal || '') + '"><span class="unit">Tests</span></div></div>';
     if (Object.keys(cm).length) html += '<div class="sec-title"><h2>Kapitel in Tests</h2></div><div class="card exleg">' + O.meta.map(function (m) { var st = cm[m.n]; return '<span class="exch ' + (st ? st.s : 'none') + '" style="--c:' + m.color + '">' + m.n + '</span>'; }).join('') +
-      '<div class="exlegtxt"><span class="exch done">✓</span> schon im Test dran · <span class="exch next">•</span> kommt im offenen Test</div></div>';
+      '<div class="exlegtxt"><span class="exch done">✓</span> im Test dran · <span class="exch next">•</span> kommt im offenen Test · <span class="exch miss">✗</span> verpasst</div></div>';
     return html;
   }
   function parseP(v) { var p = parseFloat(String(v).replace(',', '.')); return p >= 0 && p <= EX_MAX ? Math.round(p * 100) / 100 : null; }
   function exPut(e) { if (!e.c && !e.del) e.c = e.u || Date.now(); e.u = Date.now(); S.exams = S.exams || {}; S.exams[e.id] = e; save(); syncSoon(1500); viewProfile('tests'); }
   function bindExams() {
     var sel = {};
+    $('#exopen').onclick = function () { sfx('tap'); var f = $('#exnew'); f.hidden = !f.hidden; this.setAttribute('aria-expanded', String(!f.hidden)); if (!f.hidden) $('#exname').focus(); };
+    $$('.exmiss').forEach(function (b) { b.onclick = function () { sfx('tap'); var on = !b.classList.contains('on'); b.classList.toggle('on', on); b.textContent = on ? '✗ Verpasst – zählt nicht' : 'Test verpasst?'; }; });
     $$('#exch button').forEach(function (b) { b.onclick = function () { sfx('tap'); sel[b.dataset.n] = !sel[b.dataset.n]; b.classList.toggle('on', !!sel[b.dataset.n]); }; });
     $('#extot').onchange = function () { var v = parseInt(this.value, 10); S.examTotal = v > 0 ? Math.min(50, v) : 0; save(); syncSoon(1500); viewProfile('tests'); };
     $('#exadd').onclick = function () {
-      var raw = String($('#expts').value).trim(), p = raw ? parseP(raw) : null;
-      if (raw && p == null) { $('#expts').classList.add('err'); toast('Punkte von 0 bis 10 – oder leer lassen'); return; }
+      var miss = $('.newmiss').classList.contains('on'), raw = String($('#expts').value).trim(), p = raw && !miss ? parseP(raw) : null;
+      if (raw && !miss && p == null) { $('#expts').classList.add('err'); toast('Punkte von 0 bis 10 – oder leer lassen'); return; }
       var ch = Object.keys(sel).filter(function (n) { return sel[n]; }).map(Number).sort(function (a, b) { return a - b; });
       var id = 'e' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), e = { id: id, c: Date.now(), name: $('#exname').value.trim().slice(0, 40), ch: ch };
-      if (p != null) e.p = p;
-      sfx('win'); toast(p == null ? '📝 Test angelegt – Punkte später eintragen' : '📝 Test gespeichert'); exPut(e);
+      if (miss) e.miss = true; else if (p != null) e.p = p;
+      sfx('win'); toast(miss ? '✗ Verpasster Test eingetragen – zählt nicht' : p == null ? '📝 Test angelegt – Punkte später eintragen' : '📝 Test gespeichert'); exPut(e);
     };
     $$('.exsave').forEach(function (b) { b.onclick = function () {
       var inp = $('input[data-id="' + b.dataset.id + '"]'), p = parseP(inp.value);
@@ -780,10 +791,11 @@
     $$('.exeditform .chpick button').forEach(function (b) { b.onclick = function () { sfx('tap'); b.classList.toggle('on'); }; });
     $$('.efcancel').forEach(function (b) { b.onclick = function () { $('.exeditform[data-id="' + b.dataset.id + '"]').hidden = true; }; });
     $$('.efsave').forEach(function (b) { b.onclick = function () {
-      var f = $('.exeditform[data-id="' + b.dataset.id + '"]'), raw = String($('.efpts', f).value).trim(), p = raw ? parseP(raw) : null;
-      if (raw && p == null) { $('.efpts', f).classList.add('err'); toast('Punkte von 0 bis 10 – oder leer lassen'); return; }
+      var f = $('.exeditform[data-id="' + b.dataset.id + '"]'), miss = $('.efmiss', f).classList.contains('on'), raw = String($('.efpts', f).value).trim(), p = raw && !miss ? parseP(raw) : null;
+      if (raw && !miss && p == null) { $('.efpts', f).classList.add('err'); toast('Punkte von 0 bis 10 – oder leer lassen'); return; }
       var n = Object.assign({}, S.exams[b.dataset.id], { name: $('.efname', f).value.trim().slice(0, 40), ch: $$('.chpick button.on', f).map(function (x) { return +x.dataset.n; }).sort(function (a, c) { return a - c; }) });
-      if (p == null) delete n.p; else n.p = p;
+      delete n.p; delete n.miss;
+      if (miss) n.miss = true; else if (p != null) n.p = p;
       sfx('win'); toast('✏️ Test geändert'); exPut(n);
     }; });
     $$('.exdel').forEach(function (b) { b.onclick = function () {
