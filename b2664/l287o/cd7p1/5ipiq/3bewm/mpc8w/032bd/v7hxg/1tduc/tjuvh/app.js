@@ -651,12 +651,13 @@
     if (sub === 'stats') { app.innerHTML = back + statsHtml(); return; }
     if (sub === 'noten') { app.innerHTML = back + gradesHtml(); return; }
     if (sub === 'sync') { app.innerHTML = back + syncHtml(); bindSync(); return; }
+    if (sub === 'tests') { app.innerHTML = back + examsHtml(); bindExams(); return; }
     var tot = 0, today0 = (S.dayTime || {})[today()] || 0; Object.keys(S.time || {}).forEach(function (k) { tot += (S.time[k].l || 0) + (S.time[k].q || 0); });
     var got = BADGES.filter(function (b) { return S.badges[b[0]]; }).length;
     app.innerHTML = topBar() + profHead() +
       '<div class="card namecard"><label for="pname">Wie dürfen Chippy und die Erinnerungen dich nennen?</label><div class="numrow" style="padding:2px 12px"><input id="pname" type="text" maxlength="24" autocomplete="given-name" placeholder="Dein Vorname" value="' + esc(S.name || '') + '"><button class="btn sm main" id="psave">Speichern</button></div></div>' +
       '<div class="stat-grid"><div><b>' + fmtDur(today0) + '</b><small>heute gelernt</small></div><div><b>' + fmtDur(tot) + '</b><small>gesamt</small></div><div><b>' + (S.answered ? Math.round(S.correct / S.answered * 100) : 0) + '%</b><small>Trefferquote</small></div></div>' +
-      gradeCard() +
+      gradeCard() + examCard(true) +
       '<div class="menu">' +
       '<a href="#/profil/noten"><span>🎓</span><div><b>Noten & Quiz-Übersicht</b><small>alle 20-Fragen-Quizze und deine Gesamtnote</small></div>›</a>' +
       '<a href="#/profil/stats"><span>📊</span><div><b>Fortschritt & Analytics</b><small>Lernzeit, Noten, Zeit pro Thema und Kapitel</small></div>›</a>' +
@@ -689,6 +690,70 @@
       return '<div class="grow"><div style="flex:1;min-width:0"><b>Kapitel ' + h.n + '</b><small>' + pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + '.' + d.getFullYear() + ', ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ' · ' + h.ok + '/' + h.total + ' · ' + Math.round(h.ok / h.total * 100) + ' %' + (h.sec ? ' · ' + fmtDur(h.sec) : '') + '</small></div><b style="font-size:20px;color:' + gcolor(parseFloat(g.replace(',', '.'))) + '">' + g + '</b></div>';
     }).join('') + '</div>';
     return html;
+  }
+  /* ---------- Uni-Tests: Punkte 0–10, Ziel Schnitt 6 ---------- */
+  var EX_GOAL = 6, EX_MAX = 10;
+  function exList() { return Object.keys(S.exams || {}).map(function (k) { return S.exams[k]; }).filter(function (e) { return e && !e.del; }).sort(function (a, b) { return (a.d || '').localeCompare(b.d || '') || a.u - b.u; }); }
+  function fmtP(x) { return (Math.round(x * 100) / 100).toString().replace('.', ','); }
+  function exStats() {
+    var l = exList(), sum = l.reduce(function (a, e) { return a + e.p; }, 0), k = l.length, tot = S.examTotal || 0;
+    var o = { l: l, k: k, sum: sum, avg: k ? sum / k : null, tot: tot };
+    if (tot > k) { o.rem = tot - k; o.need = (EX_GOAL * tot - sum) / o.rem; }
+    else if (tot && tot <= k) o.done = true;
+    o.next = Math.max(0, EX_GOAL * (k + 1) - sum);
+    return o;
+  }
+  function needTxt(o) {
+    if (o.done) return o.avg >= EX_GOAL ? '✅ Alle Tests geschrieben – Ziel geschafft!' : '❌ Alle Tests geschrieben – Schnitt unter ' + EX_GOAL;
+    if (o.rem) {
+      if (o.need <= 0) return '✅ Ziel sicher – egal, wie die restlichen ' + o.rem + ' Tests laufen';
+      if (o.need > EX_MAX) return '⚠️ Rechnerisch nicht mehr erreichbar (nötig wären Ø ' + fmtP(o.need) + ' Punkte)';
+      return 'In den restlichen <b>' + o.rem + '</b> Test' + (o.rem === 1 ? '' : 's') + ' brauchst du im Schnitt <b>' + fmtP(Math.ceil(o.need * 100) / 100) + ' Punkte</b>';
+    }
+    if (!o.k) return 'Trag deinen ersten Test ein – Ziel: Schnitt ' + EX_GOAL + ' Punkte';
+    return o.next > EX_MAX ? '⚠️ Mit dem nächsten Test allein nicht auf Ø ' + EX_GOAL : 'Nächster Test: mindestens <b>' + fmtP(o.next) + ' Punkte</b>, damit dein Schnitt ≥ ' + EX_GOAL + ' bleibt';
+  }
+  function exColor(a) { return a == null ? 'var(--dim)' : a >= 8 ? '#7ff0b2' : a >= EX_GOAL ? '#ffd166' : a >= 5 ? '#ffb347' : '#ff8a95'; }
+  function examCard(link) {
+    var o = exStats();
+    return (link ? '<a class="gradecard examcard" href="#/profil/tests">' : '<div class="gradecard examcard">') +
+      '<div><small>📝 Uni-Tests</small><b class="gv" style="color:' + exColor(o.avg) + '">' + (o.avg == null ? '–' : fmtP(Math.round(o.avg * 100) / 100)) + '</b><small style="color:var(--dim)">Ziel ' + EX_GOAL + ' / ' + EX_MAX + '</small></div>' +
+      '<div style="flex:1;font-size:13.5px;font-weight:700;color:#d8d5f5">' + needTxt(o) + '</div>' + (link ? '<span>›</span></a>' : '</div>');
+  }
+  function examsHtml() {
+    var o = exStats(), d = new Date(), td = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+    var bar = o.avg == null ? '' : '<div class="exbar"><i style="width:' + Math.min(100, o.avg / EX_MAX * 100) + '%;background:' + exColor(o.avg) + '"></i><span style="left:' + EX_GOAL / EX_MAX * 100 + '%"></span></div>';
+    var html = '<h1 style="font-size:24px;font-weight:900;margin:4px 2px 10px">📝 Uni-Tests</h1>' + examCard(false) + bar +
+      '<div class="card exform"><b>Tests im Semester insgesamt</b><small>Optional – dann rechne ich den nötigen Schnitt für alle restlichen Tests aus.</small>' +
+      '<div class="numrow"><input id="extot" type="number" inputmode="numeric" min="0" max="50" placeholder="z. B. 8" value="' + (S.examTotal || '') + '"><span class="unit">Tests</span></div></div>' +
+      '<div class="sec-title"><h2>Test eintragen</h2></div><div class="card exform">' +
+      '<label>Name (optional)</label><div class="numrow"><input id="exname" type="text" maxlength="40" placeholder="z. B. Test ' + (o.k + 1) + '"></div>' +
+      '<label>Datum</label><div class="numrow"><input id="exdate" type="date" value="' + td + '"></div>' +
+      '<label>Punkte (0–10)</label><div class="numrow"><input id="expts" type="text" inputmode="decimal" placeholder="z. B. 7,5"><span class="unit">/ 10</span></div>' +
+      '<label>Welche Kapitel kamen dran?</label><div class="chpick">' + O.meta.map(function (m) { return '<button type="button" data-n="' + m.n + '" style="--c:' + m.color + '">' + m.n + '</button>'; }).join('') + '</div>' +
+      '<button class="btn main block" id="exadd">Test speichern</button></div>';
+    if (o.k) html += '<div class="sec-title"><h2>Deine Tests</h2><small>' + o.k + (o.tot ? ' von ' + o.tot : '') + '</small></div><div class="card" style="display:grid;gap:10px">' + o.l.slice().reverse().map(function (e, i) {
+      var dt = e.d ? e.d.split('-').reverse().join('.') : '';
+      return '<div class="grow"><div style="flex:1;min-width:0"><b>' + esc(e.name || ('Test ' + (o.k - i))) + '</b><small>' + dt + (e.ch && e.ch.length ? ' · Kapitel ' + e.ch.join(', ') : '') + '</small></div><b style="font-size:20px;color:' + exColor(e.p) + '">' + fmtP(e.p) + '</b><button class="exdel" data-id="' + e.id + '" aria-label="Löschen">🗑️</button></div>';
+    }).join('') + '</div>';
+    return html;
+  }
+  function bindExams() {
+    var sel = {};
+    $$('.chpick button').forEach(function (b) { b.onclick = function () { sfx('tap'); sel[b.dataset.n] = !sel[b.dataset.n]; b.classList.toggle('on', !!sel[b.dataset.n]); }; });
+    $('#extot').onchange = function () { var v = parseInt(this.value, 10); S.examTotal = v > 0 ? Math.min(50, v) : 0; save(); syncSoon(1500); viewProfile('tests'); };
+    $('#exadd').onclick = function () {
+      var p = parseFloat(String($('#expts').value).replace(',', '.'));
+      if (!(p >= 0 && p <= EX_MAX)) { $('#expts').classList.add('err'); toast('Bitte Punkte von 0 bis 10 eingeben'); return; }
+      var id = 'e' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      S.exams = S.exams || {};
+      S.exams[id] = { id: id, u: Date.now(), d: $('#exdate').value || '', p: Math.round(p * 100) / 100, name: $('#exname').value.trim().slice(0, 40), ch: Object.keys(sel).filter(function (n) { return sel[n]; }).map(Number).sort(function (a, b) { return a - b; }) };
+      save(); syncSoon(1500); sfx('win'); toast('📝 Test gespeichert'); viewProfile('tests');
+    };
+    $$('.exdel').forEach(function (b) { b.onclick = function () {
+      var e = S.exams[b.dataset.id]; if (!e || !confirm('Test „' + (e.name || 'ohne Namen') + '“ (' + fmtP(e.p) + ' Punkte) löschen?')) return;
+      S.exams[b.dataset.id] = { id: e.id, u: Date.now(), del: true }; save(); syncSoon(1500); viewProfile('tests');
+    }; });
   }
   function badgesHtml() {
     var got = BADGES.filter(function (b) { return S.badges[b[0]]; }).length;
@@ -1290,6 +1355,7 @@
       if (k === 'days' || k === 'dayTime' || k === 'dayPct') { out[k] = {}; syKeysOf(bv, lv, rv).forEach(function (d) { out[k][d] = syAdd((bv || {})[d], (lv || {})[d], (rv || {})[d]); }); return; }
       if (k === 'time') { out[k] = {}; syKeysOf(bv, lv, rv).forEach(function (t) { var B = (bv || {})[t] || {}, Lx = (lv || {})[t] || {}, R = (rv || {})[t] || {}; out[k][t] = { l: syAdd(B.l, Lx.l, R.l), q: syAdd(B.q, Lx.q, R.q) }; }); return; }
       if (k === 'bestCombo') { out[k] = Math.max(syN(lv), syN(rv)); return; }
+      if (k === 'exams') { out[k] = {}; syKeysOf(lv, rv).forEach(function (t) { var a = (lv || {})[t], c = (rv || {})[t]; out[k][t] = !a ? c : !c ? a : (syN(a.u) >= syN(c.u) ? a : c); }); return; }
       if (k === 'chAt') { out[k] = {}; syKeysOf(lv, rv).forEach(function (t) { out[k][t] = Math.max(syN((lv || {})[t]), syN((rv || {})[t])); }); return; }
       if (k === 'listen') { out[k] = {}; syKeysOf(lv, rv).forEach(function (t) { out[k][t] = Math.max(syN((lv || {})[t]), syN((rv || {})[t])); }); return; }
       if (k === 'badges') { out[k] = {}; syKeysOf(lv, rv).forEach(function (t) { var a = (lv || {})[t], c = (rv || {})[t]; out[k][t] = a && c ? Math.min(a, c) : (a || c); }); return; }
@@ -1324,7 +1390,7 @@
     Object.keys(S).forEach(function (k) { delete S[k]; }); Object.assign(S, m, keepLocal);
     try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {}
     applyTheme(S.theme || '');
-    if (/^(#\/?|#\/kapitel|#\/profil(\/(noten|stats|erfolge|sync))?|#\/k\/\d+)?$/.test(location.hash)) route();
+    if (/^(#\/?|#\/kapitel|#\/profil(\/(noten|stats|erfolge|sync|tests))?|#\/k\/\d+)?$/.test(location.hash)) route();
   }
   function syOn() { return !!(SY.code && SYNC_API && window.crypto && crypto.subtle); }
   function syClone(o) { return JSON.parse(JSON.stringify(o)); }
