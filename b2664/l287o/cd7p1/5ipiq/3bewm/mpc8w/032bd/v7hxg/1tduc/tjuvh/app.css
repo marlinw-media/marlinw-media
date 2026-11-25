@@ -789,8 +789,8 @@ body.noscroll { overflow: hidden; }
 .gspark { position: absolute; width: 5px; height: 5px; border-radius: 50%; background: #fde68a; box-shadow: 0 0 8px #fde047; animation: gpart .8s ease-out forwards; }
 .gsmoke { position: absolute; width: 26px; height: 26px; border-radius: 50%; background: radial-gradient(circle, rgba(241,245,249,.95), rgba(203,213,225,.5) 60%, transparent 70%); animation: gsmoke 1.6s ease-out forwards; }
 @keyframes gsmoke { 0% { transform: scale(.4); opacity: .9; } 100% { transform: translate(var(--dx), 40px) scale(3.2); opacity: 0; } }
-.stage { position: absolute; left: 50%; top: 50%; width: 400px; height: 260px; transform-origin: center; overflow: hidden; }
-.stage i, .stage b { position: absolute; display: block; font-style: normal; }
+.gscene .stage { position: absolute; left: 50%; top: 50%; width: 400px; height: 260px; transform-origin: center; overflow: hidden; }
+.gscene .stage i, .gscene .stage b { position: absolute; display: block; font-style: normal; }
 
 /* Level 2 – Lager */
 .lager .lwall { position: absolute; inset: 0 0 44px 0; background: repeating-linear-gradient(0deg, #cbd5e1 0 2px, #e2e8f0 2px 30px); }
@@ -939,7 +939,7 @@ body.noscroll { overflow: hidden; }
 .pcard p { margin: 0; color: #d8d5f5; font-size: 14px; line-height: 1.45; }
 .pxp { font-size: 22px; font-weight: 900; color: #ffd166; text-shadow: 0 0 14px rgba(255,209,102,.6); }
 /* Bühne unten ausrichten, darüber passende Farbe */
-.stage { top: auto; bottom: 0; transform-origin: bottom center; }
+.gscene .stage { top: auto; bottom: 0; transform-origin: bottom center; }
 .job-lager .gscene { background: repeating-linear-gradient(0deg, #cbd5e1 0 2px, #e2e8f0 2px 30px); }
 .job-buero .gscene { background: linear-gradient(180deg, #f5f3ff, #ede9fe); }
 .job-boss .gscene { background: #1e293b; }
