@@ -159,7 +159,7 @@
     var key = n + '-' + tid; if (poolCache[key]) return poolCache[key];
     var ch = O.chapters[n], t = ch.topics.filter(function (x) { return x.id === tid; })[0], items = [];
     var EX = (O.ex || {})[key] || [], LG = (O.lang || {})[key] || {}, FXT = (O.fx || {})[key] || {};
-    (t.q || []).forEach(function (q, i) { var x = EX[i]; items.push({ id: key + '-q' + i + (q[5] ? '-' + q[5] : ''), n: n, t: tid, q: q[0], a: q[1], e: (x && x[0]) || q[2], w: x ? x[1] : null, dw: ((O.dw || {})[key] || [])[i] || null, lang: (LG.q || [])[i] || null, s: q[3] || 0, m: q[4] || '', fx: (FXT.q || {})[i] || null }); });
+    (t.q || []).forEach(function (q, i) { var x = EX[i]; items.push({ id: key + '-q' + i + (q[5] ? '-' + q[5] : ''), n: n, t: tid, q: q[0], a: q[1], e: (x && x[0]) || q[2], w: x ? x[1] : null, dw: ((O.dw || {})[key] || [])[i] || null, lang: (LG.q || [])[i] || null, s: q[3] || 0, m: q[4] || '', fx: (FXT.q || {})[i] || null, tip: ((O.tips || {})[key] || {})['q' + i] || '' }); });
     if (t.st && t.st.T.length >= 3 && t.st.F.length >= 3) {
       var cnt = t.st.n || Math.min(18, Math.min(t.st.T.length, t.st.F.length) * 3);
       for (var v = 0; v < cnt; v++) {
@@ -185,7 +185,7 @@
       for (var v = 0; v < (g.n || 5); v++) {
         var r = rng(hash(key + 'g' + gi + '-' + v)), x;
         try { x = g.f(r, v); } catch (e) { continue; }
-        var it0 = { id: key + '-g' + gi + '-' + v, n: n, t: tid, q: x.q, a: x.a, e: x.e, wr: x.wr || null, s: x.s || 0, m: x.m || '', lang: (LG.g || [])[gi] || null, gen: true, fx: (FXT.g || {})[gi] || null };
+        var it0 = { id: key + '-g' + gi + '-' + v, n: n, t: tid, q: x.q, a: x.a, e: x.e, wr: x.wr || null, s: x.s || 0, m: x.m || '', lang: (LG.g || [])[gi] || null, gen: true, fx: (FXT.g || {})[gi] || null, tip: ((O.tips || {})[key] || {})['g' + gi] || '' };
         if (x.num != null) { it0.num = x.num; it0.unit = x.unit || ''; it0.hint = x.hint || ''; it0.a = [fmtNum(x.num) + (x.unit ? ' ' + x.unit : '')]; }
         items.push(it0);
       }
@@ -240,17 +240,57 @@
   }
 
   /* ================= Sound, Konfetti, Toast ================= */
-  var AC = null;
-  function audioCtx() { if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} } if (AC && AC.state !== 'running') AC.resume(); return AC; }
-  function tone(f, t0, d, type, vol) { var c = audioCtx(); if (!c) return; var o = c.createOscillator(), g = c.createGain(); o.type = type || 'sine'; o.frequency.value = f; g.gain.setValueAtTime(.0001, c.currentTime + t0); g.gain.exponentialRampToValueAtTime(vol || .12, c.currentTime + t0 + .01); g.gain.exponentialRampToValueAtTime(.0001, c.currentTime + t0 + d); o.connect(g); g.connect(c.destination); o.start(c.currentTime + t0); o.stop(c.currentTime + t0 + d + .05); }
+  /* Leise, weiche Klänge: alles läuft über einen Master mit Tiefpass + Kompressor, keine harten Rechteckwellen. */
+  var AC = null, MASTER = null, NOISE = null;
+  function audioCtx() {
+    if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); var comp = AC.createDynamicsCompressor(), lp = AC.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 5200; MASTER = AC.createGain(); MASTER.gain.value = .8; MASTER.connect(lp); lp.connect(comp); comp.connect(AC.destination); } catch (e) {} }
+    if (AC && AC.state !== 'running') AC.resume(); return AC;
+  }
+  function tone(f, t0, d, type, vol, f2) {
+    var c = audioCtx(); if (!c) return; var o = c.createOscillator(), g = c.createGain(), t = c.currentTime + t0;
+    o.type = type || 'sine'; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + d);
+    g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol || .05, t + .012); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+    o.connect(g); g.connect(MASTER); o.start(t); o.stop(t + d + .05);
+  }
+  function bell(f, t0, d, vol) { tone(f, t0, d, 'sine', vol); tone(f * 2, t0, d * .6, 'sine', vol * .3); tone(f * 3.01, t0, d * .3, 'sine', vol * .12); }
+  function noise(t0, d, vol, freq, type, f2) {
+    var c = audioCtx(); if (!c) return;
+    if (!NOISE) { NOISE = c.createBuffer(1, c.sampleRate, c.sampleRate); var a = NOISE.getChannelData(0); for (var i = 0; i < a.length; i++) a[i] = Math.random() * 2 - 1; }
+    var s = c.createBufferSource(), fl = c.createBiquadFilter(), g = c.createGain(), t = c.currentTime + t0;
+    s.buffer = NOISE; s.loop = true; fl.type = type || 'lowpass'; fl.frequency.setValueAtTime(freq || 800, t); if (f2) fl.frequency.exponentialRampToValueAtTime(f2, t + d);
+    g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol || .05, t + .02); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+    s.connect(fl); fl.connect(g); g.connect(MASTER); s.start(t); s.stop(t + d + .05);
+  }
   function sfx(name, combo) {
     if (!S.sound) return;
-    if (name === 'ok') { var b = 660 * Math.pow(1.06, Math.min(combo || 0, 10)); tone(b, 0, .12, 'triangle', .12); tone(b * 1.5, .08, .2, 'triangle', .11); }
-    else if (name === 'bad') { tone(220, 0, .18, 'square', .05); tone(165, .12, .25, 'square', .05); }
-    else if (name === 'win') { [523, 659, 784, 1047, 1319].forEach(function (f, i) { tone(f, i * .09, .3, 'triangle', .12); }); }
-    else if (name === 'lvl') { [392, 523, 659, 784, 1047, 1319, 1568].forEach(function (f, i) { tone(f, i * .07, .35, 'triangle', .11); }); }
-    else if (name === 'tap') tone(900, 0, .04, 'sine', .05);
+    switch (name) {
+      case 'tap': if (Date.now() - (sfx.lt || 0) < 90) break; sfx.lt = Date.now(); tone(1250, 0, .045, 'sine', .022); break;
+      case 'open': tone(560, 0, .09, 'sine', .03, 760); tone(840, .05, .1, 'sine', .022); break;
+      case 'close': tone(760, 0, .09, 'sine', .028, 520); break;
+      case 'nav': tone(700, 0, .07, 'sine', .018, 880); break;
+      case 'toggle': tone(980, 0, .05, 'triangle', .025); tone(1310, .04, .05, 'triangle', .02); break;
+      case 'pop': tone(520, 0, .08, 'sine', .04, 980); break;
+      case 'ok': { var b = 659 * Math.pow(1.0595, Math.min(combo || 0, 8)); bell(b, 0, .35, .06); bell(b * 1.26, .07, .4, .05); break; }
+      case 'bad': tone(330, 0, .22, 'sine', .055, 220); tone(262, .1, .26, 'triangle', .03, 196); break;
+      case 'win': [523, 659, 784, 1047].forEach(function (f, i) { bell(f, i * .1, .5, .05); }); break;
+      case 'lvl': [392, 523, 659, 784, 1047, 1319].forEach(function (f, i) { bell(f, i * .08, .55, .045); }); break;
+      case 'fanfare': [[523, 659, 784], [587, 740, 880], [659, 831, 988], [784, 988, 1175, 1568]].forEach(function (ch, i) { ch.forEach(function (f) { tone(f, i * .18, i === 3 ? 1 : .2, 'triangle', .022); tone(f, i * .18, i === 3 ? 1.1 : .22, 'sine', .028); }); }); break;
+      case 'dig': noise(0, .12, .07, 700, 'lowpass', 200); tone(140, 0, .1, 'sine', .05, 80); break;
+      case 'thud': noise(0, .22, .08, 380, 'lowpass', 120); tone(110, 0, .2, 'sine', .07, 55); break;
+      case 'stamp': noise(0, .07, .06, 900, 'lowpass'); tone(180, 0, .09, 'sine', .06, 120); break;
+      case 'whoosh': noise(0, .3, .03, 400, 'bandpass', 2200); break;
+      case 'coin': bell(1319, 0, .22, .045); bell(1760, .07, .3, .04); break;
+      case 'up': tone(420, 0, .16, 'sine', .035, 840); bell(1047, .12, .25, .025); break;
+      case 'tick': tone(1600, 0, .04, 'sine', .04); tone(800, 0, .06, 'sine', .02); break;
+      case 'launch': noise(0, 2.4, .12, 200, 'lowpass', 900); tone(60, 0, 2.2, 'sine', .08, 120); break;
+    }
   }
+  /* jeder Knopf / Link klickt leise (Antworten haben eigene Töne) */
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest && e.target.closest('a, button, [role=button], input[type=checkbox], select');
+    if (!el || el.closest('.opt') || el.hasAttribute('data-nosfx') || el.id === 'numok' || el.id === 'gnumok' || el.classList.contains('tipbtn')) return;
+    sfx(el.matches('input[type=checkbox]') ? 'toggle' : 'tap');
+  }, true);
   var toastT;
   function toast(msg, ms) { var t = $('#toast'); t.innerHTML = msg; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(function () { t.classList.remove('on'); }, ms || 2600); }
   function floatXp(txt, el) {
@@ -408,6 +448,7 @@
     if (parts.length) requestAnimationFrame(cfLoop); else { cfRun = false; cfx.clearRect(0, 0, innerWidth, innerHeight); }
   }
   function levelUp(l) {
+    if (document.body.classList.contains('jobmode')) { sfx('lvl'); toast('⭐ XP-Stufe <b>' + l + '</b> erreicht!', 2600); return; }
     sfx('lvl'); confetti(180);
     var d = document.createElement('div'); d.className = 'levelup';
     d.innerHTML = '<div class="box cheer">' + chippy('party', 88) + '<div style="font-weight:900;color:#ffd166;letter-spacing:.15em;font-size:13px">LEVEL UP</div><div class="lv grad-text">' + l + '</div><p style="color:#d8d5f5;margin:10px 0 18px">Stark' + (S.name ? ', ' + esc(S.name) : '') + '! Du bist jetzt auf Level ' + l + '.</p><button class="btn main block">Weiter so 🚀</button></div>';
@@ -530,6 +571,7 @@
     if (tab === 'lernen' && FPDFS[n]) html += '<a class="big-quiz pdf-btn fpdf-btn" href="#" data-pdf="' + n + '" data-kind="f"><div class="ic">🧮</div><div style="flex:1"><b style="font-size:17px">Formeln als PDF</b><div style="color:#d8d5f5;font-size:13px;font-weight:600">Alle Formeln aus Kapitel ' + n + ' mit Buch-Beispiel</div></div><span style="font-size:22px">⤓</span></a>';
     if (tab === 'quiz') {
       var tot = ch.topics.reduce(function (a, t) { return a + pool(n, t.id).length; }, 0);
+      html += careerCard(n);
       html += '<a class="big-quiz" href="#/k/' + n + '/quiz/alle"><div class="ic">🏆</div><div style="flex:1"><b style="font-size:17px">Großes Kapitel-Quiz</b><div style="color:#d8d5f5;font-size:13px;font-weight:600">20 Fragen aus allen ' + tot + ' Fragen des Kapitels</div></div><span style="font-size:22px">›</span></a>';
     } else if (tab === 'lernen') html += '<p style="color:var(--dim);font-size:13px;text-align:center;margin-top:16px">Tipp: Erst den Podcast hören, dann im Quiz festigen. 🎧 → 🎯</p>';
     app.innerHTML = html;
@@ -1166,6 +1208,7 @@
     });
   }
   function openSheetHtml(html, bind) {
+    sfx('open');
     var d = document.createElement('div'); d.className = 'sheet on voice-sheet';
     d.innerHTML = '<div class="panel"><div class="grab"></div><div class="article">' + html + '</div></div>';
     document.body.appendChild(d);
@@ -1220,13 +1263,14 @@
     var it = Q.items[Q.i], ch = O.chapters[Q.n], t = ch.topics.filter(function (x) { return x.id === it.t; })[0];
     var isNew = box(it.id) < 0, fxH = it.fx && it.fx.length ? '<div class="fxwrap"><button class="fxbtn" id="fxbtn" type="button">🧮 Formeln</button></div>' : '';
     app.innerHTML = '<div class="qtop"><a class="x" href="#/k/' + Q.n + '" aria-label="Beenden">✕</a><div class="qprog"><i style="width:' + (Q.i / Q.items.length * 100) + '%"></i></div><div class="combo" id="combo">' + (Q.combo >= 2 ? '🔥×' + Q.combo : '') + '</div></div>' +
-      '<div class="qcard"><div class="qmeta"><span>' + (Q.i + 1) + ' / ' + Q.items.length + ' · ' + esc(t.title) + '</span><span>' + (isNew ? '✨ neu' : box(it.id) === 0 ? '↻ Wiederholung' : '') + '</span></div>' +
-      '<div class="qtext">' + md(it.q) + '</div>' + (it.num != null ?
+      '<div class="qcard"><div class="qmeta"><span>' + (Q.i + 1) + ' / ' + Q.items.length + ' · ' + esc(t.title) + '</span><span>' + (isNew ? '✨ neu' : box(it.id) === 0 ? '↻ Wiederholung' : '') + ' <button class="tipbtn" id="tipbtn">💡 Tipp</button></span></div>' +
+      '<div class="qtext">' + md(it.q) + '</div><div class="tipbox" hidden></div>' + (it.num != null ?
       '<div class="numq"><div class="numhint">⌨️ Antwort eintippen · <b>' + esc(it.hint || 'Zahl') + '</b></div><div class="numrow"><input id="numin" type="text" inputmode="decimal" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Zahl eingeben"><span class="unit">' + esc(it.unit || '') + '</span></div><button class="btn main block" id="numok">Prüfen</button></div></div><div class="fb" id="fb"></div>' :
       '<div class="opts">' +
       it.order.map(function (ai, k) { return '<button class="opt" data-a="' + ai + '"><span class="k">' + 'ABCD'[k] + '</span><span>' + md(it.a[ai]).replace(/^<p>|<\/p>$/g, '') + '</span></button>'; }).join('') +
       '</div></div><div class="fb" id="fb"></div>');
     $$('.opt').forEach(function (b) { b.onclick = function () { answer(+b.dataset.a, b); }; });
+    Q.tipUsed = false; $('#tipbtn').onclick = function () { if (Q.tipUsed) return; Q.tipUsed = true; this.disabled = true; useTip(it, app); };
     $$('.fxwrap').forEach(function (x) { x.remove(); });
     if (fxH) { document.body.insertAdjacentHTML('beforeend', fxH); $('#fxbtn').onclick = function () { openFx(it.fx); }; }
     if (it.num != null) {
@@ -1260,6 +1304,7 @@
   function answer(ai, btn) {
     var fxb = $('.fxwrap'); if (fxb) fxb.remove(); closeSheets();
     var it = Q.items[Q.i], right = ai === 0, pctBefore = chapterProgress(it.n); Q.lastRight = right;
+    var tb_ = $('#tipbtn'); if (tb_) tb_.disabled = true;
     $$('.opt').forEach(function (b) { b.disabled = true; var a = +b.dataset.a; if (a === 0) b.classList.add('right'); else if (b === btn) b.classList.add('wrong'); else b.classList.add('dim'); });
     var r = S.q[it.id] || { b: 0, n: 0, c: 0, t: 0 };
     r.n++; r.t = Date.now(); touchCh(it.n);
@@ -1270,6 +1315,7 @@
       r.b = Math.min(5, (S.q[it.id] ? r.b : 0) + 1); r.c++; S.correct++;
       Q.ok++; Q.combo++; Q.maxCombo = Math.max(Q.maxCombo, Q.combo); S.bestCombo = Math.max(S.bestCombo, Q.combo);
       gain = 10 + Math.min(Q.combo - 1, 5) * 2;
+      if (Q.tipUsed) gain = Math.ceil(gain / 2);
       sfx('ok', Q.combo);
       Q.wrongRow = 0;
       if (MOT.combo[Q.combo]) { if (Q.combo >= 5) confetti(60); pep(rnd(MOT.combo[Q.combo]), Q.combo >= 8 ? 'cool' : 'party', true); }
@@ -1324,14 +1370,408 @@
     checkBadges();
   }
 
+  /* ================= Tipps (alle Quizfragen) ================= */
+  /* Quelle: handgeschriebener Tipp (O.tips) oder Hinweis auf den passenden Podcast-Abschnitt (Antwort maskiert) */
+  function tipInfo(it) {
+    var t = (O.chapters[it.n].topics || []).filter(function (x) { return x.id === it.t; })[0], seg = t && t.segs && t.segs[it.s || 0], ptr = '';
+    if (seg) {
+      var fs = firstSentence(spoken(seg)), ans = String(it.a && it.a[0] || '').replace(/[*`„“"]/g, '').trim();
+      if (ans.length > 3) fs = fs.split(ans).join('…');
+      ptr = 'Schau im Podcast „' + t.title + '“, Abschnitt ' + ((it.s || 0) + 1) + ': „' + fs + '“';
+    }
+    return { custom: it.tip || '', ptr: ptr };
+  }
+  /* streicht eine falsche Antwort durch und zeigt den Hinweis; liefert false, wenn schon benutzt */
+  function useTip(it, scope, after) {
+    var info = tipInfo(it), html = '', box = $('.tipbox', scope);
+    if (it.num == null) {
+      var wrong = $$('.opt', scope).filter(function (b) { return +b.dataset.a !== 0 && !b.classList.contains('elim') && !b.disabled; });
+      if (wrong.length > 1) { var w = wrong[Math.floor(Math.random() * wrong.length)]; w.classList.add('elim'); w.disabled = true; html += '<div class="tipline">✂️ Eine falsche Antwort ist durchgestrichen.</div>'; }
+    } else {
+      if (it.fx && it.fx.length) html += '<div class="tipline">🧮 Die passenden Formeln findest du unten rechts.</div>';
+      if (it.hint || it.unit) html += '<div class="tipline">🎯 Gesucht: ' + esc((it.hint || 'eine Zahl') + (it.unit ? ' in ' + it.unit : '')) + '</div>';
+    }
+    if (info.custom) html += '<div class="tipline">' + md(info.custom).replace(/^<p>|<\/p>$/g, '') + '</div>';
+    else if (info.ptr) html += '<div class="tipline">🎧 ' + esc(info.ptr) + '</div>';
+    if (!html) html = '<div class="tipline">Lies die Frage nochmal ganz genau – jedes Wort zählt.</div>';
+    if (box) { box.innerHTML = '<b>💡 Tipp</b><small>halbe XP für diese Frage</small>' + html; box.hidden = false; }
+    sfx('tap'); if (after) after();
+  }
+
+  /* ================= Goldgräber-Expedition ================= */
+  /* Jede richtige Antwort gräbt eine Schicht tiefer. 3 Grubenlampen = 3 Fehler. Unten wartet der Schatz (+300 XP). */
+  var GOLD_LAYERS = [
+    ['Oberfläche', '#7dd3fc', '#bae6fd', 'sky'], ['Mutterboden', '#7c4a26', '#5b3519', 'soil'], ['Lehm', '#b8662f', '#8f4b22', 'clay'], ['Kies', '#8b7d6b', '#6b5e4f', 'gravel'],
+    ['Sandstein', '#d6a66a', '#b9874d', 'sand'], ['Kohleflöz', '#3a3633', '#1f1c1a', 'coal'], ['Granit', '#8d8a8f', '#5e5b62', 'granite'], ['Unterirdischer See', '#2c5a7a', '#173a52', 'water'],
+    ['Kristallhöhle', '#4b2d73', '#2b1847', 'crystal'], ['Basalt', '#3c4250', '#252a35', 'basalt'], ['Glutgestein', '#7a2b12', '#4a1408', 'magma'], ['Goldader', '#6b5212', '#3d2e08', 'gold'],
+    ['Schatzkammer', '#5a4310', '#2e2206', 'treasure']];
+  function goldDecor(i, kind) {
+    var r = rng(hash('gold' + i)), s = '', k;
+    var dots = function (n, col, rmin, rmax) { var o = ''; for (k = 0; k < n; k++) o += '<ellipse cx="' + (r() * 400).toFixed(1) + '" cy="' + (r() * 128).toFixed(1) + '" rx="' + (rmin + r() * (rmax - rmin)).toFixed(1) + '" ry="' + (rmin * .7 + r() * (rmax - rmin) * .7).toFixed(1) + '" fill="' + col + '" opacity="' + (.35 + r() * .5).toFixed(2) + '"/>'; return o; };
+    if (kind === 'sky') {
+      s = '<defs><radialGradient id="gsun"><stop offset="0" stop-color="#fff7c2"/><stop offset=".55" stop-color="#ffd166"/><stop offset="1" stop-color="#ffd166" stop-opacity="0"/></radialGradient></defs>' +
+        '<circle cx="330" cy="34" r="34" fill="url(#gsun)"/><circle cx="330" cy="34" r="15" fill="#fff3b0"/>' +
+        '<g fill="#fff" opacity=".9"><ellipse cx="80" cy="30" rx="30" ry="10"/><ellipse cx="100" cy="24" rx="20" ry="12"/><ellipse cx="200" cy="48" rx="26" ry="8"/><ellipse cx="216" cy="43" rx="16" ry="9"/></g>' +
+        '<path d="M0 98 Q60 70 120 92 T240 88 T400 84 V128 H0Z" fill="#4ade80"/><path d="M0 108 Q80 92 170 104 T400 100 V128 H0Z" fill="#22c55e"/>' +
+        '<g fill="#15803d">' + Array.apply(null, Array(26)).map(function (_, j) { var x = j * 16 + r() * 6; return '<path d="M' + x.toFixed(1) + ' 110 l3 -9 l3 9z"/>'; }).join('') + '</g>' +
+        '<g transform="translate(168 64)"><rect x="0" y="6" width="8" height="58" fill="#7c4a1e"/><rect x="56" y="6" width="8" height="58" fill="#7c4a1e"/><rect x="-6" y="0" width="76" height="10" rx="2" fill="#92582a"/><rect x="8" y="14" width="48" height="50" fill="#1c1209"/><text x="32" y="-4" text-anchor="middle" font-size="11" font-weight="900" fill="#7c4a1e">MINE</text></g>' +
+        '<g transform="translate(60 92)"><rect x="0" y="0" width="30" height="16" rx="3" fill="#6b7280"/><circle cx="7" cy="18" r="4" fill="#374151"/><circle cx="23" cy="18" r="4" fill="#374151"/><ellipse cx="15" cy="1" rx="11" ry="4" fill="#fbbf24"/></g>';
+      return s;
+    }
+    if (kind === 'soil') s = dots(16, '#3f2410', 2, 6) + '<g stroke="#e9c79b" stroke-width="2" fill="none" opacity=".55"><path d="M40 0 q6 20 -4 40 q-8 16 4 30"/><path d="M300 0 q-8 24 6 44"/><path d="M210 0 q4 14 -6 26"/></g><path d="M120 80 q10 -8 20 0 q10 8 20 0" stroke="#f9a8d4" stroke-width="5" fill="none" stroke-linecap="round"/>';
+    else if (kind === 'clay') s = dots(14, '#7a3d14', 3, 9) + '<g stroke="#d6814a" stroke-width="3" fill="none" opacity=".5"><path d="M0 40 q100 -16 200 0 t200 0"/><path d="M0 90 q100 14 200 0 t200 0"/></g>';
+    else if (kind === 'gravel') s = dots(46, '#c5b9a8', 3, 8) + dots(30, '#4b4135', 2, 6);
+    else if (kind === 'sand') s = '<g fill="none" stroke-width="5" opacity=".45"><path d="M0 24 q100 10 200 0 t200 0" stroke="#f3d29b"/><path d="M0 58 q100 -10 200 0 t200 0" stroke="#a87a42"/><path d="M0 96 q100 12 200 0 t200 0" stroke="#f3d29b"/></g>' + dots(20, '#f7e2b8', 1, 3) + '<path d="M300 70 q14 -12 28 0 q-14 12 -28 0" fill="#e9d5b0" opacity=".8"/><circle cx="311" cy="69" r="2" fill="#7c5a2e"/>';
+    else if (kind === 'coal') s = dots(24, '#0b0a09', 6, 16) + dots(14, '#5c5650', 2, 4) + '<g fill="#9ca3af" opacity=".7"><circle cx="90" cy="44" r="1.6"/><circle cx="260" cy="88" r="1.6"/><circle cx="340" cy="30" r="1.4"/></g>';
+    else if (kind === 'granite') s = dots(60, '#e5e7eb', 1, 3) + dots(40, '#1f2937', 1, 3) + dots(20, '#f9a8d4', 1, 2);
+    else if (kind === 'water') s = '<path d="M0 70 q50 -12 100 0 t100 0 t100 0 t100 0 V128 H0Z" fill="#38bdf8" opacity=".35"/><path d="M0 80 q50 -10 100 0 t100 0 t100 0 t100 0" stroke="#bae6fd" stroke-width="2" fill="none" opacity=".7"/>' +
+        '<g fill="#bae6fd" opacity=".8"><path d="M60 0 v14 a4 4 0 1 0 1 0z"/><path d="M230 0 v22 a4 4 0 1 0 1 0z"/><path d="M350 0 v10 a4 4 0 1 0 1 0z"/></g>' + '<g transform="translate(300 96)" fill="#fbbf24"><path d="M0 0 q10 -8 20 0 q-10 8 -20 0z"/><path d="M20 0 l8 -6 v12z"/><circle cx="5" cy="-1" r="1.5" fill="#1f2937"/></g>';
+    else if (kind === 'crystal') {
+      s = dots(10, '#1e1030', 4, 10);
+      for (k = 0; k < 9; k++) { var x = 20 + r() * 360, y = 128 - (r() > .5 ? 0 : 128), h = 18 + r() * 34, w = 7 + r() * 8, col = ['#c084fc', '#a78bfa', '#67e8f9', '#f0abfc'][k % 4], up = y > 64 ? -1 : 1;
+        s += '<polygon points="' + (x - w) + ',' + y + ' ' + x + ',' + (y + up * h) + ' ' + (x + w) + ',' + y + '" fill="' + col + '" opacity=".9"/><polygon points="' + x + ',' + (y + up * h) + ' ' + (x + w) + ',' + y + ' ' + x + ',' + y + '" fill="#fff" opacity=".28"/>'; }
+    } else if (kind === 'basalt') { s = ''; for (k = 0; k < 12; k++) s += '<path d="M' + (k * 34) + ' 0 l14 8 v120 l-14 -6z" fill="#11151d" opacity=".55"/>'; s += dots(10, '#64748b', 1, 3); }
+    else if (kind === 'magma') s = '<g fill="none" stroke-linecap="round"><path d="M0 40 l60 10 l40 -14 l70 22 l60 -12 l80 18 l90 -10" stroke="#fb923c" stroke-width="5" opacity=".8"/><path d="M0 40 l60 10 l40 -14 l70 22 l60 -12 l80 18 l90 -10" stroke="#fde047" stroke-width="1.6"/><path d="M30 110 l50 -20 l60 14 l50 -18" stroke="#f97316" stroke-width="4" opacity=".7"/></g>' + dots(16, '#fb923c', 1, 3);
+    else if (kind === 'gold') { s = '<g fill="none" stroke-linecap="round"><path d="M0 30 q60 30 120 6 t140 20 t140 -10" stroke="#fbbf24" stroke-width="7" opacity=".85"/><path d="M0 30 q60 30 120 6 t140 20 t140 -10" stroke="#fff3b0" stroke-width="2"/><path d="M40 108 q50 -26 110 -6 t120 -10" stroke="#f59e0b" stroke-width="5" opacity=".8"/></g>' + dots(22, '#fcd34d', 2, 5); }
+    else if (kind === 'treasure') s = '<g fill="#fcd34d" opacity=".75">' + Array.apply(null, Array(30)).map(function () { return '<circle cx="' + (r() * 400).toFixed(1) + '" cy="' + (100 + r() * 28).toFixed(1) + '" r="' + (3 + r() * 4).toFixed(1) + '"/>'; }).join('') + '</g>' +
+        '<g id="gchest" transform="translate(240 58)"><rect x="0" y="22" width="70" height="42" rx="6" fill="#92400e" stroke="#451a03" stroke-width="3"/><rect x="0" y="34" width="70" height="7" fill="#fbbf24"/><rect x="30" y="30" width="10" height="16" rx="2" fill="#fde047" stroke="#a16207" stroke-width="2"/>' +
+        '<g class="glid"><path d="M0 24 q35 -26 70 0 z" fill="#b45309" stroke="#451a03" stroke-width="3"/><rect x="0" y="18" width="70" height="7" fill="#fbbf24"/></g></g>';
+    return s;
+  }
+  function goldMiner() {
+    return '<svg viewBox="0 0 90 100" class="gminer-svg">' +
+      '<ellipse cx="45" cy="97" rx="24" ry="4" fill="rgba(0,0,0,.35)"/>' +
+      '<g class="gpick"><rect x="60" y="20" width="5" height="46" rx="2" fill="#8b5a2b" transform="rotate(28 62 60)"/><path d="M50 22 q22 -14 44 4 q-22 -6 -44 2z" fill="#cbd5e1" stroke="#475569" stroke-width="2" transform="rotate(28 62 60)"/></g>' +
+      '<rect x="31" y="66" width="10" height="24" rx="3" fill="#1e3a8a"/><rect x="49" y="66" width="10" height="24" rx="3" fill="#1e3a8a"/><rect x="28" y="86" width="15" height="8" rx="3" fill="#3f2a14"/><rect x="47" y="86" width="15" height="8" rx="3" fill="#3f2a14"/>' +
+      '<rect x="26" y="44" width="38" height="30" rx="9" fill="#2563eb"/><rect x="32" y="48" width="26" height="16" rx="4" fill="#3b82f6"/><circle cx="37" cy="52" r="2" fill="#fbbf24"/><circle cx="53" cy="52" r="2" fill="#fbbf24"/>' +
+      '<rect x="18" y="48" width="10" height="20" rx="5" fill="#2563eb"/><circle cx="23" cy="69" r="5" fill="#f5c9a6"/>' +
+      '<circle cx="45" cy="34" r="15" fill="#f5c9a6"/><path d="M31 38 q14 18 28 0 q-2 10 -14 12 q-12 -2 -14 -12z" fill="#92400e"/><circle cx="40" cy="32" r="2" fill="#1f2937"/><circle cx="50" cy="32" r="2" fill="#1f2937"/><ellipse cx="45" cy="37" rx="3" ry="2" fill="#e8a27f"/>' +
+      '<path d="M28 27 q17 -22 34 0 z" fill="#facc15" stroke="#a16207" stroke-width="2"/><rect x="25" y="25" width="40" height="5" rx="2.5" fill="#eab308"/><circle cx="45" cy="18" r="5" fill="#fef9c3" stroke="#a16207" stroke-width="1.5" class="glamp"/>' +
+      '</svg>';
+  }
+  /* ================= Karriereleiter: 5 Job-Spiele (pro Kapitel eigener Fortschritt) ================= */
+  /* Jede richtige Antwort = ein Arbeitsschritt. 3 Leben. Level geschafft → Beförderung. In Level 5 (CEO) bleibt man. */
+  var GAME_CH = { 22: 1, 26: 1 };
+  var JOBS = [
+    { id: 'mine', lvl: 1, job: 'Bergarbeiter', place: 'Goldmine', icon: '⛏️', steps: 8, xp: 100, life: '🏮', okTxt: 'Richtig – weitergraben!', badTxt: 'Steinschlag! Eine Grubenlampe ist aus.', intro: 'Grab dich mit richtigen Antworten bis zur Goldader.' },
+    { id: 'lager', lvl: 2, job: 'Gabelstapler-Fahrer', place: 'Logistiklager', icon: '📦', steps: 9, xp: 150, life: '🛞', okTxt: 'Richtig – Kiste eingelagert!', badTxt: 'Kiste runtergefallen! Ein Reifen ist platt.', intro: 'Stapel alle Kisten ins Hochregal.' },
+    { id: 'buero', lvl: 3, job: 'Sachbearbeiter', place: 'Großraumbüro', icon: '🗂️', steps: 10, xp: 200, life: '☕', okTxt: 'Richtig – Akte erledigt!', badTxt: 'Kaffee verschüttet! Eine Tasse weniger.', intro: 'Arbeite den Aktenberg bis zum Feierabend ab.' },
+    { id: 'boss', lvl: 4, job: 'Abteilungsleiter', place: 'Vorstandsetage', icon: '📈', steps: 11, xp: 250, life: '🤝', okTxt: 'Richtig – die Zahlen steigen!', badTxt: 'Der Vorstand runzelt die Stirn …', intro: 'Überzeug den Vorstand mit steigenden Zahlen.' },
+    { id: 'ceo', lvl: 5, job: 'CEO', place: 'Mondmission', icon: '🚀', steps: 12, xp: 400, life: '💰', okTxt: 'Richtig – Bauteil montiert!', badTxt: 'Bauteil abgestürzt! Ein Investor springt ab.', intro: 'Bau deine Firmenrakete und flieg zum Mond.' }];
+  function career(n) { var c = (S.career || {})[n] || {}; return { lvl: Math.min(5, Math.max(1, c.lvl || 1)), w5: c.w5 || 0 }; }
+  var C = null;
+  function goldPool(n) {
+    var items = []; O.chapters[n].topics.forEach(function (t) { items = items.concat(pool(n, t.id)); });
+    return pick(items, Math.min(items.length, 45)).map(function (it) { return Object.assign({}, it, { order: shuffle(it.a.map(function (_, i) { return i; })) }); });
+  }
+  function careerCard(n) {
+    if (!GAME_CH[n]) return '';
+    var cr = career(n), J = JOBS[cr.lvl - 1];
+    return '<a class="big-quiz gold-btn" href="#/k/' + n + '/job"><div class="ic">' + J.icon + '</div><div style="flex:1"><b style="font-size:17px">Karriereleiter · Level ' + J.lvl + '</b>' +
+      '<div style="color:#fde68a;font-size:13px;font-weight:700">' + esc(J.job) + ' · ' + esc(J.place) + (cr.w5 ? ' · 🏆×' + cr.w5 : '') + '</div>' +
+      '<div class="ladder">' + JOBS.map(function (x) { return '<i class="' + (x.lvl < J.lvl ? 'done' : x.lvl === J.lvl ? 'now' : '') + '" title="' + esc(x.job) + '">' + x.icon + '</i>'; }).join('<s></s>') + '</div></div><span style="font-size:22px">›</span></a>';
+  }
+  /* Szenen-Bühne: feste Größe 400 × 260, wird in die Szene eingepasst */
+  function stageFit() {
+    var sc = $('#gscene'), st = $('#stage'); if (!sc || !st) return;
+    var s = Math.min(sc.clientWidth / 400, sc.clientHeight / 260);
+    st.style.transform = 'translateX(-50%) scale(' + s + ')';
+  }
+  window.addEventListener('resize', function () { stageFit(); if (C && C.J.id === 'mine') mineCam(true); });
+  function fxBurst(cls, n, x, y, col, spread) {
+    var fx = $('#gfx'); if (!fx) return;
+    for (var k = 0; k < n; k++) {
+      var p = document.createElement('i'); p.className = cls;
+      p.style.left = (x + (Math.random() - .5) * 30) + 'px'; p.style.top = y + 'px';
+      p.style.setProperty('--dx', ((Math.random() - .5) * (spread || 220)).toFixed(0) + 'px'); p.style.setProperty('--dy', (-50 - Math.random() * 120).toFixed(0) + 'px');
+      p.style.setProperty('--r', (Math.random() * 720 - 360).toFixed(0) + 'deg'); if (col) p.style.background = col;
+      p.style.animationDelay = (Math.random() * .15).toFixed(2) + 's';
+      fx.appendChild(p); setTimeout(function (x_) { x_.remove(); }.bind(null, p), 1500);
+    }
+  }
+  function fxAt(el, dy) { var s = $('#gscene').getBoundingClientRect(), r = el.getBoundingClientRect(); return [r.left - s.left + r.width / 2, r.top - s.top + r.height / 2 + (dy || 0)]; }
+
+  /* ---------- Level 1: Goldmine ---------- */
+  var MINE_IDX = [0, 1, 2, 3, 5, 6, 8, 11, 12], MINE_LH = 128;
+  function mineCam(now) {
+    var sc = $('#gscene'), w = $('#gworld'), m = $('#gminer'); if (!sc || !w) return;
+    var mh = 84, top = C.prog * MINE_LH + MINE_LH - mh - 6;
+    m.style.top = top + 'px';
+    var y = Math.max(0, top + mh / 2 - sc.clientHeight * .52);
+    w.style.transition = now ? 'none' : ''; w.style.transform = 'translateY(' + (-y) + 'px)';
+    $('#gdark').style.opacity = Math.min(.82, C.prog * .1);
+  }
+  var SCENES = {
+    mine: {
+      html: function () {
+        return '<div class="gworld" id="gworld">' + MINE_IDX.map(function (gi, i) {
+          var L = GOLD_LAYERS[gi];
+          return '<div class="glayer gl-' + L[3] + (i === 0 ? ' dug' : '') + '" data-i="' + i + '" style="height:' + MINE_LH + 'px;--c1:' + L[1] + ';--c2:' + L[2] + '"><svg class="gdeco" viewBox="0 0 400 128" preserveAspectRatio="xMidYMid slice">' + goldDecor(gi, L[3]) + '</svg>' +
+            (i ? '<div class="gtun"><i class="beam l"></i><i class="beam r"></i><i class="beam t"></i></div><svg class="gcrack" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M50 0 L44 24 L56 40 L40 62 L52 78 L46 100 M44 24 L28 30 M56 40 L74 44 M40 62 L22 70 M52 78 L70 86" stroke="rgba(0,0,0,.65)" stroke-width="2.2" fill="none"/></svg>' : '') +
+            '<span class="gname"><b>' + L[0] + '</b>' + (i ? (i * 10) + ' m' : 'Start') + '</span></div>';
+        }).join('') + '<div class="gminer" id="gminer">' + goldMiner() + '</div></div><div class="gdark" id="gdark"></div>';
+      },
+      init: function () { mineCam(true); },
+      step: function (k, done) {
+        var m = $('#gminer'), next = $('.glayer[data-i="' + k + '"]'), L = GOLD_LAYERS[MINE_IDX[k]];
+        m.classList.remove('dig'); void m.offsetWidth; m.classList.add('dig'); next.classList.add('crack'); sfx('dig');
+        var hits = 0, iv = setInterval(function () { hits++; var p = fxAt(m, 36); fxBurst('gpart', 8, p[0], p[1], L[1]); if (hits < 3) sfx('dig'); if (hits >= 3) clearInterval(iv); }, 300);
+        setTimeout(function () {
+          next.classList.remove('crack'); next.classList.add('dug'); m.classList.remove('dig'); mineCam(); jobHud();
+          if (k < JOBS[0].steps && Math.random() < .3) setTimeout(function () { C.xp += 5; addXp(5); jobHud(); var p = fxAt(m, 30); fxBurst('gnug', 10, p[0], p[1]); sfx('coin'); toast('✨ Goldnugget gefunden! +5 XP'); }, 700);
+          setTimeout(done, 900);
+        }, 1000);
+      },
+      fail: function () {
+        var fx = $('#gfx'), sc = $('#gscene'), m = $('#gminer'), r = document.createElement('i'), p = fxAt(m, -40);
+        r.className = 'grock'; r.style.left = (p[0] - 14) + 'px'; r.style.setProperty('--ty', (p[1] + 10) + 'px'); fx.appendChild(r); setTimeout(function () { r.remove(); }, 1300);
+        setTimeout(function () { shake(); m.classList.add('hurt'); setTimeout(function () { m.classList.remove('hurt'); }, 600); var q = fxAt(m, 0); fxBurst('gpart', 10, q[0], q[1], '#6b7280'); sfx('thud'); }, 480);
+      },
+      win: function (done) { var ch = $('#gchest'); if (ch) ch.classList.add('open'); var p = fxAt($('#gminer'), 0); fxBurst('gnug', 26, p[0] + 60, p[1]); sfx('coin'); setTimeout(done, 1500); }
+    },
+
+    /* ---------- Level 2: Logistiklager ---------- */
+    lager: {
+      html: function (J) {
+        var rack = '', k;
+        for (k = 0; k < 3; k++) rack += '<i class="lbeam" style="top:' + (210 - k * 60) + 'px"></i>';
+        for (k = 0; k < 4; k++) rack += '<i class="lpost" style="left:' + (208 + k * 60) + 'px"></i>';
+        var pal = ''; for (k = 0; k < J.steps; k++) pal += '<i class="lbox pal" data-k="' + k + '" style="left:' + (98 + (k % 2) * 28) + 'px;bottom:' + (44 + Math.floor(k / 2) * 22) + 'px;width:26px;height:22px"></i>';
+        return '<div class="stage lager" id="stage"><div class="lwall"></div><div class="lgate"><i></i></div><div class="lwin"></div><div class="llamp" style="left:120px"></div><div class="llamp" style="left:300px"></div>' +
+          '<div class="lfloor"></div><div class="lline"></div>' + rack + '<div class="lpallet"></div>' + pal +
+          '<div class="lsign" id="lsign">LAGER VOLL ✓</div>' +
+          '<div class="fl" id="fl" style="left:4px"><div class="fork" id="fork"><i class="lbox carry" id="carry"></i></div>' +
+          '<svg viewBox="0 0 96 80" class="flsvg"><rect x="2" y="6" width="6" height="64" rx="2" fill="#6b7280"/><rect x="12" y="6" width="6" height="64" rx="2" fill="#6b7280"/>' +
+          '<path d="M30 30 h34 l10 18 v16 h-48 z" fill="#facc15" stroke="#a16207" stroke-width="2"/><path d="M38 6 h26 l4 24 h-34 z" fill="none" stroke="#1f2937" stroke-width="3"/><rect x="36" y="2" width="32" height="5" rx="2" fill="#1f2937"/>' +
+          '<rect x="70" y="40" width="22" height="24" rx="4" fill="#374151"/><circle cx="36" cy="68" r="10" fill="#111827"/><circle cx="36" cy="68" r="4" fill="#9ca3af"/><circle cx="72" cy="68" r="10" fill="#111827"/><circle cx="72" cy="68" r="4" fill="#9ca3af"/>' +
+          '<circle cx="50" cy="20" r="6" fill="#f5c9a6"/><rect x="44" y="26" width="12" height="10" rx="3" fill="#ea580c"/><path d="M43 17 q7 -9 14 0z" fill="#facc15"/><circle cx="66" cy="4" r="3" fill="#fb923c" class="lbeacon"/></svg></div></div>';
+      },
+      init: function () { stageFit(); },
+      step: function (k, done) {
+        var fl = $('#fl'), fork = $('#fork'), carry = $('#carry'), idx = k - 1, col = idx % 3, row = Math.floor(idx / 3);
+        var src = $('.lbox.pal[data-k="' + (JOBS[1].steps - k) + '"]');
+        fl.style.left = '20px'; sfx('whoosh');
+        setTimeout(function () { if (src) src.style.opacity = 0; carry.classList.add('on'); sfx('pop'); }, 620);
+        setTimeout(function () { fl.style.left = (132 + col * 60) + 'px'; fork.style.bottom = (15 + row * 60) + 'px'; sfx('whoosh'); }, 820);
+        setTimeout(function () {
+          carry.classList.remove('on');
+          var b = document.createElement('i'); b.className = 'lbox placed'; b.style.left = (214 + col * 60) + 'px'; b.style.top = (210 - row * 60 - 40) + 'px'; $('#stage').appendChild(b); sfx('stamp');
+          fork.style.bottom = '14px'; fl.style.left = '4px'; jobHud();
+        }, 1900);
+        setTimeout(done, 2100);
+      },
+      fail: function () {
+        var fl = $('#fl'), carry = $('#carry');
+        carry.classList.add('on'); fl.classList.add('wobble'); sfx('thud');
+        setTimeout(function () { carry.classList.remove('on'); var b = document.createElement('i'); b.className = 'lbox fall'; b.style.left = (parseFloat(fl.style.left) + 82) + 'px'; b.style.top = '170px'; $('#stage').appendChild(b); shake(); setTimeout(function () { var p = fxAt(b, 10); fxBurst('gpart', 12, p[0], p[1], '#c08a4a'); b.remove(); }, 650); }, 300);
+        setTimeout(function () { fl.classList.remove('wobble'); }, 900);
+      },
+      win: function (done) { $('#lsign').classList.add('on'); $$('.lbox.placed').forEach(function (b, i) { setTimeout(function () { b.classList.add('glow'); }, i * 80); }); sfx('win'); setTimeout(done, 1500); }
+    },
+
+    /* ---------- Level 3: Büro ---------- */
+    buero: {
+      html: function (J) {
+        var inb = '', k, cols = ['#60a5fa', '#f472b6', '#34d399', '#fbbf24', '#a78bfa'];
+        for (k = 0; k < J.steps; k++) inb += '<i class="bfile" data-k="' + k + '" style="left:52px;bottom:' + (86 + k * 7) + 'px;background:' + cols[k % 5] + '"></i>';
+        return '<div class="stage buero" id="stage"><div class="bwall"></div><div class="bwin"><i class="bsky" id="bsky"></i><i class="bsun" id="bsun"></i><i class="bcity"></i><i class="bframe"></i></div>' +
+          '<div class="bclock"><i class="bh" id="bh"></i><i class="bm" id="bm"></i></div><div class="bplant"></div><div class="bposter">TEAM<br>SPIRIT</div>' +
+          '<div class="bdesk"></div><div class="bmon"><i id="bscreen">📊</i></div><div class="btray l"></div><div class="btray r"></div>' + inb +
+          '<div class="bstamp" id="bstamp"><i></i></div><div class="bmug" id="bmug"></div><div class="bspill" id="bspill"></div><div class="bsign" id="bsign">FEIERABEND 🎉</div></div>';
+      },
+      init: function () { stageFit(); buroTime(0); },
+      step: function (k, done) {
+        var f = $('.bfile[data-k="' + (JOBS[2].steps - k) + '"]'), st = $('#bstamp');
+        if (!f) { done(); return; }
+        f.classList.add('top'); f.style.left = '128px'; f.style.bottom = '100px'; sfx('whoosh');
+        setTimeout(function () { st.classList.remove('hit'); void st.offsetWidth; st.classList.add('hit'); sfx('stamp'); setTimeout(function () { f.classList.add('done'); }, 160); }, 520);
+        setTimeout(function () { f.style.left = '296px'; f.style.bottom = (86 + (k - 1) * 7) + 'px'; sfx('pop'); buroTime(k / JOBS[2].steps); jobHud(); }, 1150);
+        setTimeout(done, 1500);
+      },
+      fail: function () { var m = $('#bmug'), sp = $('#bspill'); m.classList.remove('tip'); void m.offsetWidth; m.classList.add('tip'); sp.classList.add('on'); sp.style.setProperty('--s', 1 + (3 - C.lives) * .35); sfx('thud'); shake(); },
+      win: function (done) { $('#bsign').classList.add('on'); $('#bscreen').textContent = '✅'; sfx('win'); setTimeout(done, 1400); }
+    },
+
+    /* ---------- Level 4: Vorstand ---------- */
+    boss: {
+      html: function (J) {
+        var bars = '', k, heads = '', cols = ['#fca5a5', '#fcd34d', '#a7f3d0', '#c4b5fd', '#93c5fd'];
+        for (k = 0; k < J.steps; k++) bars += '<i class="vbar" data-k="' + k + '" style="left:' + (106 + k * 17) + 'px"></i>';
+        for (k = 0; k < 5; k++) heads += '<div class="vman" data-k="' + k + '" style="left:' + (70 + k * 58) + 'px"><i class="vbody" style="background:' + ['#1e3a8a', '#374151', '#7f1d1d', '#065f46', '#4c1d95'][k] + '"></i><i class="vhead" style="background:' + cols[k] + '"></i><b class="vbub"></b></div>';
+        return '<div class="stage boss" id="stage"><div class="vwall"></div><div class="vwin"></div><div class="vscreen"><span class="vtitle">Quartalszahlen</span><i class="vaxis"></i>' + bars + '<span class="vnum" id="vnum">+0 %</span><span class="vrocket" id="vrocket">🚀</span></div>' +
+          '<div class="vlamp"></div>' + heads + '<div class="vtable"></div><div class="vme"><i class="vbody" style="background:#111827"></i><i class="vhead" style="background:#f5c9a6"></i><i class="vtie"></i></div></div>';
+      },
+      init: function () { stageFit(); },
+      step: function (k, done) {
+        var b = $('.vbar[data-k="' + (k - 1) + '"]'), h = 18 + k * (96 / JOBS[3].steps);
+        b.style.height = h + 'px'; b.classList.add('on'); sfx('up');
+        $('#vnum').textContent = '+' + (k * 9) + ' %';
+        var m = $$('.vman')[Math.floor(Math.random() * 5)]; bubble(m, ['👍', '👏', '😮', '💯', '🔥'][k % 5]);
+        jobHud(); setTimeout(done, 1100);
+      },
+      fail: function () { var m = $$('.vman')[Math.floor(Math.random() * 5)]; bubble(m, ['🤨', '😴', '😬'][Math.floor(Math.random() * 3)]); $('.vscreen').classList.remove('red'); void $('.vscreen').offsetWidth; $('.vscreen').classList.add('red'); sfx('thud'); shake(); },
+      win: function (done) { $('#vrocket').classList.add('go'); $$('.vman').forEach(function (m, i) { setTimeout(function () { m.classList.add('stand'); bubble(m, '👏'); }, i * 120); }); sfx('win'); setTimeout(done, 1700); }
+    },
+
+    /* ---------- Level 5: CEO – Mondmission ---------- */
+    ceo: {
+      parts: ['engine', 'tank1', 'boostL', 'boostR', 'finL', 'finR', 'band', 'tank2', 'window', 'nose', 'ant', 'flag'],
+      html: function () {
+        var stars = '', k, r = rng(77); for (k = 0; k < 60; k++) stars += '<i style="left:' + (r() * 400).toFixed(0) + 'px;top:' + (r() * 900 - 700).toFixed(0) + 'px;animation-delay:' + (r() * 3).toFixed(1) + 's"></i>';
+        return '<div class="stage ceo" id="stage"><div class="cworld" id="cworld"><div class="csky"></div><div class="cspace"></div><div class="cstars">' + stars + '</div><div class="cmoon" id="cmoon"><i></i><i></i><i></i></div>' +
+          '<div class="ccloud" style="left:30px;top:40px"></div><div class="ccloud" style="left:270px;top:70px;transform:scale(.7)"></div>' +
+          '<div class="ccity"><i style="left:0;height:40px"></i><i style="left:26px;height:62px"></i><i style="left:58px;height:30px"></i><i style="left:300px;height:56px"></i><i class="tower" style="left:330px;height:96px"></i><i style="left:368px;height:44px"></i></div>' +
+          '<div class="cground"></div><div class="cpad"></div><div class="ctower"></div><div class="ccrane"><i class="arm"></i></div></div>' +
+          '<div class="rocket" id="rocket">' + this.parts.map(function (p) { return '<i class="rp ' + p + '" data-p="' + p + '"></i>'; }).join('') + '<i class="flame" id="flame"></i></div>' +
+          '<div class="csmoke" id="csmoke"></div><div class="ccount" id="ccount"></div></div>';
+      },
+      init: function () { stageFit(); },
+      step: function (k, done) {
+        var p = $('.rp[data-p="' + this.parts[k - 1] + '"]'); p.classList.add('drop'); sfx('whoosh');
+        setTimeout(function () { p.classList.add('on'); sfx('stamp'); var q = fxAt(p, 6); fxBurst('gspark', 8, q[0], q[1], '#fde68a', 120); jobHud(); }, 520);
+        setTimeout(done, 900);
+      },
+      fail: function () {
+        var next = this.parts[C.prog] || 'tank1', p = document.createElement('i'); p.className = 'rp ' + next + ' miss'; $('#rocket').appendChild(p);
+        sfx('thud'); setTimeout(function () { shake(); var q = fxAt(p, 0); fxBurst('gpart', 12, q[0], q[1], '#9ca3af'); }, 700); setTimeout(function () { p.remove(); }, 1500);
+      },
+      win: function (done) {
+        var cnt = $('#ccount'), st = $('#stage'), n = 3;
+        var tick = function () {
+          cnt.textContent = n > 0 ? n : 'LIFT-OFF!'; cnt.classList.remove('on'); void cnt.offsetWidth; cnt.classList.add('on'); sfx(n > 0 ? 'tick' : 'launch');
+          if (n > 0) { n--; setTimeout(tick, 800); return; }
+          st.classList.add('launch'); $('#flame').classList.add('on'); $('#gscene').classList.add('launched');
+          var sm = setInterval(function () { var p = fxAt($('#flame'), 10); fxBurst('gsmoke', 5, p[0], p[1], null, 160); }, 110);
+          setTimeout(function () { clearInterval(sm); st.classList.add('space'); }, 2600);
+          setTimeout(function () { st.classList.add('land'); sfx('win'); }, 4300);
+          setTimeout(done, 5600);
+        };
+        setTimeout(tick, 300);
+      }
+    }
+  };
+  function bubble(m, e) { var b = $('.vbub', m); b.textContent = e; b.classList.remove('on'); void b.offsetWidth; b.classList.add('on'); }
+  function shake() { var sc = $('#gscene'); if (!sc) return; sc.classList.remove('shake'); void sc.offsetWidth; sc.classList.add('shake'); if (navigator.vibrate) navigator.vibrate(70); }
+  function buroTime(t) {
+    var h = $('#bh'), m = $('#bm'), sky = $('#bsky'), sun = $('#bsun'); if (!h) return;
+    var hours = 9 + t * 8; h.style.transform = 'rotate(' + (hours % 12 * 30) + 'deg)'; m.style.transform = 'rotate(' + (t * 8 * 360) + 'deg)';
+    sky.style.opacity = t; sun.style.transform = 'translateY(' + (t * 46) + 'px)'; sun.style.background = t > .7 ? '#fb923c' : '#fde047';
+  }
+
+  function viewJob(n) {
+    if (!O.chapters[n]) return;
+    if (!GAME_CH[n]) { location.hash = '#/k/' + n; return; }
+    var cr = career(n), J = JOBS[cr.lvl - 1];
+    C = { n: n, J: J, items: goldPool(n), i: 0, prog: 0, lives: 3, xp: 0, busy: false, tip: false };
+    document.body.classList.add('immersive', 'jobmode');
+    app.innerHTML = '<div class="gold job-' + J.id + '"><div class="ghud"><a class="x" href="#/k/' + n + '" aria-label="Beenden">✕</a>' +
+      '<div class="gjob"><small>Level ' + J.lvl + ' / 5 · ' + esc(J.place) + '</small><b>' + J.icon + ' ' + esc(J.job) + '</b></div><div class="glives" id="glives"></div><div class="gxp" id="gxp">0 XP</div></div>' +
+      '<div class="gscene" id="gscene">' + SCENES[J.id].html(J) + '<div class="gfx" id="gfx"></div><div class="gmeter"><i id="gmeter"></i></div></div><div class="gq" id="gq"></div></div>';
+    SCENES[J.id].init(J); jobHud(); jobQ(true); sfx('open');
+  }
+  function jobHud() {
+    if (!C || !$('#glives')) return;
+    $('#glives').innerHTML = [0, 1, 2].map(function (k) { return '<span class="' + (k < C.lives ? '' : 'off') + '">' + C.J.life + '</span>'; }).join('');
+    $('#gxp').textContent = C.xp + ' XP'; $('#gmeter').style.height = (C.prog / C.J.steps * 100) + '%';
+  }
+  function jobQ(first) {
+    if (C.i >= C.items.length) { C.items = goldPool(C.n); C.i = 0; }
+    var it = C.items[C.i], J = C.J, t = O.chapters[C.n].topics.filter(function (x) { return x.id === it.t; })[0];
+    C.tip = false; C.qStart = Date.now();
+    var q = $('#gq');
+    if (first) toast(J.icon + ' <b>Level ' + J.lvl + ': ' + esc(J.job) + '</b><br>' + esc(J.intro) + ' ' + J.steps + ' richtige Antworten, 3 Fehler erlaubt.', 4200);
+    q.innerHTML =
+      '<div class="qcard gcard"><div class="qmeta"><span>' + J.icon + ' Schritt ' + (C.prog + 1) + ' / ' + J.steps + ' · ' + esc(t.title) + '</span><button class="tipbtn" id="gtip">💡 Tipp</button></div>' +
+      '<div class="qtext">' + md(it.q) + '</div><div class="tipbox" hidden></div>' +
+      (it.num != null ? '<div class="numq"><div class="numhint">⌨️ Antwort eintippen · <b>' + esc(it.hint || 'Zahl') + '</b></div><div class="numrow"><input id="gnum" type="text" inputmode="decimal" autocomplete="off" placeholder="Zahl eingeben"><span class="unit">' + esc(it.unit || '') + '</span></div><button class="btn main block" id="gnumok">Prüfen</button></div>'
+        : '<div class="opts">' + it.order.map(function (ai, k) { return '<button class="opt" data-a="' + ai + '"><span class="k">' + 'ABCD'[k] + '</span><span>' + md(it.a[ai]).replace(/^<p>|<\/p>$/g, '') + '</span></button>'; }).join('') + '</div>') +
+      '<div class="gfb" id="gfb"></div></div>';
+    q.scrollTop = 0;
+    $$('.opt', q).forEach(function (b) { b.onclick = function () { jobAnswer(+b.dataset.a === 0, b, +b.dataset.a); }; });
+    $('#gtip').onclick = function () { if (C.tip) return; C.tip = true; this.disabled = true; useTip(it, q); };
+    $$('.fxwrap').forEach(function (x) { x.remove(); });
+    if (it.fx && it.fx.length) { document.body.insertAdjacentHTML('beforeend', '<div class="fxwrap"><button class="fxbtn" id="fxbtn" type="button">🧮 Formeln</button></div>'); $('#fxbtn').onclick = function () { openFx(it.fx); }; }
+    if (it.num != null) {
+      var inp = $('#gnum'), go = function () {
+        var v = parseNum(inp.value); if (isNaN(v)) { inp.classList.add('err'); toast('Bitte eine Zahl eingeben'); return; }
+        inp.disabled = true; $('#gnumok').disabled = true; inp.blur();
+        var right = Math.abs(v - it.num) <= (it.tol || 0) + 1e-9; inp.classList.add(right ? 'right' : 'wrong'); jobAnswer(right, $('#gnumok'), right ? 0 : -1, fmtNum(v));
+      };
+      $('#gnumok').onclick = go; inp.onkeydown = function (e) { if (e.key === 'Enter') go(); };
+    }
+  }
+  function goldRecord(it, right) {
+    var pctBefore = chapterProgress(it.n), r = S.q[it.id] || { b: 0, n: 0, c: 0, t: 0 };
+    r.n++; r.t = Date.now(); touchCh(it.n);
+    addTime(it.n, it.t, 'q', Math.min(180, (Date.now() - (C.qStart || Date.now())) / 1000));
+    S.answered++;
+    if (right) { r.b = Math.min(5, (S.q[it.id] ? r.b : 0) + 1); r.c++; S.correct++; } else r.b = 0;
+    S.q[it.id] = r; addPct(chapterProgress(it.n) - pctBefore); save(); syncSoon(1500);
+  }
+  function jobAnswer(right, btn, ai, given) {
+    if (C.busy) return; C.busy = true;
+    var it = C.items[C.i], J = C.J; $$('.fxwrap').forEach(function (x) { x.remove(); }); closeSheets();
+    $$('#gq .opt').forEach(function (b) { b.disabled = true; var a = +b.dataset.a; if (a === 0) b.classList.add('right'); else if (b === btn) b.classList.add('wrong'); else b.classList.add('dim'); });
+    $('#gtip').disabled = true;
+    goldRecord(it, right);
+    var fb = $('#gfb'), reason = right || ai < 0 ? '' : (it.w ? it.w[ai - 1] : (it.wr && it.wr[it.a[ai]])) || '';
+    if (right) {
+      var gain = C.tip ? 3 : 6; C.xp += gain; addXp(gain, btn); sfx('ok', C.prog + 1);
+      fb.innerHTML = '<div class="gfbin good"><b>✅ ' + J.okTxt + '</b> <span>+' + gain + ' XP</span></div>';
+      C.prog++;
+      SCENES[J.id].step(C.prog, function () {
+        if (C.prog >= J.steps) { jobWin(); return; }
+        C.i++; C.busy = false; jobQ();
+      });
+    } else {
+      sfx('bad'); C.lives--; SCENES[J.id].fail(); jobHud(); fb.classList.add('over');
+      fb.innerHTML = '<div class="gfbin bad"><b>💥 ' + J.badTxt + '</b>' + (given ? '<div>Deine Antwort: ' + esc(given + (it.unit ? ' ' + it.unit : '')) + '</div>' : '') + (reason ? '<div>' + md(reason).replace(/^<p>|<\/p>$/g, '') + '</div>' : '') +
+        '<div class="gok">✔ ' + md(it.a[0]).replace(/^<p>|<\/p>$/g, '') + '</div><div class="gex">' + md(it.e) + '</div>' +
+        '<button class="btn main block" id="gnext">' + (C.lives > 0 ? 'Weiter' : 'Auswertung') + '</button></div>';
+      $('#gnext').onclick = function () { if (C.lives <= 0) { jobLose(); return; } C.i++; C.busy = false; jobQ(); };
+    }
+  }
+  function jobWin() {
+    var J = C.J, n = C.n, S2 = S.career = S.career || {}, rec = S2[n] = S2[n] || { lvl: 1, w5: 0 };
+    var promoted = J.lvl < 5;
+    if (promoted) rec.lvl = Math.max(rec.lvl || 1, J.lvl + 1); else rec.w5 = (rec.w5 || 0) + 1;
+    save(); syncSoon(800);
+    C.xp += J.xp; addXp(J.xp); jobHud();
+    SCENES[J.id].win(function () {
+      confetti(promoted ? 200 : 300);
+      if (promoted) { promoOverlay(J, JOBS[J.lvl], n); return; }
+      sfx('fanfare');
+      $('#gq').innerHTML = '<div class="gend win"><div class="gtrophy">🌕</div><h2>Mondlandung geschafft!</h2><p>Als CEO hast du deine Firma bis auf den Mond gebracht. Du bleibst an der Spitze – starte jederzeit eine neue Mission.</p>' +
+        '<div class="stat-grid"><div><b style="color:#ffd166">+' + C.xp + '</b><small>XP</small></div><div><b>5 / 5</b><small>Karriere</small></div><div><b>' + rec.w5 + '×</b><small>Mond erreicht</small></div></div>' +
+        '<div style="display:grid;gap:10px"><a class="btn main block" href="#/k/' + n + '/job?r=' + Date.now() + '">Neue Mission 🚀</a><a class="btn block" href="#/k/' + n + '">Zurück zum Kapitel</a></div></div>';
+    });
+  }
+  function promoOverlay(oldJ, newJ, n) {
+    sfx('fanfare');
+    var d = document.createElement('div'); d.className = 'promo'; d.id = 'promo';
+    d.innerHTML = '<div class="prays"></div><div class="pcard"><div class="pstamp">BEFÖRDERT!</div>' +
+      '<div class="pjobs"><div class="pold"><span>' + oldJ.icon + '</span>' + esc(oldJ.job) + '</div><div class="parrow">➜</div><div class="pnew"><span>' + newJ.icon + '</span>' + esc(newJ.job) + '</div></div>' +
+      '<div class="ladder big">' + JOBS.map(function (x) { return '<i class="' + (x.lvl < newJ.lvl ? 'done' : x.lvl === newJ.lvl ? 'now' : '') + '">' + x.icon + '</i>'; }).join('<s></s>') + '</div>' +
+      '<p>Kapitel ' + n + ' · jetzt <b>Level ' + newJ.lvl + ' von 5</b><br>' + esc(newJ.place) + ': ' + esc(newJ.intro) + '</p><div class="pxp">+' + C.xp + ' XP</div>' +
+      '<a class="btn main block" href="#/k/' + n + '/job?r=' + Date.now() + '">Neuer Job: ' + esc(newJ.job) + ' ' + newJ.icon + '</a><a class="btn block" href="#/k/' + n + '">Zurück zum Kapitel</a></div>';
+    document.body.appendChild(d);
+    setTimeout(function () { d.classList.add('on'); }, 30);
+  }
+  function jobLose() {
+    var J = C.J, n = C.n, sc = $('#gscene'); if (sc) sc.classList.add('cavein'); sfx('bad');
+    $('#gq').innerHTML = '<div class="gend"><div class="gtrophy">' + (J.id === 'mine' ? '🪨' : '😓') + '</div><h2>Schicht vorbei – ' + C.prog + ' von ' + J.steps + ' geschafft</h2><p>Alle drei ' + J.life + ' sind weg. Versuch es nochmal – die Beförderung wartet!</p>' +
+      '<div class="stat-grid"><div><b style="color:#ffd166">+' + C.xp + '</b><small>XP</small></div><div><b>' + C.prog + '/' + J.steps + '</b><small>Schritte</small></div><div><b>Level ' + J.lvl + '</b><small>' + esc(J.job) + '</small></div></div>' +
+      '<div style="display:grid;gap:10px"><a class="btn main block" href="#/k/' + n + '/job?r=' + Date.now() + '">Nochmal versuchen ' + J.icon + '</a><a class="btn block" href="#/k/' + n + '">Zurück zum Kapitel</a></div></div>';
+  }
+
   /* ================= Router ================= */
   function route() {
-    stopPlayer(); stopTerms(); closeSheets(); closePdf(); $$('.fxwrap').forEach(function (x) { x.remove(); }); window.scrollTo(0, 0);
+    stopPlayer(); stopTerms(); closeSheets(); closePdf(); var po_ = $('#promo'); if (po_) po_.remove(); C = null; $$('.fxwrap').forEach(function (x) { x.remove(); }); window.scrollTo(0, 0);
     var h = location.hash.replace(/^#/, '') || '/', qs = '', qi = h.indexOf('?');
     if (qi >= 0) { qs = h.slice(qi + 1); h = h.slice(0, qi); }
     var params = {}; qs.split('&').forEach(function (kv) { if (!kv) return; var p = kv.split('='); params[p[0]] = decodeURIComponent(p[1] || ''); });
     var p = h.split('/').filter(Boolean);
-    document.body.classList.remove('immersive');
+    document.body.classList.remove('immersive', 'jobmode');
     if (p[0] === 'k' && (p[2] === 'lernen' || p[2] === 'quiz') && p[3]) { touchCh(+p[1]); save(); }
     $$('.tabbar a').forEach(function (a) { a.classList.toggle('on', (p[0] || 'home') === a.dataset.tab || (!p[0] && a.dataset.tab === 'home')); });
     if (!p.length) viewHome();
@@ -1343,6 +1783,7 @@
     else if (p[0] === 'k' && p[2] === 'lernen') viewLearn(+p[1], p[3]);
     else if (p[0] === 'k' && p[2] === 'text') viewText(+p[1], p[3], +(p[4] || 0), params.m || '');
     else if (p[0] === 'k' && p[2] === 'quiz') viewQuiz(+p[1], p[3]);
+    else if (p[0] === 'k' && (p[2] === 'job' || p[2] === 'gold')) viewJob(+p[1]);
     else if (p[0] === 'k' && p[2] === 'merken') viewMerk(+p[1]);
     else if (p[0] === 'sync') { syncJoinLink(p[1]); }
     else viewHome();
@@ -1403,6 +1844,8 @@
       if (k === 'days' || k === 'dayTime' || k === 'dayPct') { out[k] = {}; syKeysOf(bv, lv, rv).forEach(function (d) { out[k][d] = syAdd((bv || {})[d], (lv || {})[d], (rv || {})[d]); }); return; }
       if (k === 'time') { out[k] = {}; syKeysOf(bv, lv, rv).forEach(function (t) { var B = (bv || {})[t] || {}, Lx = (lv || {})[t] || {}, R = (rv || {})[t] || {}; out[k][t] = { l: syAdd(B.l, Lx.l, R.l), q: syAdd(B.q, Lx.q, R.q) }; }); return; }
       if (k === 'bestCombo') { out[k] = Math.max(syN(lv), syN(rv)); return; }
+      if (k === 'career') { out[k] = {}; syKeysOf(lv, rv).forEach(function (t) { var a = (lv || {})[t] || {}, c = (rv || {})[t] || {}; out[k][t] = { lvl: Math.max(syN(a.lvl), syN(c.lvl), 1), w5: Math.max(syN(a.w5), syN(c.w5)) }; }); return; }
+      if (k === 'gold') { out[k] = {}; syKeysOf(lv, rv).forEach(function (t) { var a = (lv || {})[t] || {}, c = (rv || {})[t] || {}; out[k][t] = { best: Math.max(syN(a.best), syN(c.best)), wins: Math.max(syN(a.wins), syN(c.wins)) }; }); return; }
       if (k === 'exams') { out[k] = {}; syKeysOf(lv, rv).forEach(function (t) { var a = (lv || {})[t], c = (rv || {})[t]; out[k][t] = !a ? c : !c ? a : (syN(a.u) >= syN(c.u) ? a : c); }); return; }
       if (k === 'chAt') { out[k] = {}; syKeysOf(lv, rv).forEach(function (t) { out[k][t] = Math.max(syN((lv || {})[t]), syN((rv || {})[t])); }); return; }
       if (k === 'listen') { out[k] = {}; syKeysOf(lv, rv).forEach(function (t) { out[k][t] = Math.max(syN((lv || {})[t]), syN((rv || {})[t])); }); return; }
